@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017 - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2017-2018 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,14 @@
 
 namespace E20R\Utilities;
 
+// Deny direct access to the file
+if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
+	wp_die( "Cannot access file directly" );
+}
 
-class Support {
+if ( ! class_exists( '\E20R\Utilities\Support' ) ) {
 	
+	class Support {
+	
+	}
 }
