@@ -133,7 +133,7 @@ try {
 	return false;
 }
 
-add_filter( 'e20r_utilities_module_installed', '__return_true', 99999, 0 );
+add_filter( 'e20r_utilities_module_installed', '__return_true', -1, 1 );
 
 if ( class_exists( '\E20R\Utilities\Utilities' )  ) {
 	Utilities::configureUpdateServerV4( '00-e20r-utilities', __FILE__ );
