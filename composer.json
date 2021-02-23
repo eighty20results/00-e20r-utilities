@@ -34,10 +34,10 @@
         "brain/monkey": "*"
     },
     "scripts": {
-        "post-install-cmd": "./inc/bin/phpcs --config-set installed_paths vendor/wp-coding-standards/wpcs",
-        "post-update-cmd" : "./inc/bin/phpcs --config-set installed_paths vendor/wp-coding-standards/wpcs",
+        "post-install-cmd": "./inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs",
+        "post-update-cmd" : "./inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs",
         "test": [
-            "phpcs --report=full --colors -p --standard=WordPress-Extra --ignore=*/inc/*,*/node_modules/* --extensions=php",
+            "phpcs --report=full --colors -p --standard=WordPress-Extra --ignore=*/inc/*,*/node_modules/* --extensions=php *.php",
             "phpunit"
         ]
     }
