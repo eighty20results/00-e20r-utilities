@@ -1,25 +1,44 @@
 {
-  "config": {
-    "vendor-dir": "inc/"
-  },
-  "name": "eight20results/utilities",
-  "type": "plugin",
-  "description": "Adds various utility functions and license capabilities",
-  "keywords": ["wordpress", "utilities", "licensing"],
-  "minimum-stability": "stable",
-  "homepage": "https://eighty20results.com",
-  "license": "GPLv2",
-  "authors": [
+    "config": {
+        "vendor-dir": "inc/"
+    },
+    "name": "eight20results/utilities",
+    "type": "plugin",
+    "description": "Adds various utility functions and license capabilities",
+    "keywords": ["wordpress", "utilities", "licensing"],
+    "minimum-stability": "stable",
+    "homepage": "https://eighty20results.com",
+    "license": "GPLv2",
+    "authors": [
     {
       "name": "Thomas Sjolshagen",
       "email": "thomas@eighty20results.com",
       "homepage": "https://eighty20results.com/thomas-sjolshagen",
       "role": "Developer"
     }
-  ],
-  "require": {
+    ],
+    "require": {
     "php": ">=7.1",
     "yahnis-elsts/plugin-update-checker": ">=4.5",
-      "ext-curl": "*"
-  }
+    "10quality/license-keys-php-client": ">=v1.2.2",
+    "ext-curl": "*",
+    "ext-json": "*"
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": ">=3.5.8",
+        "wp-coding-standards/wpcs": "^2.3.0",
+        "phpstan/phpstan": "*",
+        "phpmetrics/phpmetrics": ">=v1.10.0",
+        "phpunit/phpunit": ">=9.5.2",
+        "spatie/phpunit-snapshot-assertions": ">=4.2.5",
+        "brain/monkey": "*"
+    },
+    "scripts": {
+        "post-install-cmd": "./inc/bin/phpcs --config-set installed_paths vendor/wp-coding-standards/wpcs",
+        "post-update-cmd" : "./inc/bin/phpcs --config-set installed_paths vendor/wp-coding-standards/wpcs",
+        "test": [
+            "phpcs --report=full --colors -p --standard=WordPress-Extra --ignore=*/inc/*,*/node_modules/* --extensions=php",
+            "phpunit"
+        ]
+    }
 }
