@@ -44,6 +44,12 @@ class PluginTestCase extends TestCase {
 			->returnArg( 1 );
 		Monkey\Functions\when( '_n' )
 			->returnArg( 1 );
+		Monkey\Functions\when( 'plugins_url' )
+			->justReturn( sprintf( 'https://development.local/wp-content/plugins/' ) );
+		Monkey\Functions\when( 'plugin_dir_path' )
+			->justReturn( sprintf( '/var/www/html/wp-content/plugins/00-e20r-utilities/' ) );
+		Monkey\Functions\when( 'get_current_blog_id' )
+			->justReturn( 1 );
 	}
 
 	/**

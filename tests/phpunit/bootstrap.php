@@ -36,10 +36,14 @@ if ( ! defined( 'PLUGIN_ABSPATH' ) ) {
 	define( 'PLUGIN_ABSPATH', sys_get_temp_dir() . '/wp-content/plugins/e20r-members-list/' );
 }
 
+if ( ! defined( 'PLUGIN_PATH' ) ) {
+	define( 'PLUGIN_PATH', __DIR__ . '/../../' );
+}
+
 require_once __DIR__ . '/../../inc/autoload.php';
+
+# Load the class autoloader
+require_once __DIR__ . '/../../class-loader.php';
 
 // Include the class for PluginTestCase
 require_once __DIR__ . '/inc/PluginTestCase.php';
-
-// Since our plugin files are loaded with composer, we should be good to go
-
