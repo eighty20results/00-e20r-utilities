@@ -11,8 +11,8 @@ This module is intended to simplify support for licensed WordPress plugins.
 1. Have WooCommerce installed and configure on your website (where you wish to sell licenses)
 1. Have the WooCommerce [License Keys for WooCommerce](https://wordpress.org/plugins/woo-license-keys/) plugin installed and configured on your website
 1. Optionally purchase and install the [WooCommerce License Keys (Extended)](https://www.10quality.com/product/woocommerce-license-keys/) plugin
-1. Create a "License" or "Simple Subscription" product, using the same SKU value as you used to define the 'key_prefix', 'stub' and 'product_sku' in the `License_Client::add_new_license_info()` method
-1. Add a client class for the licensing module by extending it from the E20R Licensing utlitity module base `License_Client` class. For example: `class My_License_Client extends \E20R\Utilities\Licensing\License_Client {}` (see below)
+1. Create a "License" or "Simple Subscription" product, using the same SKU value as you used to define the 'key_prefix', 'stub' and 'product_sku' in the `LicenseClient::add_new_license_info()` method
+1. Add a client class for the licensing module by extending it from the E20R Licensing utlitity module base `LicenseClient` class. For example: `class My_LicenseClient extends \E20R\Utilities\Licensing\LicenseClient {}` (see below)
 1. Adjust any E20R Licensing utilities module filters to match your needs (see "Filters & Hooks" section below)
 
 
@@ -149,17 +149,17 @@ function register() {
 	[... do your own Settings API 'register_[...]()' functions ...]
 
 	// Added to trigger registration of settings for the E20R Licensing utility module
-	License_Settings::register_settings();
+	LicenseSettings::register();
 }
 `
 Alternatively, the Settings API compliant registration of the Licensing settings can be triggered directly in its own
 `admin_init` action hook:
 
-`add_action( 'admin_init', '\\E20R\Utilities\\Licensing\\License_Settings::register_settings', 10 );`
+`add_action( 'admin_init', '\\E20R\Utilities\\Licensing\\LicenseSettings::register', 10 );`
 
 === Creating and registering your own license product ===
 
-To register your own License product SKU and inform the E20R Licensing utility library of the required license information, you'll need to extend the `License_Client` class and add the implementation for the required abstract class members.
+To register your own License product SKU and inform the E20R Licensing utility library of the required license information, you'll need to extend the `LicenseClient` class and add the implementation for the required abstract class members.
 
 These class members are:
 
@@ -231,7 +231,7 @@ Example 'check_licenses' client method:
 		}
 	}
 `
-You should, probably, also override the `License_Client::add_new_license_info()` member function.
+You should, probably, also override the `LicenseClient::add_new_license_info()` member function.
 
 See the "Example Client Licensing class in your own plugin" section below for a more comprehensive example (full class).
 
@@ -255,11 +255,11 @@ The following is an example of a License registration class (a version of this i
 `
 namespace My_Custom_Plugin;
 
-use E20R\Utilities\Licensing\License_Client;
+use E20R\Utilities\Licensing\LicenseClient;
 use E20R\Utilities\Licensing\Licensing;
 use E20R\Utilities\Utilities;
 
-class My_License extends License_Client {
+class My_License extends LicenseClient {
 
 	/**
 	 * Current/only instance of this class (singleton pattern)
@@ -279,7 +279,7 @@ class My_License extends License_Client {
 	 *
 	 * @return My_License|null
 	 */
-	public static function getInstance() {
+	public static function get_instance() {
 
 		if ( is_null( self::$instance ) ) {
 			self::$instance = new self();
