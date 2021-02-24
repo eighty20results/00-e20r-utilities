@@ -1,6 +1,6 @@
 <?php
 /**
- *  Copyright (c) 2019-2020. - Eighty / 20 Results by Wicked Strong Chicks.
+ *  Copyright (c) 2019-2021. - Eighty / 20 Results by Wicked Strong Chicks.
  *  ALL RIGHTS RESERVED
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -21,12 +21,23 @@
 
 namespace E20R\Utilities\Licensing;
 
-
 use E20R\Utilities\Cache;
 use E20R\Utilities\Utilities;
+# For the 10quality license client handling
+use LicenseKeys\Utility\Api;
+use LicenseKeys\Utility\Client;
+use LicenseKeys\Utility\LicenseRequest;
 
-if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
-	class License_Server {
+if ( file_exists( plugin_dir_path( __FILE__ ) . 'inc/autoload.php' ) ) {
+	require_once plugin_dir_path( __FILE__ ) . 'inc/autoload.php';
+}
+
+// Deny direct access to the file
+if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
+	wp_die( 'Cannot access file directly' );
+}
+if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
+	class LicenseServer {
 
 		const E20R_LICENSE_SECRET_KEY = '5687dc27b50520.33717427';
 		const E20R_LICENSE_STORE_CODE = 'L4EGy6Y91a15ozt';
@@ -38,18 +49,19 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 		 *
 		 * @return \stdClass|false
 		 */
-		public static function send_to_license_server( $api_params ) {
+		public static function send( $api_params ) {
 
 			$utils = Utilities::get_instance();
-			if ( E20R_LICENSING_DEBUG ) {
-				$utils->log( "Attempting remote connection to " . E20R_LICENSE_SERVER_URL );
+
+			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				$utils->log( 'Attempting remote connection to ' . E20R_LICENSE_SERVER_URL );
 			}
 
 			if ( ! Licensing::is_new_version() ) {
-				// Send query to the license manager server
 				$response = wp_remote_post(
 					E20R_LICENSE_SERVER_URL,
 					array(
+						// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 						'timeout'     => apply_filters( 'e20r-license-remote-server-timeout', 30 ),
 						'sslverify'   => Licensing::get_ssl_verify(),
 						'httpversion' => '1.1',
@@ -58,7 +70,27 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 					)
 				);
 			} else {
-
+				// Using the (new) WooCommerce License plugin
+				// Send query to the license manager server
+				try {
+					return Api::validate(
+						Client::instance(),
+						function() use ( $api_params ) {
+							return new LicenseRequest( $api_params['license_key'] );
+						},
+						function( $api_params ) {
+							$utils = Utilities::get_instance();
+							// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+							$utils->log( 'Need to save API settings? ' . print_r( $api_params, true ) );
+							// TODO: Save settings
+						}
+					);
+				} catch ( \Exception $e ) {
+					$utils->log( "Error activating the ${$api_params['sku']} license! - {$e->getMessage()}" );
+					$utils->log( $e->getTraceAsString() );
+					return false;
+				}
+				/** FIXME: Remove when testing of the new API module works as expected
 				$action = isset( $api_params['action'] ) ? $api_params['action'] : null;
 
 				if ( empty( $action ) ) {
@@ -71,7 +103,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 
 				unset( $api_params['action'] );
 
-				if ( E20R_LICENSING_DEBUG ) {
+				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( "Expensive: Connecting to upstream license server!" );
 				}
 
@@ -85,13 +117,14 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 						'body'        => $api_params,
 					)
 				);
+				 */
 			}
 
 			// Check for error in the response
 			if ( is_wp_error( $response ) ) {
-
-				$msg = sprintf( __( "E20R Licensing: %s", 'e20r-licensing-utility' ), $response->get_error_message() );
-				if ( E20R_LICENSING_DEBUG ) {
+				// translators: The error message is supplied from the repsponse object
+				$msg = sprintf( __( 'E20R Licensing: %s', 'e20r-licensing-utility' ), $response->get_error_message() );
+				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( $msg );
 				}
 				$utils->add_message( $msg, 'error' );
@@ -124,12 +157,17 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 						$error = __( 'Malformed UTF-8 characters, possibly incorrectly encoded', 'e20r-licensing-utility' );
 						break;
 					default:
-						$error = sprintf( __( "No error, supposedly? %s", 'e20r-licensing-utility' ), print_r( json_last_error(), true ) );
+						$error = sprintf(
+							// translators: The message is returned from the json parser (if it exists)
+							__( 'No error, supposedly? %s', 'e20r-licensing-utility' ),
+							// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+							print_r( json_last_error(), true )
+						);
 				}
 
-				if ( E20R_LICENSING_DEBUG ) {
-					$utils->log( "Response from remote server: <" . $license_data . ">" );
-					$utils->log( "JSON decode error: " . $error );
+				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+					$utils->log( 'Response from remote server: <' . $license_data . '>' );
+					$utils->log( 'JSON decode error: ' . $error );
 				}
 
 				return false;
@@ -147,7 +185,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 		 *
 		 * @return bool
 		 */
-		public static function get_license_status_from_server( $sku, $settings = null, $force = false ) {
+		public static function status( $sku, $settings = null, $force = false ) {
 
 			$utils = Utilities::get_instance();
 
@@ -156,11 +194,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 			global $current_user;
 
 			if ( is_null( $settings ) ) {
-				$settings = License_Settings::get_settings( $sku );
+				$settings = LicenseSettings::get_settings( $sku );
 			}
 
 			if ( ! Licensing::is_new_version() && empty( $settings['key'] ) ) {
-				if ( E20R_LICENSING_DEBUG ) {
+				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( "Old store: {$sku} has no key stored. Returning false" );
 				}
 
@@ -168,28 +206,28 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 			}
 
 			if ( Licensing::is_new_version() && empty( $settings['the_key'] ) ) {
-				if ( E20R_LICENSING_DEBUG ) {
+				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( "New store: {$sku} has no key stored. Returning false" );
 				}
 
 				return $license_status;
 			}
 
-			if ( E20R_LICENSING_DEBUG && Licensing::is_new_version() ) {
-				$utils->log( "Using the new store plugin" );
+			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG && Licensing::is_new_version() ) {
+				$utils->log( 'Using the new store plugin' );
 			}
 
-			if ( E20R_LICENSING_DEBUG ) {
-				$utils->log( "Local license settings for {$sku}" /* . print_r( $settings, true ) */ );
+			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				$utils->log( "Local license settings for {$sku}" /* . print_r( $settings, true ) phpcs:ignore */ );
 			}
 
-			$utils->log( "Force check against upstream server? " . ( $force ? 'Yes' : 'No' ) );
+			$utils->log( 'Force check against upstream server? ' . ( $force ? 'Yes' : 'No' ) );
 			$license_status = (bool) Cache::get( "{$sku}_status", 'e20r_licensing' );
-			$utils->log( "Current license status (cached) is ({$license_status}): " . ( $license_status ? 'Active' : 'empty' ) );
+			$utils->log( "Cached license status is ({$license_status}): " . ( $license_status ? 'Active' : 'empty' ) );
 
-			if ( true === $force || false == $force && false === $license_status ) {
+			if ( true === $force || false === $force && true !== $license_status ) {
 
-				if ( E20R_LICENSING_DEBUG ) {
+				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( "Connecting to license server to validate license for {$sku}" );
 				}
 
@@ -201,10 +239,29 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 						'slm_action'  => 'slm_check',
 						'secret_key'  => self::E20R_LICENSE_SECRET_KEY,
 						'license_key' => $settings['key'],
-						// 'registered_domain' => $_SERVER['SERVER_NAME']
+						// 'registered_domain' => $_SERVER['SERVER_NAME'] phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 					);
 				} else {
 
+					// Use the 10quality License Key management client
+					// Returns a boolean if successful
+					return Api::validate(
+						Client::instance(),
+						function() use ( $settings ) {
+							return new LicenseRequest( $settings['key'] );
+						},
+						function() use ( $sku, $settings ) {
+							$utils = Utilities::get_instance();
+
+							if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+								// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+								$utils->log( "Saving settings for {$sku}: " . print_r( $settings, true ) );
+							}
+
+							return LicenseSettings::update( $sku, $settings );
+						}
+					);
+					/** FIXME: Remove this when the new client API works as expected
 					if ( ! isset( $settings['activation_id'] ) ) {
 						$utils->log( "Assume the license is inactive and return" );
 
@@ -219,17 +276,17 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 						'sku'           => $settings['product_sku'],
 						'activation_id' => $settings['activation_id'],
 					);
+					*/
 				}
-				if ( E20R_LICENSING_DEBUG ) {
+				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( "Transmitting request to License server for {$sku}" );
 				}
 
-				$decoded = self::send_to_license_server( $api_params );
+				$decoded = self::send( $api_params );
 
 				if ( ! Licensing::is_new_version() ) {
 					// License not validated
-					if ( ! isset( $decoded->result ) || 'success' != $decoded->result ) {
-
+					if ( ! isset( $decoded->result ) || 'success' !== $decoded->result ) {
 
 						if ( isset( $settings['fulltext_name'] ) ) {
 							$name = $settings['fulltext_name'];
@@ -237,8 +294,12 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 							$name = $product_name;
 						}
 
-						$msg = sprintf( __( "Sorry, no valid license found for: %s", 'e20r-licensing-utility' ), $name );
-						if ( E20R_LICENSING_DEBUG ) {
+						$msg = sprintf(
+							// translators: License name is provided by the calling plugin
+							__( 'Sorry, no valid license found for: %s', 'e20r-licensing-utility' ),
+							$name
+						);
+						if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 							$utils->log( $msg );
 						}
 						$utils->add_message( $msg, 'error', 'backend' );
@@ -248,87 +309,92 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 					}
 
 					if ( is_array( $decoded->registered_domains ) ) {
-						if ( E20R_LICENSING_DEBUG ) {
-							$utils->log( "Processing license data for (count: " . count( $decoded->registered_domains ) . " domains )" );
+						if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+							$utils->log( 'Processing license data for (count: ' . count( $decoded->registered_domains ) . ' domains )' );
 						}
 
 						foreach ( $decoded->registered_domains as $domain ) {
 
-							if ( isset( $domain->registered_domain ) && $domain->registered_domain == $_SERVER['SERVER_NAME'] ) {
+							if ( isset( $domain->registered_domain ) && $domain->registered_domain === $_SERVER['SERVER_NAME'] ) {
 
-								if ( '0000-00-00' != $decoded->date_renewed ) {
-									$settings['renewed'] = strtotime( $decoded->date_renewed, current_time( 'timestamp' ) );
+								if ( '0000-00-00' !== $decoded->date_renewed ) {
+									$settings['renewed'] = strtotime( $decoded->date_renewed, time() );
 								} else {
-									$settings['renewed'] = current_time( 'timestamp' );
+									$settings['renewed'] = time();
 								}
 								$settings['domain']        = $domain->registered_domain;
 								$settings['fulltext_name'] = $product_name;
-								$settings['expires']       = isset( $decoded->date_expiry ) ? strtotime( $decoded->date_expiry, current_time( 'timestamp' ) ) : null;
+								$settings['expires']       = isset( $decoded->date_expiry ) ? strtotime( $decoded->date_expiry, time() ) : null;
 								$settings['status']        = $decoded->status;
 								$settings['first_name']    = isset( $current_user->first_name ) ? $current_user->first_name : null;
 								$settings['last_name']     = isset( $current_user->last_name ) ? $current_user->last_name : null;
 								$settings['email']         = $decoded->email;
-								$settings['timestamp']     = current_time( 'timestamp' );
+								$settings['timestamp']     = time();
 
-								if ( E20R_LICENSING_DEBUG ) {
+								if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+									// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 									$utils->log( "Saving license data for {$domain->registered_domain}: " . print_r( $settings, true ) );
 								}
-								if ( false === License_Settings::update_settings( $sku, $settings ) ) {
+								if ( false === LicenseSettings::update( $sku, $settings ) ) {
 
-									$msg = sprintf( __( "Unable to save the %s license settings", 'e20r-licensing-utility' ), $settings['fulltext_name'] );
-									if ( E20R_LICENSING_DEBUG ) {
+									$msg = sprintf(
+										// translators: The license name is received from the plugin being licensed
+										__( 'Unable to save the %s license settings', 'e20r-licensing-utility' ),
+										$settings['fulltext_name']
+									);
+									if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 										$utils->log( $msg );
 									}
 									$utils->add_message( $msg, 'error', 'backend' );
 								}
 
-								$license_status = ( 'active' === $settings['status'] ? true : false );
-								if ( E20R_LICENSING_DEBUG ) {
+								$license_status = ( 'active' === $settings['status'] );
+								if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 									$utils->log( "Current status for {$sku} license: " . ( $license_status ? 'active' : 'inactive/deactivated/blocked' ) );
 								}
 							} else {
-								if ( E20R_LICENSING_DEBUG ) {
-									$utils->log( "Wrong domain, or domain info not found" );
+								if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+									$utils->log( 'Wrong domain, or domain info not found' );
 								}
 							}
 						}
 					} else {
 
-						// 'activation_id' => $settings['activation_id']
+						// 'activation_id' => $settings['activation_id'] phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 
-						if ( E20R_LICENSING_DEBUG ) {
+						if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 							$utils->log( "The {$sku} license is on the server, but not active for this domain" );
 						}
 						$license_status = false;
 					}
 
-					if ( isset( $settings['expires'] ) && $settings['expires'] < current_time( 'timestamp' ) ||
-					     ( isset( $settings['active'] ) && 'active' !== $settings['status'] )
-					) {
+					if ( isset( $settings['expires'] ) && $settings['expires'] < time() || ( isset( $settings['active'] ) && 'active' !== $settings['status'] ) ) {
 
 						$msg = sprintf(
-							__( "Your %s license has expired!", 'e20r-licensing-utility' ),
+							// translators: The license name is set by the plugin being licensed
+							__( 'Your %s license has expired!', 'e20r-licensing-utility' ),
 							$settings['fulltext_name']
 						);
 
-						if ( E20R_LICENSING_DEBUG ) {
+						if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 							$utils->log( $msg );
 						}
 						$utils->add_message( $msg, 'error' );
 						$license_status = false;
 					}
 
-					$utils->log("Save the value for '{$sku}_status' to cache: {$license_status}");
+					$utils->log( "Save the value for '{$sku}_status' to cache: {$license_status}" );
 					Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
 				} else {
 
-					if ( E20R_LICENSING_DEBUG ) {
-						$utils->log( "Returned data from (new) validation check: " . print_r( $decoded, true ) );
+					if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+						$utils->log( 'Returned data from (new) validation check: ' . print_r( $decoded, true ) );
 					}
 
-					if (empty($decoded)) {
-
-						$msg = __('No data received from license server for %1$s. Please contact the store owner!', 'e20r-utilities-licensing');
+					if ( empty( $decoded ) ) {
+						// translators: License name is provided by the calling plugin
+						$msg = __( 'No data received from license server for %1$s. Please contact the store owner!', 'e20r-utilities-licensing' );
 
 						$utils->add_message(
 							sprintf( $msg, $settings['fulltext_name'] ),
@@ -342,8 +408,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 					}
 
 					if ( 1 === (int) $decoded->error && ( isset( $decoded->status ) && 500 === (int) $decoded->status ) ) {
-
-						$msg = __( 'Error validating the %s license: %s -> %s', 'e20r-utilities-licensing' );
+						// translators: License name is provided by the calling plugin and the error from the decoded request
+						$msg = __( 'Error validating the %1$s license: %2$s -> %3$s', 'e20r-utilities-licensing' );
 
 						foreach ( (array) $decoded->errors as $error_key => $error_info ) {
 
@@ -361,19 +427,19 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License_Server' ) ) {
 
 					if ( isset( $decoded->status ) && 200 === (int) $decoded->status ) {
 
-						$utils->log( "License is valid, so should be returning success" );
+						$utils->log( 'License is valid, so should be returning success' );
 
 						if ( isset( $decoded->data->status ) && 'active' === $decoded->data->status ) {
 							$license_status = true;
 						}
 
-						$utils->log( "License status: " . ( $license_status ? 'True' : 'False' ) );
+						$utils->log( 'License status: ' . ( $license_status ? 'True' : 'False' ) );
 					}
 
 					Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
 				}
 			} else {
-				if ( E20R_LICENSING_DEBUG ) {
+				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( "Loaded the cached (local) license status ({$license_status}) info for {$sku}" );
 				}
 			}

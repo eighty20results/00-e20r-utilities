@@ -102,7 +102,14 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseClient' ) ) {
 				'email_value'   => null,
 				'product_sku'   => strtoupper( $plugin_settings['key_prefix'] ),
 				// translators: The label that describes the license is defined in the received settings
-				'placeholder'   => sprintf( __( 'Paste the received \'%1$s\' key here', 'e20r-licensing' ), $plugin_settings['label'] ),
+				'placeholder'   => sprintf(
+					// translators: The licensed plugin will set its own label (name)
+					__(
+						'Paste the received \'%1$s\' key here',
+						'e20r-licensing-utility'
+					),
+					$plugin_settings['label']
+				),
 			);
 
 			return $license_settings;
