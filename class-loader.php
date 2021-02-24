@@ -3,7 +3,7 @@
 Plugin Name: E20R Utilities Module
 Plugin URI: https://eighty20results.com/
 Description: Plugin required by some of the Eighty/20 Results developed plugins
-Version: 1.0.8
+Version: 1.0.9
 Author: Thomas Sjolshagen <thomas@eighty20results.com>
 Author URI: https://eighty20results.com/thomas-sjolshagen/
 License: GPLv2
@@ -28,14 +28,22 @@ License: GPLv2
 
 namespace E20R\Utilities;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	die( "Cannot access this file directly" );
+// Deny direct access to the file
+if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
+	wp_die( 'Cannot access file directly' );
 }
 
 if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 
 	class Loader {
 
+		public function __construct() {
+			if ( function_exists( 'plugin_dir_path' ) ) {
+				require_once \plugin_dir_path( __FILE__ ) . 'inc/autoload.php';
+			} else {
+				require_once __DIR__ . '/inc/autoload.php';
+			}
+		}
 		/**
 		 * Class auto-loader for the Utilities Module
 		 *
@@ -45,17 +53,23 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 * @since  1.0
 		 * @access public static
 		 */
-		public static function autoLoad( $class_name ) {
+		public static function auto_load( $class_name ) {
 
 			if ( false === stripos( $class_name, 'e20r' ) ) {
 				return false;
 			}
 
-			$parts     = explode( '\\', $class_name );
-			$c_name    = preg_replace( '/_/', '-', $parts[ ( count( $parts ) - 1 ) ] );
-			$c_name    = strtolower( $c_name );
-			$base_path = plugin_dir_path( __FILE__ );
-			$src_path  = plugin_dir_path( __FILE__ ) . 'src/';
+			$parts  = explode( '\\', $class_name );
+			$c_name = preg_replace( '/_/', '-', $parts[ ( count( $parts ) - 1 ) ] );
+			$c_name = strtolower( $c_name );
+
+			if ( function_exists( 'plugin_dir_path' ) ) {
+				$base_path = \plugin_dir_path( __FILE__ );
+				$src_path  = \plugin_dir_path( __FILE__ ) . 'src/';
+			} else {
+				$base_path = __DIR__;
+				$src_path  = __DIR__ . '/src/';
+			}
 
 			if ( file_exists( $src_path ) ) {
 				$base_path = $src_path;
@@ -93,7 +107,6 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 				}
 			);
 
-
 			try {
 				/** @SuppressWarnings("unused") */
 				$rec_iterator = new \RecursiveIteratorIterator(
@@ -102,9 +115,12 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 					\RecursiveIteratorIterator::CATCH_GET_CHILD
 				);
 			} catch ( \UnexpectedValueException $uvexception ) {
-				error_log( sprintf(
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log(
+					sprintf(
 						"Error: %s.\nState: %s",
 						$uvexception->getMessage(),
+						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 						print_r( $iterator, true )
 					)
 				);
@@ -125,16 +141,23 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 	}
 }
 
+# Load the composer autoloader for the 10quality utilities
+if ( file_exists( __DIR__ . '/inc/autoload.php' ) ) {
+	require_once __DIR__ . '/inc/autoload.php';
+}
+
 try {
-	spl_autoload_register( 'E20R\Utilities\Loader::autoLoad' );
+	spl_autoload_register( 'E20R\Utilities\Loader::auto_load' );
 } catch ( \Exception $exception ) {
 	// phpcs:ignore
 	error_log( 'Unable to register autoloader: ' . $exception->getMessage(), E_USER_ERROR );
 	return false;
 }
 
-add_filter( 'e20r_utilities_module_installed', '__return_true', -1, 1 );
+if ( function_exists( 'add_filter' ) ) {
+	\add_filter( 'e20r_utilities_module_installed', '__return_true', - 1, 1 );
+}
 
-if ( class_exists( '\E20R\Utilities\Utilities' )  ) {
-	Utilities::configureUpdateServerV4( '00-e20r-utilities', __FILE__ );
+if ( class_exists( '\E20R\Utilities\Utilities' ) ) {
+	Utilities::configure_update( '00-e20r-utilities', __FILE__ );
 }
