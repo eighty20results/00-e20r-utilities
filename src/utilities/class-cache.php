@@ -21,19 +21,19 @@ namespace E20R\Utilities;
 
 // Deny direct access to the file
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( "Cannot access file directly" );
+	wp_die( 'Cannot access file directly' );
 }
 
 if ( ! class_exists( '\E20R\Utilities\Cache' ) ) {
-	
+
 	class Cache {
-		
+
 		/**
 		 * Default cache group
 		 * @var string
 		 */
 		const CACHE_GROUP = 'e20r_group';
-		
+
 		/**
 		 * Fetch entry from cache
 		 *
@@ -43,20 +43,19 @@ if ( ! class_exists( '\E20R\Utilities\Cache' ) ) {
 		 * @return bool|mixed|null
 		 */
 		public static function get( $key, $group = self::CACHE_GROUP ) {
-			
+
 			$found = null;
-			
 			$value = get_transient( "{$group}_{$key}" );
-			
+
 			if ( false === $value || false === ( $value instanceof Cache_Object ) ) {
 				$value = null;
 			} else {
 				$value = $value->value;
 			}
-			
+
 			return $value;
 		}
-		
+
 		/**
 		 * Store entry in cache
 		 *
@@ -68,12 +67,12 @@ if ( ! class_exists( '\E20R\Utilities\Cache' ) ) {
 		 * @return bool
 		 */
 		public static function set( $key, $value, $expires = 3600, $group = self::CACHE_GROUP ) {
-			
+
 			$data = new Cache_Object( $key, $value );
-			
+
 			return set_transient( "{$group}_{$key}", $data, $expires );
 		}
-		
+
 		/**
 		 * Delete a cache entry
 		 *
@@ -83,7 +82,7 @@ if ( ! class_exists( '\E20R\Utilities\Cache' ) ) {
 		 * @return bool - True if successful, false otherwise
 		 */
 		public static function delete( $key, $group = self::CACHE_GROUP ) {
-			
+
 			return delete_transient( "{$group}_{$key}" );
 		}
 	}

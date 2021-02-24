@@ -164,7 +164,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Async_Request' ) ) {
 			$utils = Utilities::get_instance();
 			$utils->log( "Is the query_url param set? {$this->query_url}" );
 
-			if ( property_exists( $this, 'query_url' ) && !empty( $this->query_url ) ) {
+			if ( property_exists( $this, 'query_url' ) && ! empty( $this->query_url ) ) {
 				return $this->query_url;
 			}
 
@@ -177,7 +177,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Async_Request' ) ) {
 		 * @return array
 		 */
 		protected function get_post_args() {
-			if ( property_exists( $this, 'post_args' ) && !empty( $this->post_args ) ) {
+			if ( property_exists( $this, 'post_args' ) && ! empty( $this->post_args ) ) {
 				return $this->post_args;
 			}
 
@@ -205,7 +205,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Async_Request' ) ) {
 
 			$this->handle();
 
-			$utils->log( "Terminating for single request" );
+			$utils->log( 'Terminating for single request' );
 			wp_die();
 		}
 

@@ -81,17 +81,18 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 
 			$utils     = Utilities::get_instance();
 			$cache_key = $utils->get_util_cache_key();
+			$tmp       = Cache::get( 'err_info', $cache_key );
 
-			if ( null !== ( $tmp = Cache::get( 'err_info', $cache_key ) ) ) {
+			if ( null !== $tmp ) {
 
-				$utils->log( "Loading cached messages (" . count( $tmp['msg'] ) . ")" );
+				$utils->log( 'Loading cached messages (' . count( $tmp['msg'] ) . ')' );
 
 				$this->msg      = isset( $tmp['msg'] ) ? $tmp['msg'] : array();
 				$this->msgt     = $tmp['msgt'] ? $tmp['msgt'] : array();
 				$this->location = isset( $tmp['location'] ) ? $tmp['location'] : ( isset( $tmp['msgt_source'] ) ? $tmp['msgt_source'] : array() );
 			}
 
-			$location = $this->convertDestination( $location );
+			$location = $this->convert_destination( $location );
 
 			$msg_found = array();
 
@@ -104,7 +105,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 
 				// Fix bad location values
 				if ( ! empty( $location ) ) {
-					$this->location[ $key ] = $this->convertDestination( $location );
+					$this->location[ $key ] = $this->convert_destination( $location );
 				}
 			}
 
@@ -123,14 +124,14 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 
 				// Remove extra instances of the message
 				for ( $i = 1; ( $total - 1 ) >= $i; $i ++ ) {
-					$utils->log( "Removing duplicate message" );
+					$utils->log( 'Removing duplicate message' );
 					unset( $this->msg[ $i ] );
 				}
 			}
 
 			// Update the cached values
-			if ( ! empty ( $this->msg ) ) {
-				$this->updateCache();
+			if ( ! empty( $this->msg ) ) {
+				$this->update_cache();
 			}
 		}
 
@@ -141,7 +142,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		 *
 		 * @return int
 		 */
-		private function convertDestination( $destination ) {
+		private function convert_destination( $destination ) {
 
 			if ( is_numeric( $destination ) ) {
 				return $destination;
@@ -166,7 +167,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Update the cached error/warning/notice messages
 		 */
-		private function updateCache() {
+		private function update_cache() {
 
 			$utils     = Utilities::get_instance();
 			$cache_key = $utils->get_util_cache_key();
@@ -187,7 +188,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		 *
 		 * @return bool
 		 */
-		public function clearNotices( $passthrough = null ) {
+		public function clear_notices( $passthrough = null ) {
 
 			wc_clear_notices();
 
@@ -241,9 +242,9 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 				$destination = self::FRONTEND_LOCATION;
 			}
 
-			$found_keys = $this->extractByDestination( $this->convertDestination( $destination ) );
+			$found_keys = $this->extract_by_destination( $this->convert_destination( $destination ) );
 
-			$utils->log( "Have a total of " . count( $this->msg ) . " message(s). Found " . count( $found_keys ) . " messages for location {$destination}: " );
+			$utils->log( 'Have a total of ' . count( $this->msg ) . ' message(s). Found ' . count( $found_keys ) . " messages for location {$destination}: " );
 
 			foreach ( $found_keys as $key ) {
 
@@ -259,17 +260,16 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 					switch ( intval( $location ) ) {
 
 						case self::FRONTEND_LOCATION:
-							$utils->log( "Showing on front-end of site" );
-							$this->displayFrontend( $this->msg[ $key ], $this->msgt[ $key ] );
+							$utils->log( 'Showing on front-end of site' );
+							$this->display_frontend( $this->msg[ $key ], $this->msgt[ $key ] );
 							break;
 
 						case self::BACKEND_LOCATION:
-							$utils->log( "Showing on back-end of site" );
-							$this->displayBackend( $this->msg[ $key ], $this->msgt[ $key ] );
+							$utils->log( 'Showing on back-end of site' );
+							$this->display_backend( $this->msg[ $key ], $this->msgt[ $key ] );
 							break;
 
 						default:
-
 							global $msg;
 							global $msgt;
 
@@ -283,7 +283,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 			}
 
 			if ( ! empty( $this->msg ) ) {
-				$this->updateCache();
+				$this->update_cache();
 			} else {
 				Cache::delete( 'err_info', $cache_key );
 			}
@@ -296,13 +296,13 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		 *
 		 * @return array
 		 */
-		private function extractByDestination( $destination ) {
+		private function extract_by_destination( $destination ) {
 
 			$keys = array();
 
 			foreach ( $this->location as $msg_key => $location ) {
 
-				if ( $location == $destination ) {
+				if ( $location === $destination ) {
 					$keys[] = $msg_key;
 				}
 			}
@@ -316,15 +316,15 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		 * @param string $msg
 		 * @param int    $type
 		 */
-		private function displayFrontend( $message, $type ) {
+		private function display_frontend( $message, $type ) {
 
-			if ( $this->hasWooCommerce() ) {
+			if ( $this->has_woocommerce() ) {
 
-				Utilities::get_instance()->log( "Attempting to show on WooCommerce front-end" );
+				Utilities::get_instance()->log( 'Attempting to show on WooCommerce front-end' );
 				wc_add_notice( $message, $type );
 			}
 
-			if ( $this->hasPMPro() ) {
+			if ( $this->has_pmpro() ) {
 
 				Utilities::get_instance()->log( "Attempting to show {$message} on PMPro front-end" );
 
@@ -339,7 +339,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 				$msgt       = $pmpro_msgt;
 
 				pmpro_setMessage( $pmpro_msg, $pmpro_msgt, true );
-				$this->addPMProMessage( $pmpro_msg, $pmpro_msgt );
+				$this->add_pmpro_message( $pmpro_msg, $pmpro_msgt );
 			}
 		}
 
@@ -369,7 +369,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 
 			if ( ! isset( $post->post_content ) || ( isset( $post->post_content ) && ! is_page( $page_list ) ) ) {
 
-				$utils->log( "Not on billing or account shortcode/page" );
+				$utils->log( 'Not on billing or account shortcode/page' );
 
 				return $arg1;
 			}
@@ -385,7 +385,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		 *
 		 * @return bool
 		 */
-		private function hasWooCommerce() {
+		private function has_woocommerce() {
 			return function_exists( 'wc_add_notice' );
 		}
 
@@ -394,10 +394,9 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		 *
 		 * @return bool
 		 */
-		private function hasPMPro() {
+		private function has_pmpro() {
 			return function_exists( 'pmpro_getAllLevels' );
 		}
-
 
 		/**
 		 * Display the PMPro error message(s)
@@ -405,12 +404,20 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		 * @param string $message
 		 * @param string $message_type
 		 */
-		public function addPMProMessage( $message, $message_type ) {
+		public function add_pmpro_message( $message, $message_type ) {
 
-			Utilities::get_instance()->log( "Adding for PMPro page" );
+			Utilities::get_instance()->log( 'Adding for PMPro page' );
 
 			if ( ! empty( $message ) ) {
-				printf( '<div id="pmpro_message" class="pmpro_message %s">%s</div>', $message_type, $message );
+				// translators: Message and type of message is configured when the HTML is called
+				echo esc_html__(
+					// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
+					sprintf(
+						'<div id="pmpro_message" class="pmpro_message %1$s">%2$s</div>',
+						$message_type,
+						$message
+					)
+				);
 			}
 		}
 
@@ -421,16 +428,17 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		 * @param string $type
 		 *
 		 */
-		private function displayBackend( $msg, $type ) {
+		private function display_backend( $msg, $type ) {
 
 			if ( ! Utilities::is_admin() ) {
 				return;
-			} ?>
-			<div
-				class="notice notice-<?php esc_html_e( $type ); ?> is-dismissible backend">
-				<p><?php echo wp_unslash( $msg ); ?></p>
-			</div>
-			<?php
+			}
+
+			// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText, WordPress.WP.I18n.MissingTranslatorsComment
+			echo esc_html__( sprintf( '<div class="notice notice-%1$s is-dismissible backend">', $type ) );
+			// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText, WordPress.WP.I18n.MissingTranslatorsComment
+			echo esc_html__( sprintf( '<p>%1$s</p>', $msg ) );
+			echo esc_html__( '</div>' );
 		}
 
 		/**
@@ -445,16 +453,15 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 			$messages  = array();
 			$utils     = Utilities::get_instance();
 			$cache_key = $utils->get_util_cache_key();
+			$tmp       = Cache::get( 'err_info', $cache_key );
 
 			// Grab from the cache (if it exists)
-			if ( null !== ( $tmp = Cache::get( 'err_info', $cache_key ) ) ) {
+			if ( null !== $tmp ) {
 
 				$this->msg      = $tmp['msg'];
 				$this->msgt     = $tmp['msgt'];
 				$this->location = $tmp['location'];
 			}
-
-			$messages = array();
 
 			foreach ( $this->msgt as $message_key => $message_type ) {
 

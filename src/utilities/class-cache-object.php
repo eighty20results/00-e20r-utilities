@@ -40,7 +40,7 @@ namespace E20R\Utilities;
 
 // Deny direct access to the file
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die("Cannot access file directly" );
+	wp_die( 'Cannot access file directly' );
 }
 
 if ( ! class_exists( '\E20R\Utilities\Cache_Object' ) ) {
@@ -100,8 +100,8 @@ if ( ! class_exists( '\E20R\Utilities\Cache_Object' ) ) {
 
 			switch ( $name ) {
 				case 'key':
+					// Intentionally falling through for both key and value
 				case 'value':
-
 					$result = $this->{$name};
 					break;
 			}

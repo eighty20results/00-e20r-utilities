@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2016-2020 - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2016-2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@ namespace E20R\Utilities;
 // Disallow direct access to the class definition
 
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( "Cannot access file directly" );
+	wp_die( 'Cannot access file directly' );
 }
 
 if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
@@ -38,21 +38,21 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Version number for the Utilities class
 		 */
-		const Version = '3.0';
+		const VERSION = '3.0';
 
 		/**
 		 * URI to the library path (Utilities)
 		 *
 		 * @var string
 		 */
-		public static $LIBRARY_URL = '';
+		public static $library_url = '';
 
 		/**
 		 * Path to the Utilities library
 		 *
 		 * @var string
 		 */
-		public static $LIBRARY_PATH = '';
+		public static $library_path = '';
 
 		/**
 		 * @var string Cache key
@@ -69,18 +69,28 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		private static $instance = null;
 
+		/**
+		 * @var int $blog_id
+		 */
 		private $blog_id = null;
+
+		/**
+		 * @var null $msg
+		 */
+		private $msg = null;
 
 		/**
 		 * Utilities constructor.
 		 */
 		private function __construct() {
 
-			self::$LIBRARY_URL  = plugins_url( null, __FILE__ );
-			self::$LIBRARY_PATH = plugin_dir_path( __FILE__ );
+			self::$library_url  = \plugins_url( null, __FILE__ );
+			self::$library_path = \plugin_dir_path( __FILE__ );
 
 			if ( empty( self::$plugin_slug ) ) {
-				self::$plugin_slug = apply_filters( 'e20r-licensing-text-domain', null );
+
+				//phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- TODO: Fixme!
+				self::$plugin_slug = \apply_filters( 'e20r-licensing-text-domain', null );
 			}
 
 			$this->log( 'Plugin Slug: ' . self::$plugin_slug );
@@ -88,9 +98,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$this->blog_id = get_current_blog_id();
 
 			self::$cache_key = "e20r_pw_utils_{$this->blog_id}";
-			$messages        = new \E20R\Utilities\Message();
+			$messages        = new Message();
 
-			$this->log( "Front or backend???" );
+			$this->log( 'Front or backend???' );
 
 			if ( self::is_admin() ) {
 
@@ -99,18 +109,18 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				add_action( 'pmpro_save_membership_level', array( $this, 'clear_delay_cache' ), 9999, 1 );
 
 				/** Disable SSL validation for localhost request(s) */
-				add_filter( 'http_request_args', array( $this, 'setSSLValidationForUpdates' ), 9999, 2 );
+				add_filter( 'http_request_args', array( $this, 'set_ssl_validation_for_updates' ), 9999, 2 );
 
 				if ( ! has_action( 'admin_notices', array( $messages, 'display' ) ) ) {
 
-					$this->log( "Loading message(s) for backend" );
+					$this->log( 'Loading message(s) for backend' );
 					add_action( 'admin_notices', array( $messages, 'display' ), 10 );
 
 				}
 			} else {
 
-				$this->log( "Loading message(s) for frontend" );
-				add_filter( 'woocommerce_update_cart_action_cart_updated', array( $messages, 'clearNotices' ), 10, 1 );
+				$this->log( 'Loading message(s) for frontend' );
+				add_filter( 'woocommerce_update_cart_action_cart_updated', array( $messages, 'clear_notices' ), 10, 1 );
 				add_action( 'woocommerce_init', array( $messages, 'display' ), 1 );
 
 				add_filter( 'pmpro_email_field_type', array( $messages, 'filter_passthrough' ), 1, 1 );
@@ -122,50 +132,45 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * Mask the text if it's a valid email address
 		 *
 		 * @param string $email
-		 * @param int    $minLength
-		 * @param int    $maxLength
+		 * @param int    $min_length
+		 * @param int    $max_length
 		 * @param string $mask
 		 *
 		 * @return string
 		 */
-		public function maybeMaskEmail( $email, $minLength = 3, $maxLength = 10, $mask = '***' ) {
+		public function maybe_mask_email( $email, $min_length = 3, $max_length = 10, $mask = '***' ) {
 
 			if ( ! is_email( $email ) ) {
 				return $email;
 			}
 
-			$atPos  = strpos( $email, '@' );
-			$name   = substr( $email, 0, $atPos );
-			$len    = strlen( $email );
-			$domain = substr( $email, $atPos );
+			$at_pos   = strpos( $email, '@' );
+			$username = substr( $email, 0, $at_pos );
+			$length   = strlen( $email );
+			$domain   = substr( $email, $at_pos );
 
-			if ( ( $len / 2 ) < $maxLength ) {
-				$maxLength = ( $len / 2 );
+			if ( ( $length / 2 ) < $max_length ) {
+				$max_length = ( $length / 2 );
 			}
 
-			$shortenedEmail = ( ( $len > $minLength ) ? substr( $name, 0, $maxLength ) : '' );
+			$shortened_email = ( ( $length > $min_length ) ? substr( $username, 0, $max_length ) : '' );
 
-			return "{$shortenedEmail}{$mask}{$domain}";
+			return "{$shortened_email}{$mask}{$domain}";
 		}
 
 		/**
-		 * Pattern recognize whether the data is a valid date format for this plugin
+		 * Pattern recognize whether the data is a valid date format for strtotime() to process
 		 * Expected format: YYYY-MM-DD
 		 *
-		 * @param $data -- Data to test
+		 * @param string $data -- Data to test
 		 *
 		 * @return bool -- true | false
 		 *
-		 * @access private
+		 * @access public
 		 */
 		public function is_valid_date( $data ) {
-			// Fixed: is_valid_date() needs to support all expected date formats...
-			if ( false === strtotime( $data ) ) {
-
-				return false;
-			}
-
-			return true;
+			// Returns true when strtotime($data) is for a valid date and false when it's not
+			return ( false !== strtotime( $data ) );
 		}
 
 		/**
@@ -201,17 +206,12 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 						$ip = trim( $ip );
 
 						// attempt to validate IP
-						if ( filter_var( $ip,
-								FILTER_VALIDATE_IP,
-								FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-						     ) !== false ) {
-
+						if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) !== false ) {
 							return $ip;
 						}
 					}
 				}
 			}
-
 
 			return $ip;
 		}
@@ -227,7 +227,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			if ( isset( $GLOBALS['current_screen'] ) ) {
 				$is_admin = $GLOBALS['current_screen']->in_admin();
-			} else if ( defined( 'WP_ADMIN' ) ) {
+			} elseif ( defined( 'WP_ADMIN' ) ) {
 				$is_admin = WP_ADMIN;
 			}
 
@@ -239,20 +239,20 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		public function load_textdomain() {
 
-			$this->log( "Processing load_textdomain" );
+			$this->log( 'Processing load_textdomain' );
 
 			if ( empty( self::$plugin_slug ) ) {
-				$this->log( "Error attempting to load translation files!" );
+				$this->log( 'Error attempting to load translation files!' );
 
 				return;
 			}
 
 			$domain_name = self::$plugin_slug;
 
-			$locale = apply_filters( "plugin_locale", get_locale(), $domain_name );
+			$locale = apply_filters( 'plugin_locale', get_locale(), $domain_name );
 
 			$mofile        = "{$domain_name}-{$locale}.mo";
-			$mofile_local  = plugin_dir_path( __FILE__ ) . "languages/" . $mofile;
+			$mofile_local  = plugin_dir_path( __FILE__ ) . 'languages/' . $mofile;
 			$mofile_global = WP_LANG_DIR . "/{$domain_name}/" . $mofile;
 
 			load_textdomain( "{$domain_name}", $mofile_local );
@@ -266,7 +266,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			load_textdomain( "{$domain_name}", $mofile_local );
 
 			//load via plugin_textdomain/glotpress
-			load_plugin_textdomain( "{$domain_name}", false, dirname( __FILE__ ) . "/../../languages/" );
+			load_plugin_textdomain( "{$domain_name}", false, dirname( __FILE__ ) . '/../../languages/' );
 		}
 
 		/**
@@ -279,7 +279,6 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		public function plugin_is_active( $plugin_file = null, $function_name = null ) {
 
-			// $this->log( "Testing whether plugin file ({$plugin_file}) or function ({$function_name}) exists/indicates an active plugin" );
 			if ( ! is_admin() ) {
 
 				if ( ! empty( $function_name ) ) {
@@ -289,7 +288,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				}
 			} else {
 
-				$this->log( "In WordPress backend..." );
+				$this->log( 'In WordPress backend...' );
 				if ( ! empty( $plugin_file ) ) {
 					$this->log( "{$plugin_file} is loaded and activated?" );
 
@@ -354,8 +353,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 *
 		 * @access public
 		 */
-		public function _who_called_me() {
+		public function who_called_me() {
 
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace
 			$trace  = debug_backtrace();
 			$caller = $trace[2];
 
@@ -389,18 +389,24 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$delays = array();
 			self::$instance->log( "Processing start delays for {$level->id}" );
 
+			if ( ! function_exists( 'pmpro_isLevelRecurring' ) ) {
+				self::$instance->log( 'PMPro is not an active plugin!' );
+				return $delays;
+			}
+
 			if ( true === pmpro_isLevelRecurring( $level ) ) {
 
 				self::$instance->log( "Level {$level->id} is a recurring payments level" );
+				$delays = Cache::get( "start_delay_{$level->id}", self::$cache_key );
 
-				if ( null === ( $delays = Cache::get( "start_delay_{$level->id}", self::$cache_key ) ) ) {
+				if ( null === $delays ) {
 
-					self::$instance->log( "Invalid cache... Loading from scratch" );
+					self::$instance->log( 'Invalid cache... Loading from scratch' );
 
 					// Calculate the trial period (may be smaller than a normal billing period
 					if ( $level->cycle_number > 0 ) {
 
-						self::$instance->log( "Is a recurring billing level" );
+						self::$instance->log( 'Is a recurring billing level' );
 
 						$trial_cycles       = $level->trial_limit;
 						$period_days        = self::convert_period( $level->cycle_period );
@@ -522,6 +528,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 		/**
 		 * Remove the start delay cache for the level
+		 *
+		 * @param int $level_id
 		 */
 		public function clear_delay_cache( $level_id ) {
 
@@ -543,18 +551,19 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$this->log( "Processing trial test for {$user_id} and {$level_id}" );
 
 			// Get the most recent (active) membership level record for the specified user/membership level ID
-			$sql = $wpdb->prepare(
-				"SELECT UNIX_TIMESTAMP( mu.startdate ) AS start_date
-                     FROM {$wpdb->pmpro_memberships_users} AS mu
-                     WHERE mu.user_id = %d
-                          AND mu.membership_id = %d
-                     ORDER BY mu.id DESC
-                     LIMIT 1",
-				$user_id,
-				$level_id
+			$start_ts = intval(
+				$wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT UNIX_TIMESTAMP( mu.startdate ) AS start_date
+								FROM {$wpdb->pmpro_memberships_users} AS mu
+								WHERE mu.user_id = %d AND mu.membership_id = %d
+								ORDER BY mu.id DESC
+								LIMIT 1",
+						$user_id,
+						$level_id
+					)
+				)
 			);
-
-			$start_ts = intval( $wpdb->get_var( $sql ) );
 
 			$this->log( "Found start Timestamp: {$start_ts}" );
 
@@ -565,20 +574,20 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				return false;
 			}
 
-			$now = current_time( 'timestamp' );
+			$now = time();
 
 			if ( true === $this->plugin_is_active( null, 'pmprosd_daysUntilDate' ) ) {
 
-				$this->log( "The PMPro Subscription Delays add-on is active on this system" );
+				$this->log( 'The PMPro Subscription Delays add-on is active on this system' );
 
 				// Is the user record in 'pre-start' mode (i.e. using Subscription Delay add-on)
-				if ( ! empty( $start_ts ) && $start_ts <= $now ) {
+				if ( $start_ts <= $now ) {
 
 					$this->log( "User ({$user_id}) at membership level ({$level_id}) is currently in 'trial' mode: {$start_ts} <= {$now}" );
 
 					return $start_ts;
 				}
-			} else if ( true === $this->plugin_is_active( 'paid-memberships-pro/paid-memberships-pro.php', 'pmpro_getMembershipLevelForUser' ) ) {
+			} elseif ( true === $this->plugin_is_active( 'paid-memberships-pro/paid-memberships-pro.php', 'pmpro_getMembershipLevelForUser' ) ) {
 
 				$this->log( "No trace of the 'Subscription Delays' add-on..." );
 
@@ -588,7 +597,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				if ( ! empty( $user_level->cycle_number ) && ! empty( $user_level->trial_limit ) ) {
 
 					$trial_duration = $user_level->cycle_number * $user_level->trial_limit;
-					$start_date     = date( 'Y-m-d H:i:s', $start_ts );
+					$start_date     = date_i18n( 'Y-m-d H:i:s', $start_ts );
 					$trial_ends_ts  = strtotime( "{$start_date} + {$trial_duration} {$user_level->cycle_period}" );
 
 					if ( false !== $trial_ends_ts && $trial_ends_ts >= $now ) {
@@ -596,14 +605,13 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 						return $trial_ends_ts;
 					} else {
-						$this->log( "There was a problem converting the trial period info into a timestamp!" );
+						$this->log( 'There was a problem converting the trial period info into a timestamp!' );
 					}
 				} else {
-					$this->log( "No Trial period defined for user..." );
+					$this->log( 'No Trial period defined for user...' );
 				}
-
 			} else {
-				$this->log( "Neither PMPro nor Subscription Delays add-on is installed and active!!" );
+				$this->log( 'Neither PMPro nor Subscription Delays add-on is installed and active!!' );
 			}
 
 			return false;
@@ -632,7 +640,6 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				$decimals = intval( $pmpro_currencies[ $def_currency ]['decimals'] );
 			}
 
-
 			$divisor = intval( str_pad( '1', ( 1 + $decimals ), '0', STR_PAD_RIGHT ) );
 			$this->log( "Divisor for calculation: {$divisor}" );
 
@@ -645,9 +652,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Print a message to the WP_DEBUG logger if configured (Tries to mask email addresses)
 		 *
-		 * @param string $msg
+		 * @param string $message
 		 */
-		public function log( $msg ) {
+		public function log( $message ) {
 
 			if ( ! defined( 'WP_DEBUG' ) || defined( 'WP_DEBUG' ) && false === WP_DEBUG ) {
 				return;
@@ -656,19 +663,21 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			/**
 			 * Mask email addresses if applicable
 			 */
+			// phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 			/*
 			if ( 1 === preg_match( '/\b[^\s]+@[^\s]+/i', $msg, $match ) ) {
 
-				$masked_email = $this->maybeMaskEmail( $match[0] );
+				$masked_email = $this->maybe_mask_email( $match[0] );
 				$msg          = preg_replace( '/\b[^\s]+@[^\s]+/i', $masked_email, $msg );
 			}
 			*/
 			// Get timestamp, thread ID and function calling us
-			$tid  = sprintf( "%08x", abs( crc32( $_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] ) ) );
-			$time = date( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
-			$from = $this->_who_called_me();
+			$thread_id        = sprintf( '%08x', abs( crc32( $_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] ) ) );
+			$timestamp        = gmdate( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
+			$calling_function = $this->who_called_me();
 
-			error_log( "[{$tid}]({$time}) {$from} - {$msg}" );
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( "[{$thread_id}]({$timestamp}) {$calling_function} - {$message}" );
 
 		}
 
@@ -683,9 +692,13 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		public function nc_replace( $search, $replacer, $input ) {
 
-			return preg_replace_callback( "/\b{$search}\b/i", function ( $matches ) use ( $replacer ) {
-				return ctype_lower( $matches[0][0] ) ? strtolower( $replacer ) : $replacer;
-			}, $input );
+			return preg_replace_callback(
+				"/\b{$search}\b/i",
+				function ( $matches ) use ( $replacer ) {
+					return ctype_lower( $matches[0][0] ) ? strtolower( $replacer ) : $replacer;
+				},
+				$input
+			);
 		}
 
 		/**
@@ -697,7 +710,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * @return bool|float|int|null|string  Sanitized value from the front-end.
 		 */
 		public function get_variable( $name, $default = null ) {
-
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return isset( $_REQUEST[ $name ] ) && ! empty( $_REQUEST[ $name ] ) ? $this->_sanitize( $_REQUEST[ $name ] ) : $default;
 		}
 
@@ -708,34 +721,36 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 *
 		 * @return mixed     Sanitized value
 		 */
-		public function _sanitize( $field ) {
+		public function sanitize( $field ) {
 
 			if ( ! is_numeric( $field ) ) {
 
 				if ( is_array( $field ) ) {
 
 					foreach ( $field as $key => $val ) {
-						$field[ $key ] = $this->_sanitize( $val );
+						$field[ $key ] = $this->sanitize( $val );
 					}
 				}
 
 				if ( is_object( $field ) ) {
 
-					foreach ( $field as $key => $val ) {
-						$field->{$key} = $this->_sanitize( $val );
+					foreach ( (array) $field as $key => $val ) {
+						$field->{$key} = $this->sanitize( $val );
 					}
 				}
 
-				if ( ! is_email( $field ) && ( ( ! is_array( $field ) ) && ctype_alpha( $field ) ||
-				                               ( ( ! is_array( $field ) ) && strtotime( $field ) ) ||
-				                               ( ( ! is_array( $field ) ) && is_string( $field ) ) )
+				if ( ! is_email( $field ) && (
+					( ! is_array( $field ) ) && ctype_alpha( $field ) ||
+					( ( ! is_array( $field ) ) && strtotime( $field ) ) ||
+					( ( ! is_array( $field ) ) && is_string( $field ) )
+					)
 				) {
 
-					if ( strtolower( $field ) == 'yes' ) {
+					if ( strtolower( $field ) === 'yes' ) {
 						$field = true;
-					} else if ( strtolower( $field ) == 'no' ) {
+					} elseif ( strtolower( $field ) === 'no' ) {
 						$field = false;
-					} else if ( ! $this->is_html( $field ) ) {
+					} elseif ( ! $this->is_html( $field ) ) {
 						$field = sanitize_text_field( $field );
 					} else {
 						$field = wp_kses_post( $field );
@@ -745,7 +760,6 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				if ( function_exists( 'is_email' ) && is_email( $field ) ) {
 					$field = sanitize_email( $field );
 				}
-
 			} else {
 
 				if ( is_float( $field + 1 ) ) {
@@ -771,8 +785,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 *
 		 * @return bool
 		 */
-		final static function is_html( $string ) {
-			return preg_match( "/<[^<]+>/", $string, $m ) != 0;
+		final public static function is_html( $string ) {
+			return preg_match( '/<[^<]+>/', $string, $m ) !== 0;
 		}
 
 		/**
@@ -782,7 +796,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 *
 		 * @return bool|int
 		 */
-		final static function is_integer( $val ) {
+		final public static function is_integer( $val ) {
 			if ( ! is_scalar( $val ) || is_bool( $val ) ) {
 				return false;
 			}
@@ -797,11 +811,11 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Test if the value is a floating point number
 		 *
-		 * @param string $val
+		 * @param string|mixed $val
 		 *
 		 * @return bool
 		 */
-		final static function is_float( $val ) {
+		final public static function is_float( $val ) {
 			if ( ! is_scalar( $val ) ) {
 				return false;
 			}
@@ -812,20 +826,21 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Decode the JSON object we received
 		 *
-		 * @param $response
+		 * @param string $response
 		 *
 		 * @return array|mixed|object
 		 *
 		 * @since 2.0.0
 		 * @since 2.1 - Updated to handle UTF-8 BOM character
 		 */
-		public function decode_response( $response ) {
+		public function decode_response( string $response ) {
 
 			// UTF-8 BOM handling
 			$bom  = pack( 'H*', 'EFBBBF' );
 			$json = preg_replace( "/^$bom/", '', $response );
+			$obj  = json_decode( $json );
 
-			if ( null !== ( $obj = json_decode( $json ) ) ) {
+			if ( null !== $obj ) {
 				return $obj;
 			}
 
@@ -842,11 +857,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * @since 2.0.0
 		 */
 		public function encode( $data ) {
-			if ( false !== ( $json = json_encode( $data ) ) ) {
-				return $json;
-			}
 
-			return false;
+			return wp_json_encode( $data );
 		}
 
 		/**
@@ -867,8 +879,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Return or print checked field for HTML Checkbox INPUT
 		 *
-		 * @param mixed $needle
-		 * @param array $haystack
+		 * @param array|object $needle
+		 * @param array|object $haystack
 		 * @param bool  $echo
 		 *
 		 * @return null|string
@@ -878,23 +890,23 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$text = null;
 
 			if ( is_array( $haystack ) ) {
-				if ( in_array( $needle, $haystack ) ) {
+				if ( in_array( $needle, $haystack, true ) ) {
 					$text = ' checked="checked" ';
 				}
 			}
 
-			if ( is_object( $haystack ) && in_array( $needle, (array) $haystack ) ) {
+			if ( is_object( $haystack ) && in_array( $needle, (array) $haystack, true ) ) {
 				$text = ' checked="checked" ';
 			}
 
-			if ( ! is_array( $haystack ) && ! is_object( $haystack ) ) {
+			if ( false === is_array( $haystack ) && false === is_object( $haystack ) ) {
 				if ( $needle === $haystack ) {
 					$text = ' checked="checked" ';
 				}
 			}
 
-			if ( true === $echo ) {
-				esc_attr_e( $text );
+			if ( true === $echo && ! empty( $text ) ) {
+				echo esc_attr__( ' checked="checked" ' );
 
 				return null;
 			}
@@ -913,31 +925,30 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		public function selected( $needle, $haystack, $echo = false ) {
 
-			$text = null;
+			$html_string = null;
 
 			if ( is_array( $haystack ) ) {
-				if ( in_array( $needle, $haystack ) ) {
-					$text = ' selected="selected" ';
+				if ( in_array( $needle, $haystack, true ) ) {
+					$html_string = ' selected="selected" ';
 				}
 			}
 
-			if ( is_object( $haystack ) && in_array( $needle, (array) $haystack ) ) {
-				$text = ' selected="selected" ';
+			if ( is_object( $haystack ) && in_array( $needle, (array) $haystack, true ) ) {
+				$html_string = ' selected="selected" ';
 			}
 
 			if ( ! is_array( $haystack ) && ! is_object( $haystack ) ) {
 				if ( $needle === $haystack ) {
-					$text = ' selected="selected" ';
+					$html_string = ' selected="selected" ';
 				}
 			}
 
-			if ( true === $echo ) {
-				esc_attr_e( $text );
-
+			if ( true === $echo && ! empty( $html_string ) ) {
+				print esc_attr__( ' selected="selected" ' );
 				return null;
 			}
 
-			return $text;
+			return $html_string;
 		}
 
 		/**
@@ -961,7 +972,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 					$string .= $keyspace[ random_int( 0, $max_len ) ];
 				}
 			} catch ( \Exception $e ) {
-				$this->log( "Error generating random string: " . $e->getMessage() );
+				$this->log( 'Error generating random string: ' . $e->getMessage() );
 
 				return false;
 			}
@@ -1001,19 +1012,24 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			if ( $not_in_count > 0 ) {
 
 				$args = array(
-					str_replace( '[IN]',
-						implode( ', ', array_fill( 0, count( $values ), ( $type == '%d' ? '%d' : '%s' ) ) ),
-						str_replace( '%', '%%', $sql ) ),
+					str_replace(
+						'[IN]',
+						implode( ', ', array_fill( 0, count( $values ), ( '%d' === $type ? '%d' : '%s' ) ) ),
+						str_replace( '%', '%%', $sql )
+					),
 				);
 
-				for ( $i = 0; $i < substr_count( $sql, '[IN]' ); $i ++ ) {
+				$substr_count = substr_count( $sql, '[IN]' );
+
+				for ( $i = 0; $i < $substr_count; $i ++ ) {
 					$args = array_merge( $args, $values );
 				}
 
 				// Sanitize the SQL variables
 				$sql = call_user_func_array(
 					array( $wpdb, 'prepare' ),
-					array_merge( $args ) );
+					array_merge( $args )
+				);
 
 			}
 
@@ -1023,8 +1039,10 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Get rid of PHP notice/warning messages from buffer
 		 */
-		public function safeAjax() {
+		public function safe_ajax() {
 
+			// Intentionally deactivate debug output to display/client
+			// phpcs:ignore WordPress.PHP.IniSet.display_errors_Blacklisted
 			ini_set( 'display_errors', 0 );
 			ob_start();
 			$messages = ob_get_clean();
@@ -1034,11 +1052,10 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Connect to the license server using TLS 1.2
 		 *
-		 * @param $handle - File handle for the pipe to the CURL process
+		 * @param mixed $handle - File handle for the pipe to the CURL process
 		 */
 		public function force_tls_12( $handle ) {
-
-			// set the CURL option to use.
+			// phpcs:ignore -- Intentionally setting the CURL option we need
 			curl_setopt( $handle, CURLOPT_SSLVERSION, 6 );
 		}
 
@@ -1050,7 +1067,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		public static function get_instance() {
 
 			if ( is_null( self::$instance ) ) {
-				self::$instance = new self;
+				self::$instance = new self();
 			}
 
 			return self::$instance;
@@ -1064,20 +1081,17 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 *
 		 * @return mixed
 		 */
-		public static function configureUpdateServerV4( $plugin_slug, $plugin_path = null ) {
+		public static function configure_update( $plugin_slug, $plugin_path = null ) {
 
 			$plugin_updates = null;
-			$plugin = self::get_instance();
+			$plugin         = self::get_instance();
 
 			if ( is_null( $plugin_path ) ) {
 				$plugin_path = plugin_dir_path( $plugin_path ) . '../' . $plugin_slug . '.php';
 			}
 
-			if ( ! file_exists(
-				plugin_dir_path( __FILE__ ) .
-				'../inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php' )
-			) {
-				$plugin->add_message( "File not found: Unable to load the plugin update checker!", 'warning' );
+			if ( ! file_exists( plugin_dir_path( __FILE__ ) . '../inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php' ) ) {
+				$plugin->add_message( 'File not found: Unable to load the plugin update checker!', 'warning' );
 				return $plugin_updates;
 			}
 
@@ -1085,7 +1099,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			 * One-click update handler & checker
 			 */
 			if ( ! class_exists( '\\Puc_v4_Factory' ) ) {
-				require_once( plugin_dir_path( __FILE__ ) . '../inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php' );
+				require_once plugin_dir_path( __FILE__ ) . '../inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
 			}
 
 			$plugin_updates = \Puc_v4_Factory::buildUpdateChecker(
@@ -1110,8 +1124,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				$url = home_url();
 			}
 
-			return defined( 'E20R_LICENSE_SERVER_URL' ) &&
-			       strpos( $url, E20R_LICENSE_SERVER_URL ) === 0;
+			return defined( 'E20R_LICENSE_SERVER_URL' ) && strpos( $url, E20R_LICENSE_SERVER_URL ) === 0;
 		}
 
 		/**
@@ -1124,7 +1137,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * @uses 'http_request_args' -> Configure Request arguments (header)
 		 *
 		 */
-		public function setSSLValidationForUpdates( $request_args, $url ) {
+		public function set_ssl_validation_for_updates( $request_args, $url ) {
 
 			if ( ! self::is_local_server( $url ) ) {
 				return $request_args;

@@ -19,14 +19,15 @@
 
 namespace E20R\Utilities;
 
-
 if ( ! class_exists( '\E20R\Utilities\Support' ) ) {
-	
+
 	/**
 	 * Class Support
 	 * @package E20R\Utilities
 	 */
 	class Support {
-	
+		public function __construct() {
+			return $this;
+		}
 	}
 }
