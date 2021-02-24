@@ -56,3 +56,4 @@ fabric.properties
 /build/
 /inc/
 /build_readmes/
+/.phpunit.result.cache

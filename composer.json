@@ -5,7 +5,10 @@
     "name": "eight20results/utilities",
     "type": "plugin",
     "description": "Adds various utility functions and license capabilities",
-    "keywords": ["wordpress", "utilities", "licensing"],
+    "keywords": ["wordpress",
+        "src/utilities",
+        "src/licensing"
+    ],
     "minimum-stability": "stable",
     "homepage": "https://eighty20results.com",
     "license": "GPLv2",
@@ -31,14 +34,16 @@
         "phpmetrics/phpmetrics": ">=v1.10.0",
         "phpunit/phpunit": ">=9.5.2",
         "spatie/phpunit-snapshot-assertions": ">=4.2.5",
-        "brain/monkey": "*"
+        "brain/monkey": "~2.0.0"
     },
     "scripts": {
         "post-install-cmd": "./inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs",
         "post-update-cmd" : "./inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs",
+        "lint": [
+            "inc/bin/phpcs --report=full --colors -p --standard=WordPress-Extra --ignore=*/inc/*,*/node_modules/* --extensions=php *.php src/*/*.php"
+        ],
         "test": [
-            "phpcs --report=full --colors -p --standard=WordPress-Extra --ignore=*/inc/*,*/node_modules/* --extensions=php *.php",
-            "phpunit"
+            "inc/bin/phpunit -v --bootstrap tests/phpunit/bootstrap.php tests/"
         ]
     }
 }
