@@ -11,14 +11,14 @@ declare -a include=( \
 	"licensing" \
 	"utilities" \
 	"class-utility-loader.php" \
-	"README.txt" )
+	"README.txt" \
+	"CHANGELOG.md"
+	)
 declare -a exclude=( \
 	"*.yml" \
 	"*.phar" \
 	"composer.*" \
 	"vendor" \
-	"inc/squizlabs" \
-	"inc/wp-coding-standards" \
 	)
 declare -a build=()
 plugin_path="${short_name}"
