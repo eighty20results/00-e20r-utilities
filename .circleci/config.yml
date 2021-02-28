@@ -1,0 +1,198 @@
+version: 2.1
+
+# workdir: &workdir
+#   working-directory: ~/results/<< parameters.php-version >>
+commands:
+  shared-build:
+    parameters:
+      php-version:
+        type: string
+    working_directory: ~/repo
+    docker:
+      - image: cimg/php:<< parameters.php-version >>-browsers
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "composer.json" }}-<< parameters.php-version >>
+      - run:
+          name: Update composer
+          command: composer self-update
+      - run:
+          name: Install dependencies
+          command: |
+            composer install -o --prefer-dist --no-interaction
+      - save_cache:
+          paths:
+            - ./inc
+          key: v1-dependencies-{{ checksum "composer.json" }}-<< parameters.php-version >>
+      - run:
+          name: Prepare log directories
+          command: |
+            mkdir -p build/logs/coverage
+            mkdir -p build/logs/unit_tests
+            mkdir -p build/logs/phpmetrics
+      - persist_to_workspace:
+          root: ~/repo
+          paths:
+            - "*"
+
+  shared-linting:
+    parameters:
+      php-version:
+        type: string
+    docker:
+      - image: cimg/php<< parameters.php-version >>-browsers
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: Check for PHP parse errors
+          command: |
+            find ./ -type -f -name '*.php' -print0 | xargs -0 -n1 -P4 php -l -n | (! grep -v "No syntax errors found" )
+
+
+  shared-unit-tests:
+    parameters:
+      php-version:
+        type: string
+    docker:
+      - image: cimg/php:<< parameters.php-version >>-browsers
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: Execute unit tests
+          command: |
+            inc/bin/phpunit -c build --testsuite Unit --log-junit build/logs/unittests/junit.xml --coverage-html build/logs/coverage --coverage-clover=coverage.xml
+      - run:
+          name: Upload code coverage to codecov.io
+          command: bash <(curl -s https://codecov.io/bash)
+      - store_test_results:
+          path: build/logs/unittests
+      - store_artifacts:
+          path: build/logs/unittests
+          destination: code-coverage-unittests
+      - store_artifacts:
+          path: build/logs/coverage
+          destination: code-coverage-html
+
+  shared-integration-tests:
+    parameters:
+      php-version:
+        type: string
+    docker:
+      - image: cimg/php:<< parameters.php-version >>-browsers
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: Execute Integration tests
+          command: inc/bin/phpunit -c build --testsuite Integration --log-junit build/logs/unittests/junit.xml
+
+      - store_test_results:
+          path: build/logs/unittests
+
+      - store_artifacts:
+          path: build/logs/unittests
+          destination: code-coverage-junit
+
+  shared-phpmetrics:
+    parameters:
+      php-version:
+        type: string
+    docker:
+      - image: cimg/php:<< parameters.php-version >>-browsers
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: Run PHP Metrics
+          command: inc/bin/phpmetrics --report-html=build/logs/phpmetrics ./
+      - store_artifacts:
+          path: build/logs/phpmetrics
+          destination: php-metrics-report
+
+  shared-phpstan:
+    parameters:
+      php-version:
+        type: string
+    docker:
+      - image: cimg/php:<< parameters.php-version >>-browsers
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: Execute PHPStan
+          command: inc/bin/phpstan analyze --level max ./
+
+  shared-github-release:
+    docker:
+      - image: cibuilds/github
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: Display GIT tag file
+          command: |
+            VERSION=$(cat ./TAG)
+            echo "${VERSION}"
+      - run:
+          name: Create the GitHub release
+          command: build_env/create_release.sh
+
+jobs:
+  build:
+    <<: *shared-build
+
+
+  linter:
+    parameters:
+      php-version:
+        type: string
+    <<: *shared-build
+    <<: *shared-linting
+
+  push-to-github:
+    <<: *shared-github-release
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - shared-linting:
+        matrix:
+          parameters:
+            php-version: [ '5.6', '7.2', '7.3', '7.4', '8.0' ]
+
+      - shared-phpstan:
+        matrix:
+          parameters:
+            php-version: [ '5.6', '7.2', '7.3', '7.4', '8.0' ]
+
+      - shared-phpmetrics:
+        matrix:
+          parameters:
+            php-version: [ '5.6', '7.2', '7.3', '7.4', '8.0' ]
+
+      - shared-unit-tests:
+        matrix:
+          parameters:
+            php-version: [ '5.6', '7.2', '7.3', '7.4', '8.0' ]
+
+      - shared-integration-tests:
+          matrix:
+            parameters:
+              php-version: [ '5.6', '7.2', '7.3', '7.4', '8.0' ]
+          requires:
+            - shared-linting
+            - shared-phpstan
+            - shared-phpmetrics
+            - shared-unit-tests
+      - shared-github-release:
+          requires:
+            - shared-linting
+            - shared-phpstan
+            - shared-phpmetrics
+            - shared-unit-tests
+            - shared-integration-tests

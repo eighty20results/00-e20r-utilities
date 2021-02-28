@@ -34,18 +34,20 @@
         "phpmetrics/phpmetrics": ">=v1.10.0",
         "phpunit/phpunit": ">=9.5.2",
         "codeception/codeception": "^4.1.0",
-        "lucatume/wp-browser": "^3",
+        "lucatume/wp-browser": "^3.0",
+        "codeception/module-asserts": "^1.3",
+        "codeception/module-phpbrowser": "^1.0",
+        "codeception/module-webdriver": "^1.2.0",
+        "codeception/module-db": "^1.1",
+        "codeception/module-filesystem": "^1.0",
+        "codeception/module-cli": "^1.1.0",
+        "codeception/util-universalframework": "^1.0.0",
         "spatie/phpunit-snapshot-assertions": "^4.2.5",
         "brain/monkey": "~2.0.0"
     },
     "scripts": {
         "post-install-cmd": "./inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs",
         "post-update-cmd" : "./inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs",
-        "lint": [
-            "inc/bin/phpcs --report=full --colors -p --standard=WordPress-Extra --ignore=*/inc/*,*/node_modules/* --extensions=php *.php src/*/*.php"
-        ],
-        "test": [
-            "inc/bin/phpunit -v --bootstrap tests/phpunit/bootstrap.php tests/"
-        ]
+        "lint": "docker-compose -p ${PROJECT} --env-file ${DC_ENV_FILE} --file ${DC_CONFIG_FILE} exec -T -w /var/www/html/wp-content/plugins/00-e20r-utilities/ wordpress ./inc/bin/phpcs --report=full --colors -p --standard=WordPress-Extra --ignore=*/inc/*,*/node_modules/* --extensions=php *.php src/*/*.php"
     }
 }

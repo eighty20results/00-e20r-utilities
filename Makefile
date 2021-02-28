@@ -11,10 +11,15 @@ DC_ENV_FILE ?= $(PWD)/.circleci/docker/.env
 
 .PHONY: \
 	clean \
-	start_wordpress \
-	stop_wordpress \
-	restart_wordpress \
-	access
+	start-wordpress \
+	stop-wordpress \
+	restart-wordpress \
+	shell \
+	lint-test \
+	phpcs-test \
+	unit-test \
+	acceptance-test \
+	build-test
 
 clean:
 #	$(FIND) $(BASE_PATH)/inc -path composer -prune \
@@ -23,15 +28,36 @@ clean:
 #		-type d -print
 #		-exec rm -rf {} \;
 
-start_wordpress:
+start-wordpress:
 	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) up --detach
-#	@sleep 10
 
 
-stop_wordpress:
-	docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) down
+stop-wordpress:
+	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) down
 
 restart_wordpress: stop_wordpress start_wordpress
 
-access:
-	docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec wordpress /bin/bash
+shell:
+	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec wordpress /bin/bash
+
+lint-test:
+	# TODO: Configure the linter test
+
+phpcs-test:
+	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+    	exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
+    	wordpress inc/bin/phpcs --report=full --colors -p --standard=WordPress-Extra --ignore=*/inc/*,*/node_modules/* --extensions=php *.php src/*/*.php
+unit-test:
+	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+	exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
+	wordpress inc/bin/codecept run wpunit
+
+acceptance-test:
+	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
+	 wordpress inc/bin/codecept run acceptance
+
+build-test:
+	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
+	 wordpress inc/bin/codecept build
