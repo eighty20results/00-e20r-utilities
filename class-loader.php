@@ -137,6 +137,8 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 					require_once $class_path;
 				}
 			}
+
+			return true;
 		}
 	}
 }
@@ -155,7 +157,7 @@ try {
 }
 
 if ( function_exists( 'add_filter' ) ) {
-	\add_filter( 'e20r_utilities_module_installed', '__return_true', - 1, 1 );
+	\add_filter( 'e20r_utilities_module_installed', '__return_true', -1, 1 );
 }
 
 if ( class_exists( '\E20R\Utilities\Utilities' ) ) {
