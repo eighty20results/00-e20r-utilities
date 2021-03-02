@@ -161,6 +161,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Pattern recognize whether the data is a valid date format for strtotime() to process
 		 * Expected format: YYYY-MM-DD
+		 * Note: Does not check if the date makes sense! I.e. will return true for Feb 31st, 2020
 		 *
 		 * @param string $data -- Data to test
 		 *
@@ -170,7 +171,11 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		public function is_valid_date( $data ) {
 			// Returns true when strtotime($data) is for a valid date and false when it's not
-			return ( false !== strtotime( $data ) );
+			if ( false === strtotime( $data, time() ) ) {
+				return false;
+			}
+
+			return true;
 		}
 
 		/**
@@ -282,22 +287,15 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			if ( ! is_admin() ) {
 
 				if ( ! empty( $function_name ) ) {
-					$this->log( "{$function_name} is present and loaded?" );
-
 					return function_exists( $function_name );
 				}
 			} else {
 
-				$this->log( 'In WordPress backend...' );
 				if ( ! empty( $plugin_file ) ) {
-					$this->log( "{$plugin_file} is loaded and activated?" );
-
 					return ( is_plugin_active( $plugin_file ) || is_plugin_active_for_network( $plugin_file ) );
 				}
 
 				if ( ! empty( $function_name ) ) {
-					$this->log( "{$function_name} function is present, implying the plugin is loaded and activated" );
-
 					return function_exists( $function_name );
 				}
 			}
