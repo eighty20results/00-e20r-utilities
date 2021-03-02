@@ -6,7 +6,7 @@ volumes:
 
 services:
   wordpress:
-    container_name: e20r-codecepiton-wordpress
+    container_name: e20r-codeception-wordpress
     build:
       context: /Users/sjolshag/PhpStormProjects/Utilities/tests
       dockerfile: docker/Dockerfile
@@ -29,8 +29,11 @@ services:
       WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
       WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
       WORDPRESS_SKIP_INSTALL: 'yes'
-      APACHE_RUN_USER: ${APACHE_RUN_USER}
-      APACHE_RUN_GROUP: ${APACHE_RUN_GROUP}
+      WORDPRESS_DEBUG: 1
+      WORDPRESS_DEBUG_LOG_FILE: 1
+      WORDPRESS_DEBUG_DISPLAY: 0
+#      APACHE_RUN_USER: ${APACHE_RUN_USER}
+#      APACHE_RUN_GROUP: ${APACHE_RUN_GROUP}
     volumes:
       - ${PLUGIN_DIR}:/var/www/html/wp-content/plugins/${E20R_PLUGIN_NAME}
       - ${PMPRO_DIR}:/var/www/html/wp-content/plugins/paid-memberships-pro

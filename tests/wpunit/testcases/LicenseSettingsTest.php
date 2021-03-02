@@ -21,16 +21,49 @@
 
 namespace E20R\Utilities\Licensing\Test;
 
-use E20R\Utilities\Licensing\LicenseServer;
+use Codeception\Test\Unit;
+use E20R\Utilities\Licensing\LicenseSettings;
 use PHPUnit\Framework\TestCase;
 
-class LicenseServerTest extends TestCase {
+class LicenseSettingsTest extends Unit {
 
-	public function testGetStatus() {
+	public function testMerge() {
 
 	}
 
-	public function testSendToServer() {
+	public function testValidate() {
+
+	}
+
+	public function testLoadPage() {
+
+	}
+
+	public function testGetInstance() {
+
+	}
+
+	public function testRegister() {
+
+	}
+
+	public function testGetSettings() {
+
+	}
+
+	public function testIsPageLoaded() {
+
+	}
+
+	public function testDefaultSettings() {
+
+	}
+
+	public function testAddOptionsPage() {
+
+	}
+
+	public function testUpdate() {
 
 	}
 }

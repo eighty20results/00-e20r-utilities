@@ -49,5 +49,12 @@
         "post-install-cmd": "./inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs",
         "post-update-cmd" : "./inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs",
         "lint": "docker-compose -p ${PROJECT} --env-file ${DC_ENV_FILE} --file ${DC_CONFIG_FILE} exec -T -w /var/www/html/wp-content/plugins/00-e20r-utilities/ wordpress ./inc/bin/phpcs --report=full --colors -p --standard=WordPress-Extra --ignore=*/inc/*,*/node_modules/* --extensions=php *.php src/*/*.php"
+    },
+    "autoload": {
+        "psr-4": {
+            "E20R\\": "",
+            "E20R\\Utilities\\": "src/",
+            "E20R\\Test\\": "tests/"
+        }
     }
 }

@@ -21,12 +21,13 @@
 
 namespace E20R\Utilities\Licensing\Test;
 
-use E20R\Utilities\Licensing\Licensing;
+use Codeception\Test\Unit;
+use E20R\Utilities\Licensing\LicenseClient;
 use PHPUnit\Framework\TestCase;
 
-class LicensingTest extends TestCase {
+class LicenseClientTest extends Unit {
 
-	public function testAjax_handler_verify_license() {
+	public function testCheck_licenses() {
 
 	}
 
@@ -34,47 +35,7 @@ class LicensingTest extends TestCase {
 
 	}
 
-	public function testEnqueue() {
-
-	}
-
-	public function testIs_active() {
-
-	}
-
-	public function testIs_licensed() {
-
-	}
-
-	public function testGet_license_page_url() {
-
-	}
-
-	public function testGet_ssl_verify() {
-
-	}
-
-	public function testIs_new_version() {
-
-	}
-
-	public function testDeactivate() {
-
-	}
-
 	public function testGet_instance() {
-
-	}
-
-	public function testGet_text_domain() {
-
-	}
-
-	public function testActivate() {
-
-	}
-
-	public function testIs_license_expiring() {
 
 	}
 }

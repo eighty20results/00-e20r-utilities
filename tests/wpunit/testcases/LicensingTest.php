@@ -21,48 +21,61 @@
 
 namespace E20R\Utilities\Licensing\Test;
 
-use E20R\Utilities\Licensing\LicenseSettings;
+use E20R\Utilities\Licensing\Licensing;
 use PHPUnit\Framework\TestCase;
+use Codeception\Test\Unit;
 
-class LicenseSettingsTest extends TestCase {
+class LicensingTest extends Unit {
 
-	public function testMerge() {
-
-	}
-
-	public function testValidate() {
+	public function testAjax_handler_verify_license() {
 
 	}
 
-	public function testLoadPage() {
+	public function testLoad_hooks() {
 
 	}
 
-	public function testGetInstance() {
+	public function testEnqueue() {
 
 	}
 
-	public function testRegister() {
+	public function testIs_active() {
 
 	}
 
-	public function testGetSettings() {
+	public function testIs_licensed() {
 
 	}
 
-	public function testIsPageLoaded() {
+	public function testGet_license_page_url() {
 
 	}
 
-	public function testDefaultSettings() {
+	public function testGet_ssl_verify() {
 
 	}
 
-	public function testAddOptionsPage() {
+	public function testIs_new_version() {
 
 	}
 
-	public function testUpdate() {
+	public function testDeactivate() {
+
+	}
+
+	public function testGet_instance() {
+
+	}
+
+	public function testGet_text_domain() {
+
+	}
+
+	public function testActivate() {
+
+	}
+
+	public function testIs_license_expiring() {
 
 	}
 }

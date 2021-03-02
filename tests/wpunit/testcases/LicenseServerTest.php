@@ -21,20 +21,17 @@
 
 namespace E20R\Utilities\Licensing\Test;
 
-use E20R\Utilities\Licensing\LicenseClient;
+use Codeception\Test\Unit;
+use E20R\Utilities\Licensing\LicenseServer;
 use PHPUnit\Framework\TestCase;
 
-class LicenseClientTest extends TestCase {
+class LicenseServerTest extends Unit {
 
-	public function testCheck_licenses() {
-
-	}
-
-	public function testLoad_hooks() {
+	public function testGetStatus() {
 
 	}
 
-	public function testGet_instance() {
+	public function testSendToServer() {
 
 	}
 }

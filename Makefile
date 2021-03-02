@@ -1,6 +1,15 @@
 SHELL := /bin/bash
 BASE_PATH := $(PWD)
 FIND := $(shell which find)
+APACHE_RUN_USER ?= $(shell id -u)
+APACHE_RUN_GROUP ?= $(shell id -g)
+SQL_BACKUP_FILE ?= $(PWD)/.circleci/docker/test/db_backup/
+E20R_PLUGIN_NAME ?= 00-e20r-utilities
+MYSQL_DATABASE ?= wordpress
+MYSQL_USER ?= wordpress
+MYSQL_PASSWORD ?= wordpress
+WORDPRESS_DB_HOST ?= localhost
+
 # PROJECT := $(shell basename ${PWD}) # This is the default as long as the plugin name matches
 PROJECT := 00-e20r-utilities
 
@@ -11,9 +20,9 @@ DC_ENV_FILE ?= $(PWD)/.circleci/docker/.env
 
 .PHONY: \
 	clean \
-	start-wordpress \
-	stop-wordpress \
-	restart-wordpress \
+	start \
+	stop \
+	restart \
 	shell \
 	lint-test \
 	phpcs-test \
@@ -28,36 +37,52 @@ clean:
 #		-type d -print
 #		-exec rm -rf {} \;
 
-start-wordpress:
-	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) up --detach
+start:
+	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) up --detach
+	@
+	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+		exec -T database \
+		/usr/bin/mysql -u$(MYSQL_USER) -p'$(MYSQL_PASSWORD)' -h$(WORDPRESS_DB_HOST) $(MYSQL_DATABASE) < $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql
 
+stop:
+	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) down
 
-stop-wordpress:
-	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) down
+restart: stop start
 
-restart_wordpress: stop_wordpress start_wordpress
-
-shell:
+wp-shell:
 	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec wordpress /bin/bash
+
+wp-log:
+	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) logs -f wordpress
+
+db-shell:
+	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec database /bin/bash
+
+db-backup:
+	docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec database /usr/bin/mysqldump -u$(MYSQL_USER) -p'$(MYSQL_PASSWORD)' -h$(WORDPRESS_DB_HOST) $(MYSQL_DATABASE) > $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql
 
 lint-test:
 	# TODO: Configure the linter test
 
-phpcs-test:
+phpcs-test: start
 	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
     	exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
     	wordpress inc/bin/phpcs --report=full --colors -p --standard=WordPress-Extra --ignore=*/inc/*,*/node_modules/* --extensions=php *.php src/*/*.php
-unit-test:
+
+unit-test: start
 	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
 	wordpress inc/bin/codecept run wpunit
+	stop
 
-acceptance-test:
+acceptance-test: start
 	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress inc/bin/codecept run acceptance
+	 stop
 
-build-test:
+build-test: start
 	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress inc/bin/codecept build
+	 stop
