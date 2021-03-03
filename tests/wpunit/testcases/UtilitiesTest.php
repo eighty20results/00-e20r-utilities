@@ -100,50 +100,13 @@ class UtilitiesTest extends Unit {
 	 *
 	 * @dataProvider pluginListData
 	 */
-	public function test_plugin_is_active( $plugin_name, $function_name, $is_networked, $is_admin, $expected ) {
-		$utils = Utilities::get_instance();
+	public function test_plugin_is_active( $plugin_name, $function_name, $is_admin, $expected ) {
+		$utils  = Utilities::get_instance();
 		$result = null;
 
 		Functions\when( 'is_admin' )
 			->justReturn( $is_admin );
 
-		/*
-		Functions\when( 'is_plugin_active' )
-			->alias(
-				function() use ( $plugin_name, $expected ) {
-					if ( true === $expected && ! empty( $function_name ) ) {
-						return true;
-					}
-					return false;
-				}
-			);
-
-		Functions\when( 'is_plugin_active_for_network' )
-			->alias(
-				function() use ( $plugin_name, $expected, $is_networked ) {
-					if ( false === $is_networked ) {
-						return false;
-					}
-
-					if ( empty( $plugin_name ) ) {
-						return false;
-					}
-
-					if ( ! empty( $function_name ) && false === $expected ) {
-						return false;
-					}
-
-					return true;
-				}
-			);
-
-		Functions\when( 'function_exists' )
-			->alias(
-				function() use ( $function_name, $expected ) {
-					return ! empty( $function_name );
-				}
-			);
-		*/
 		$result = $utils->plugin_is_active( $plugin_name, $function_name );
 
 		self::assertEquals( $expected, $result );
@@ -156,16 +119,16 @@ class UtilitiesTest extends Unit {
 	 */
 	public function pluginListData() {
 		return array(
-			// $plugin_name, $function_name, $is_networked, $is_admin, $expected
-			array( 'plugin_file/something.php', 'my_function', false, false, false ),
-			array( '00-e20r-utilities/class-loader.php', null, false, true, true ),
-			array( '00-e20r-utilities/class-loader.php', null, true, true, true ),
-			array( null, 'pmpro_getOption', false, false, true ),
-			array( null, 'pmpro_getOption', false, true, true ),
-			array( null, 'pmpro_not_a_function', false, false, false),
-			array( null, 'pmpro_not_a_function', false, true, false ),
-			array( 'paid-memberships-pro/paid-memberships-pro.php', null, false, true, true ),
-			array( 'paid-memberships-pro/paid-memberships-pro.php', null, false, false, false ),
+			// $plugin_name, $function_name, $is_admin, $expected
+			array( 'plugin_file/something.php', 'my_function', false, false ),
+			array( '00-e20r-utilities/class-loader.php', null, true, true ),
+			array( '00-e20r-utilities/class-loader.php', null, true, true ),
+			array( null, 'pmpro_getOption', false, true ),
+			array( null, 'pmpro_getOption', true, true ),
+			array( null, 'pmpro_not_a_function', false, false ),
+			array( null, 'pmpro_not_a_function', true, false ),
+			array( 'paid-memberships-pro/paid-memberships-pro.php', null, true, true ),
+			array( 'paid-memberships-pro/paid-memberships-pro.php', null, false, false ),
 		);
 	}
 	/**
