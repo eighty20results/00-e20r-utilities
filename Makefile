@@ -73,16 +73,14 @@ unit-test: start
 	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
 	wordpress inc/bin/codecept run wpunit
-	stop
 
 acceptance-test: start
 	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress inc/bin/codecept run acceptance
-	 stop
 
 build-test: start
 	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress inc/bin/codecept build
-	 stop
+
