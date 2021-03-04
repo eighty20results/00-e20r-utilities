@@ -28,6 +28,11 @@ License: GPLv2
 
 namespace E20R\Utilities;
 
+use RecursiveCallbackFilterIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use UnexpectedValueException;
+
 // Deny direct access to the file
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 	wp_die( 'Cannot access file directly' );
@@ -77,16 +82,16 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 
 			$filename = "class-{$c_name}.php";
 
-			$iterator = new \RecursiveDirectoryIterator(
+			$iterator = new RecursiveDirectoryIterator(
 				$base_path,
-				\RecursiveDirectoryIterator::SKIP_DOTS |
-				\RecursiveIteratorIterator::SELF_FIRST |
-				\RecursiveIteratorIterator::CATCH_GET_CHILD |
-				\RecursiveDirectoryIterator::FOLLOW_SYMLINKS
+				RecursiveDirectoryIterator::SKIP_DOTS |
+				RecursiveIteratorIterator::SELF_FIRST |
+				RecursiveIteratorIterator::CATCH_GET_CHILD |
+				RecursiveDirectoryIterator::FOLLOW_SYMLINKS
 			);
 
 			// Locate class member files, recursively
-			$filter = new \RecursiveCallbackFilterIterator(
+			$filter = new RecursiveCallbackFilterIterator(
 				$iterator,
 				/** @SuppressWarnings("unused") */
 				function ( $current, $key, $iterator ) use ( $filename ) {
@@ -109,12 +114,12 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 
 			try {
 				/** @SuppressWarnings("unused") */
-				$rec_iterator = new \RecursiveIteratorIterator(
+				$rec_iterator = new RecursiveIteratorIterator(
 					$iterator,
-					\RecursiveIteratorIterator::LEAVES_ONLY,
-					\RecursiveIteratorIterator::CATCH_GET_CHILD
+					RecursiveIteratorIterator::LEAVES_ONLY,
+					RecursiveIteratorIterator::CATCH_GET_CHILD
 				);
-			} catch ( \UnexpectedValueException $uvexception ) {
+			} catch ( UnexpectedValueException $uvexception ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log(
 					sprintf(
