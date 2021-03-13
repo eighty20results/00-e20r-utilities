@@ -3,15 +3,15 @@ BASE_PATH := $(PWD)
 FIND := $(shell which find)
 APACHE_RUN_USER ?= $(shell id -u)
 APACHE_RUN_GROUP ?= $(shell id -g)
-SQL_BACKUP_FILE ?= $(PWD)/.circleci/docker/test/db_backup/
-E20R_PLUGIN_NAME ?= pmpro-import-members-from-csv
+SQL_BACKUP_FILE ?= $(PWD)/.circleci/docker/test/db_backup
+E20R_PLUGIN_NAME ?= 00-e20r-utilities
 MYSQL_DATABASE ?= wordpress
 MYSQL_USER ?= wordpress
 MYSQL_PASSWORD ?= wordpress
 WORDPRESS_DB_HOST ?= localhost
 
 # PROJECT := $(shell basename ${PWD}) # This is the default as long as the plugin name matches
-PROJECT := pmpro-import-members-from-csv
+PROJECT := $(E20R_PLUGIN_NAME)
 
 # Settings for docker-compose
 DC_CONFIG_FILE ?= $(PWD)/.circleci/docker/docker-compose.yml
