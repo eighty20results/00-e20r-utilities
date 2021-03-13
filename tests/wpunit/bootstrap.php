@@ -42,6 +42,11 @@ if ( ! defined( 'PLUGIN_PATH' ) ) {
 
 require_once __DIR__ . '/../../inc/autoload.php';
 
+# Load fixtures for testing
+if ( file_exists( __DIR__ . '/inc/fixtures.php' ) ) {
+	require_once __DIR__ . '/inc/fixtures.php';
+}
+
 # Load the class autoloader
 require_once __DIR__ . '/../../class-loader.php';
 

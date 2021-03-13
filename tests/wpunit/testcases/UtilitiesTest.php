@@ -148,4 +148,5 @@ class UtilitiesTest extends Unit {
 			array( 'nothing', false ),
 		);
 	}
+
 }
