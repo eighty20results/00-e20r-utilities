@@ -4,14 +4,14 @@ FIND := $(shell which find)
 APACHE_RUN_USER ?= $(shell id -u)
 APACHE_RUN_GROUP ?= $(shell id -g)
 SQL_BACKUP_FILE ?= $(PWD)/.circleci/docker/test/db_backup/
-E20R_PLUGIN_NAME ?= 00-e20r-utilities
+E20R_PLUGIN_NAME ?= pmpro-import-members-from-csv
 MYSQL_DATABASE ?= wordpress
 MYSQL_USER ?= wordpress
 MYSQL_PASSWORD ?= wordpress
 WORDPRESS_DB_HOST ?= localhost
 
 # PROJECT := $(shell basename ${PWD}) # This is the default as long as the plugin name matches
-PROJECT := 00-e20r-utilities
+PROJECT := pmpro-import-members-from-csv
 
 # Settings for docker-compose
 DC_CONFIG_FILE ?= $(PWD)/.circleci/docker/docker-compose.yml
@@ -39,7 +39,8 @@ clean:
 
 start:
 	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) up --detach
-	@
+	@bin/wait-for-db.sh '$(MYSQL_USER)' '$(MYSQL_PASSWORD)' '$(WORDPRESS_DB_HOST)'
+	@echo "Loading the ${E20R_PLUGIN_NAME}.sql data"
 	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 		exec -T database \
 		/usr/bin/mysql -u$(MYSQL_USER) -p'$(MYSQL_PASSWORD)' -h$(WORDPRESS_DB_HOST) $(MYSQL_DATABASE) < $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql
@@ -64,6 +65,11 @@ db-backup:
 lint-test:
 	# TODO: Configure the linter test
 
+phpstan-test: start
+	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+        	exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
+        	wordpress php -d display_errors=on inc/bin/phpstan.phar --memory-limit=256M analyse -c ./phpstan.dist.neon
+
 phpcs-test: start
 	@docker-compose -p $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
     	exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
@@ -83,4 +89,3 @@ build-test: start
 	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress inc/bin/codecept build
-
