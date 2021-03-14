@@ -90,7 +90,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			if ( empty( self::$plugin_slug ) ) {
 
 				//phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- TODO: Fixme!
-				self::$plugin_slug = \apply_filters( 'e20r-licensing-text-domain', null );
+				self::$plugin_slug = \apply_filters( 'e20r_licensing_text_domain', null );
 			}
 
 			$this->log( 'Plugin Slug: ' . self::$plugin_slug );
