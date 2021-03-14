@@ -6,10 +6,10 @@ volumes:
 
 services:
   wordpress:
-    container_name: e20r-codeception-wordpress
+    container_name: codecep-wp-${E20R_PLUGIN_NAME}
     build:
       context: /Users/sjolshag/PhpStormProjects/Utilities/tests
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.unittest
       args:
         WP_TAG: wordpress:${WP_RELEASE}
     restart: always
@@ -39,11 +39,11 @@ services:
       - ${PMPRO_DIR}:/var/www/html/wp-content/plugins/paid-memberships-pro
       - ${SQL_BACKUP_FILE}/${E20R_PLUGIN_NAME}.sql:/docker-entrypoint-initdb.d/${E20R_PLUGIN_NAME}.sql
     depends_on:
-      - "database"
+      - database
 
   database:
     image: mariadb:latest
-    container_name: mariadb_wordpress
+    container_name: mariadb-wp-${E20R_PLUGIN_NAME}
     restart: always
     ports:
       - ${DB_PORT}:3306
