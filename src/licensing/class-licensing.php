@@ -79,7 +79,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		 *
 		 * @var string|null
 		 */
-		private static $text_domain = 'e20r-licensing-utility';
+		private static $text_domain = 'e20r-utility-licensing';
 
 		/**
 		 * New or old Licensing plugin in store
@@ -964,27 +964,25 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		/**
 		 * Get the license page URL for the local admin/options page
 		 *
-		 * @param string $stub
+		 * @param string $license_stub
 		 *
 		 * @return string
 		 */
-		public static function get_license_page_url( $stub ) {
+		public static function get_license_page_url( $license_stub ) {
 
 			if ( empty( self::$instance ) ) {
 				self::get_instance();
 			}
 
-			$license_page_url = esc_url(
+			return esc_url_raw(
 				add_query_arg(
 					array(
 						'page'         => 'e20r-licensing',
-						'license_stub' => $stub,
+						'license_stub' => urlencode( $license_stub ),
 					),
 					admin_url( 'options-general.php' )
 				)
 			);
-
-			return $license_page_url;
 		}
 
 		/**
@@ -999,7 +997,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				$utils          = Utilities::get_instance();
 
 				// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-				self::$text_domain = apply_filters( 'e20r-licensing-text-domain', self::$text_domain );
+				self::$text_domain = apply_filters( 'e20r_licensing_text_domain', self::$text_domain );
 
 				// Determine whether we're using the new or old Licensing version
 				self::$new_version = (
