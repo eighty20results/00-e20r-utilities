@@ -86,12 +86,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			self::$library_url  = \plugins_url( null, __FILE__ );
 			self::$library_path = \plugin_dir_path( __FILE__ );
-
-			if ( empty( self::$plugin_slug ) ) {
-
-				//phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- TODO: Fixme!
-				self::$plugin_slug = \apply_filters( 'e20r_licensing_text_domain', null );
-			}
+			self::$plugin_slug = \apply_filters( 'e20r_licensing_text_domain', null );
 
 			$this->log( 'Plugin Slug: ' . self::$plugin_slug );
 
