@@ -2,15 +2,15 @@ parameters:
     level: 5
     paths:
         - class-loader.php
-        - src/licensing
         - src/utilities
+        - src/licenses
         - tests/wpunit
         - tests/unit
         - tests/functional
         - tests/acceptance
     bootstrapFiles:
     	- tests/bootstrap.php
-    	- class.class-loader.php
+    	- class-loader.php
     excludePaths:
         - inc/
         - tests/*/data/*

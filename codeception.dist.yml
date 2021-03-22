@@ -21,3 +21,13 @@ params:
 settings:
   lint: true
   colors: true
+coverage:
+  enabled: true
+  include:
+    - src/utilities/*
+    - src/licenses/*
+    - ./class-loader.php
+  exclude:
+    - inc/*
+    - languages/*
+    - tests/*

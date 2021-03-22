@@ -1,5 +1,5 @@
-ARG WP_TAG
-FROM ${WP_TAG}
+ARG WP_RELEASE latest
+FROM wordpress:$WP_RELEASE
 
 RUN docker-php-ext-install pdo_mysql
-RUN docker-php-ext-install pcov
+RUN pecl install pcov && docker-php-ext-enable pcov
