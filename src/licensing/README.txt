@@ -320,7 +320,7 @@ class My_License extends LicenseClient {
 			'key_prefix'  => 'my_license_sku',
 			'stub'        => 'my_license_sku',
 			'product_sku' => 'MY_LICENSE_SKU', // The Woocommerce Product SKU string to use when identifying the license
-			'label'       => __( 'My Custom Client License', 't10n-slug' ),
+			'label'       => esc_attr__( 'My Custom Client License', 't10n-slug' ),
 		);
 
 		$license_settings = parent::add_new_license_info( $license_settings, $plugin_settings['my_license'] );
@@ -338,10 +338,10 @@ class My_License extends LicenseClient {
 		switch ( Licensing::is_license_expiring( 'MY_LICENSE_SKU' ) ) {
 
 			case true:
-				$utils->add_message( sprintf( __( 'The license for \'%s\' will renew soon. As this is an automatic payment, you will not have to do anything. To change %syour license%s, please go to %syour account page%s' ), __( 'My Custom License', 't10n-slug' ), '<a href="https://mywebserver.com/shop/licenses/" target="_blank">', '</a>', '<a href="https://mywebserver.com/account/" target="_blank">', '</a>' ), 'info', 'backend' );
+				$utils->add_message( sprintf( esc_attr__( 'The license for \'%s\' will renew soon. As this is an automatic payment, you will not have to do anything. To change %syour license%s, please go to %syour account page%s' ), esc_attr__( 'My Custom License', 't10n-slug' ), '<a href="https://mywebserver.com/shop/licenses/" target="_blank">', '</a>', '<a href="https://mywebserver.com/account/" target="_blank">', '</a>' ), 'info', 'backend' );
 				break;
 			case - 1:
-				$utils->add_message( sprintf( __( 'Your \'%s\' license has expired. To continue to get updates and support for this plugin, you will need to %srenew and install your license%s.' ), 'My Custom License', '<a href="https://mywebserver.com/shop/licenses/" target="_blank">', '</a>' ), 'error', 'backend' );
+				$utils->add_message( sprintf( esc_attr__( 'Your \'%s\' license has expired. To continue to get updates and support for this plugin, you will need to %srenew and install your license%s.' ), 'My Custom License', '<a href="https://mywebserver.com/shop/licenses/" target="_blank">', '</a>' ), 'error', 'backend' );
 				break;
 		}
 	}

@@ -123,7 +123,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 			// Check for error in the response
 			if ( is_wp_error( $response ) ) {
 				// translators: The error message is supplied from the repsponse object
-				$msg = sprintf( __( 'E20R Licensing: %s', 'e20r-licensing-utility' ), $response->get_error_message() );
+				$msg = sprintf( esc_attr__( 'E20R Licensing: %s', 'e20r-licensing-utility' ), $response->get_error_message() );
 				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( $msg );
 				}
@@ -142,19 +142,19 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 
 				switch ( json_last_error() ) {
 					case JSON_ERROR_DEPTH:
-						$error = __( 'Maximum stack depth exceeded', 'e20r-licensing-utility' );
+						$error = esc_attr__( 'Maximum stack depth exceeded', 'e20r-licensing-utility' );
 						break;
 					case JSON_ERROR_STATE_MISMATCH:
-						$error = __( 'Underflow or the modes mismatch', 'e20r-licensing-utility' );
+						$error = esc_attr__( 'Underflow or the modes mismatch', 'e20r-licensing-utility' );
 						break;
 					case JSON_ERROR_CTRL_CHAR:
-						$error = __( 'Unexpected control character found', 'e20r-licensing-utility' );
+						$error = esc_attr__( 'Unexpected control character found', 'e20r-licensing-utility' );
 						break;
 					case JSON_ERROR_SYNTAX:
-						$error = __( 'Syntax error, malformed JSON', 'e20r-licensing-utility' );
+						$error = esc_attr__( 'Syntax error, malformed JSON', 'e20r-licensing-utility' );
 						break;
 					case JSON_ERROR_UTF8:
-						$error = __( 'Malformed UTF-8 characters, possibly incorrectly encoded', 'e20r-licensing-utility' );
+						$error = esc_attr__( 'Malformed UTF-8 characters, possibly incorrectly encoded', 'e20r-licensing-utility' );
 						break;
 					default:
 						$error = sprintf(
@@ -394,7 +394,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 
 					if ( empty( $decoded ) ) {
 						// translators: License name is provided by the calling plugin
-						$msg = __( 'No data received from license server for %1$s. Please contact the store owner!', 'e20r-utilities-licensing' );
+						$msg = esc_attr__( 'No data received from license server for %1$s. Please contact the store owner!', 'e20r-utilities-licensing' );
 
 						$utils->add_message(
 							sprintf( $msg, $settings['fulltext_name'] ),
@@ -409,7 +409,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 
 					if ( 1 === (int) $decoded->error && ( isset( $decoded->status ) && 500 === (int) $decoded->status ) ) {
 						// translators: License name is provided by the calling plugin and the error from the decoded request
-						$msg = __( 'Error validating the %1$s license: %2$s -> %3$s', 'e20r-utilities-licensing' );
+						$msg = esc_attr__( 'Error validating the %1$s license: %2$s -> %3$s', 'e20r-utilities-licensing' );
 
 						foreach ( (array) $decoded->errors as $error_key => $error_info ) {
 

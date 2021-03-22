@@ -71,7 +71,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 			$pricing_page = apply_filters( 'e20r-license-pricing-page-url', 'https://eighty20results.com/shop/' );
 
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			$button_text = apply_filters( 'e20r-license-save-btn-text', __( 'Activate/Deactivate & Save license(s)', 'e20r-licensing-utility' ) );
+			$button_text = apply_filters( 'e20r-license-save-btn-text', esc_attr__( 'Activate/Deactivate & Save license(s)', 'e20r-licensing-utility' ) );
 			?>
 			<p class="e20r-licensing-section">
 			<?php
@@ -148,7 +148,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 			$is_active       = isset( $args['is_active'] ) && 1 === (int) $args['is_active'];
 			$product_sku     = isset( $args['product_sku'] ) ? $args['product_sku'] : '';
 			$status_color    = $is_active ? 'e20r-license-active' : 'e20r-license-inactive';
-			$product         = __( 'Unknown', 'e20r-licensing-utility' );
+			$product         = esc_attr__( 'Unknown', 'e20r-licensing-utility' );
 			$var_name        = "{$args['option_name']}[product][0]";
 			$is_subscription = ( isset( $args['has_subscription'] ) && ! empty( $args['has_subscription'] ) && 1 === $args['has_subscription'] );
 
@@ -278,14 +278,14 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 						$expiration_date = '';
 
 						if ( $is_active ) {
-							$expiration_message = __( 'This license does not expire', 'e20r-licensing-utility' );
+							$expiration_message = esc_attr__( 'This license does not expire', 'e20r-licensing-utility' );
 						} else {
-							$expiration_message = __( 'This license is not activated', 'e20r-licensing-utility' );
+							$expiration_message = esc_attr__( 'This license is not activated', 'e20r-licensing-utility' );
 						}
 
 						if ( $has_expiration || $is_subscription ) {
 							// translators: Creates the appropriately formatted date information for the license expiration
-							$expiration_date = __(
+							$expiration_date = esc_attr__(
 								// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
 								sprintf(
 									'on or before: %1$s',
@@ -303,7 +303,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 							__( 'needs to be renewed manually', 'e20r-licensing-utility' );
 
 						if ( ! $is_subscription && ! $has_expiration ) {
-							$body_msg = __( 'does not need to be renewed', 'e20r-licensing-utility' );
+							$body_msg = esc_attr__( 'does not need to be renewed', 'e20r-licensing-utility' );
 						}
 
 						if ( $is_subscription || $has_expiration ) {
@@ -354,7 +354,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 			$utils = Utilities::get_instance();
 
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			$button_text = apply_filters( 'e20r-license-save-btn-text', __( 'Activate/Deactivate & Save license(s)', 'e20r-licensing-utility' ) );
+			$button_text = apply_filters( 'e20r-license-save-btn-text', esc_attr__( 'Activate/Deactivate & Save license(s)', 'e20r-licensing-utility' ) );
 			?>
 			<?php $utils->display_messages(); ?>
 			<br/>

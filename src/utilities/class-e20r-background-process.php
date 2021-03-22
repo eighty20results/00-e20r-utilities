@@ -788,7 +788,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 			$schedules[ "{$this->identifier}_cron_interval" ] = array(
 				'interval' => MINUTE_IN_SECONDS * $interval,
 				// translators: The $interval represents the calculated number of minutes for the cron job to trigger.
-				'display'  => sprintf( __( 'Every %d Minutes' ), $interval ),
+				'display'  => sprintf( esc_attr__( 'Every %d Minutes' ), $interval ),
 			);
 
 			return $schedules;

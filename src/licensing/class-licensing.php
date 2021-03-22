@@ -216,7 +216,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 						__(
 							'No product name found for the "%s" SKU',
 							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-							Utilities::$plugin_slug
+							'e20r-utility-licensing'
 						),
 						$product_sku
 					)
@@ -231,7 +231,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 						__(
 							'Error: Invalid/non-existent key specified for the "%s" license',
 							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-							Utilities::$plugin_slug
+							'e20r-utility-licensing'
 						),
 						$product_name
 					)
@@ -246,7 +246,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 						__(
 							'Invalid SKU given for the "%s" license',
 							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-							Utilities::$plugin_slug
+							'e20r-utility-licensing'
 						),
 						$product_name
 					)
@@ -263,7 +263,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 						__(
 							'No settings found for the "%s" license',
 							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-							Utilities::$plugin_slug
+							'e20r-utility-licensing'
 						),
 						$product_name
 					)
@@ -283,7 +283,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 						__(
 							'Error: Invalid license key for "%s". It is not an active/available license',
 							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-							Utilities::$plugin_slug
+							'e20r-utility-licensing'
 						),
 						$product_name
 					)
@@ -661,7 +661,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 			if ( false === $decoded ) {
 
 				// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-				$msg = __( 'Error transmitting to the remote licensing server', self::$text_domain );
+				$msg = esc_attr__( 'Error transmitting to the remote licensing server', self::$text_domain );
 
 				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( $msg );
@@ -763,7 +763,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				$settings = LicenseSettings::defaults( $product_sku );
 
 				// translators: The substitution values come from the error object
-				$msg = __( 'Activation error: %1$s -> %2$s', 'e20r-utilities-licensing' );
+				$msg = esc_attr__( 'Activation error: %1$s -> %2$s', 'e20r-utilities-licensing' );
 
 				foreach ( (array) $decoded->errors as $error_key => $error_message ) {
 					$utils->add_message(
@@ -926,13 +926,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 
 				if ( isset( $decoded->status ) && 500 === (int) $decoded->status ) {
 					// translators: Error message supplied from decoded request object
-					$error_message = __( 'Deactivation error: %s', 'e20r-utilities-licensing' );
+					$error_message = esc_attr__( 'Deactivation error: %s', 'e20r-utilities-licensing' );
 
 					if ( isset( $decoded->errors ) ) {
 
 						$utils->log( 'Decoding error messages from the License server...' );
 						// translators: Error message supplied from decoded request object
-						$error_string = __( '%1$s -> %2$s', 'e20r-utilities-licensing' );
+						$error_string = esc_attr__( '%1$s -> %2$s', 'e20r-utilities-licensing' );
 
 						foreach ( (array) $decoded->errors as $error_key => $error_info ) {
 							$info = array_pop( $error_info );

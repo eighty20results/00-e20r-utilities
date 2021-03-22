@@ -96,7 +96,7 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 
 			if ( empty( $collected_data ) ) {
 				// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-				$collected_data = array( 'default' => array( __( 'No extra data collected', Utilities::$plugin_slug ) ) );
+				$collected_data = array( 'default' => array( esc_attr__( 'No extra data collected', 'e20r-utility-licensing' ) ) );
 			}
 
 			// Process the list of data being collected for the user/member
@@ -115,8 +115,7 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 					'default' => array(
 						__(
 							'No plugin developed by Eighty/20 Results by Wicked Strong Chicks was found',
-							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-							Utilities::$plugin_slug
+							'e20r-utility-licensing'
 						),
 					),
 				);
@@ -139,7 +138,7 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 				$caveat_text = sprintf(
 					'<h3>%1$s</h3><p>%2$s</p>',
 					// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-					__( '3rd party services', Utilities::$plugin_slug ),
+					__( '3rd party services', 'e20r-utility-licensing' ),
 					__( 'The following 3rd party sites may receive information about the user/member as part of the registration process:' )
 				);
 
@@ -176,7 +175,7 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 				__(
 					'Eighty / 20 Results by Wicked Strong Chicks, LLC',
 					// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-					Utilities::$plugin_slug
+					'e20r-utility-licensing'
 				),
 				$privacy_policy
 			);
@@ -233,10 +232,10 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 		public function personal_data_exporters( $exporters ) {
 
 			$exporters[] = array(
-				'exporter_friendly_name' => __(
+				'exporter_friendly_name' => esc_attr__(
 					'E20R Plugin Data',
 					// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-					Utilities::$plugin_slug
+					'e20r-utility-licensing'
 				),
 				'callback'               => array( $this, 'export_personal_data' ),
 			);
@@ -255,7 +254,7 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 
 			$erasers[] = array(
 				// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-				'eraser_friendly_name' => __( 'E20R Plugin Data', Utilities::$plugin_slug ),
+				'eraser_friendly_name' => esc_attr__( 'E20R Plugin Data', 'e20r-utility-licensing' ),
 				'callback'             => array( $this, 'erase_personal_data' ),
 			);
 

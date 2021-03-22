@@ -104,7 +104,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseClient' ) ) {
 				// translators: The label that describes the license is defined in the received settings
 				'placeholder'   => sprintf(
 					// translators: The licensed plugin will set its own label (name)
-					__(
+					esc_attr__(
 						'Paste the received \'%1$s\' key here',
 						'e20r-licensing-utility'
 					),
