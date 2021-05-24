@@ -49,6 +49,3 @@ if ( file_exists( __DIR__ . '/inc/fixtures.php' ) ) {
 
 # Load the class autoloader
 require_once __DIR__ . '/../../class-loader.php';
-
-// Include the class for PluginTestCase
-require_once __DIR__ . '/inc/PluginTestCase.php';

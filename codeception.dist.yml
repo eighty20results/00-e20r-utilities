@@ -24,8 +24,8 @@ settings:
 coverage:
   enabled: true
   include:
-    - src/utilities/*
-    - src/licenses/*
+    - src/utilities/*.php
+    - src/licensing/*.php
     - ./class-loader.php
   exclude:
     - inc/*

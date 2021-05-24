@@ -40,12 +40,24 @@ class LicensingTest extends Unit {
 		parent::setUp();
 		setUp();
 
-		Functions\when( 'plugins_url' )
-			->justReturn( sprintf( 'https://development.local/wp-content/plugins/' ) );
+		Functions\expect( 'plugins_url' )
+			->andReturn( sprintf( 'https://localhost:7253/wp-content/plugins/' ) );
 
 		Functions\expect( 'admin_url' )
 			->with( 'options-general.php' )
-			->andReturn( 'https://development.local/wp-admin/options-general.php' );
+			->andReturn( 'https://localhost:7253/wp-admin/options-general.php' );
+
+		Functions\expect( 'get_option' )
+			->with( 'e20r_license_settings' )
+			->andReturnUsing( function() {
+				return 'test';
+			});
+
+		Functions\expect( 'plugin_dir_path' )
+			->andReturn( sprintf( '/var/www/html/wp-content/plugins/00-e20r-utilities/' ) );
+
+		Functions\expect( 'get_current_blog_id' )
+			->andReturn( 1 );
 	}
 
 	/**
@@ -71,13 +83,40 @@ class LicensingTest extends Unit {
 
 		$class = Licensing::get_instance();
 
-		Actions\has( 'admin_enqueue_scripts', array( Licensing::get_instance(), 'enqueue' ) );
-		Actions\has(
-			'wp_ajax_e20r_license_verify',
-			array( Licensing::get_instance(), 'ajax_handler_verify_license' )
-		);
+		Actions\expectAdded( 'admin_enqueue_scripts' )
+			->with( array( $class, 'enqueue' ), 10 );
+		Actions\expectAdded( 'wp_ajax_e20r_license_verify' )
+			->with( array( $class, 'ajax_handler_verify_license' ), 10 );
 
 		$class->load_hooks();
+	}
+
+	/**
+	 * @param $sku
+	 * @param $expected_settings
+	 *
+	 * @dataProvider fixture_settings
+	 */
+	public function test_load_settings( $sku, $use_new, $expected_settings ) {
+
+	}
+
+	public function fixture_settings() {
+		return $this->fixture_new_settings() + $this->fixture_old_settings();
+	}
+
+	public function fixture_new_settings() {
+		// Assuming new licensing API service
+		return array(
+			array( 'some-sku', true, array( '' ) ),
+		);
+	}
+
+	public function fixture_old_settings() {
+		// Assuming old licensing API service
+		return array(
+			array( 'some-sku', false, array( '' ) ),
+		);
 	}
 
 	public function test_enqueue() {
@@ -116,11 +155,11 @@ class LicensingTest extends Unit {
 	 */
 	public function page_url_fixture() {
 		return array(
-			array( 'test-license-1', 'https://development.local/wp-admin/options-general.php?page=e20r-licensing&license_stub=test-license-1' ),
-			array( 'test license 1', 'https://development.local/wp-admin/options-general.php?page=e20r-licensing&license_stub=test+license+1' ),
-			array( 'vXzfjW9M2O4sP1a57DG399SmA2-176', 'https://development.local/wp-admin/options-general.php?page=e20r-licensing&license_stub=vXzfjW9M2O4sP1a57DG399SmA2-176' ),
-			array( 'ovCCBklB8cz2H9Q787Asv2w0rC-166', 'https://development.local/wp-admin/options-general.php?page=e20r-licensing&license_stub=ovCCBklB8cz2H9Q787Asv2w0rC-166' ),
-			array( 'vXzfjW9M2O4sP1a57DG399SmA2%176', 'https://development.local/wp-admin/options-general.php?page=e20r-licensing&license_stub=vXzfjW9M2O4sP1a57DG399SmA2%25176' ),
+			array( 'test-license-1', 'https://localhost:7253/wp-admin/options-general.php?page=e20r-licensing&license_stub=test-license-1' ),
+			array( 'test license 1', 'https://localhost:7253/wp-admin/options-general.php?page=e20r-licensing&license_stub=test%20license%201' ),
+			array( 'vXzfjW9M2O4sP1a57DG399SmA2-176', 'https://localhost:7253/wp-admin/options-general.php?page=e20r-licensing&license_stub=vXzfjW9M2O4sP1a57DG399SmA2-176' ),
+			array( 'ovCCBklB8cz2H9Q787Asv2w0rC-166', 'https://localhost:7253/wp-admin/options-general.php?page=e20r-licensing&license_stub=ovCCBklB8cz2H9Q787Asv2w0rC-166' ),
+			array( 'vXzfjW9M2O4sP1a57DG399SmA2%176', 'https://localhost:7253/wp-admin/options-general.php?page=e20r-licensing&license_stub=vXzfjW9M2O4sP1a57DG399SmA2%25176' ),
 		);
 	}
 
@@ -148,8 +187,8 @@ class LicensingTest extends Unit {
 	 */
 	public function page_url_neg_fixture() {
 		return array(
-			array( 'test license 1', 'https://development.local/wp-admin/options-general.php?page=e20r-licensing&license_stub=test-license-1' ),
-			array( 'test license 1', 'https://development.local/wp-admin/options-general.php?page=e20r-licensing&license_stub=test%20license%201' ),
+			array( 'test license 1', 'https://localhost:7253/wp-admin/options-general.php?page=e20r-licensing&license_stub=test-license-1' ),
+			array( 'test license 1', 'https://localhost:7253/wp-admin/options-general.php?page=e20r-licensing&license_stub=test+license+1' ),
 		);
 	}
 
@@ -157,8 +196,32 @@ class LicensingTest extends Unit {
 
 	}
 
-	public function test_is_new_version() {
+	/**
+	 * @param $expected
+	 *
+	 * @dataProvider fixture_new_version
+	 */
+	public function test_is_new_version( $expected ) {
 
+		if (!extension_loaded('runkit')) {
+			$this->markTestSkipped('This test requires the runkit extension.');
+		}
+
+		runkit_constant_remove('WP_PLUGIN_DIR');
+		$licensing = new Licensing();
+
+		self::assertEquals( $expected, $licensing->is_new_version() );
+	}
+
+	/**
+	 * The fixture for the is_new_version() unit test
+	 *
+	 * @return \bool[][]
+	 */
+	public function fixture_new_version() {
+		return array(
+			array( true ),
+		);
 	}
 
 	public function test_deactivate() {

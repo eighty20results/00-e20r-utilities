@@ -104,8 +104,8 @@ class UtilitiesTest extends Unit {
 		$utils  = Utilities::get_instance();
 		$result = null;
 
-		Functions\when( 'is_admin' )
-			->justReturn( $is_admin );
+		Functions\expect( 'is_admin' )
+			->andReturn( $is_admin );
 
 		$result = $utils->plugin_is_active( $plugin_name, $function_name );
 
@@ -121,13 +121,13 @@ class UtilitiesTest extends Unit {
 		return array(
 			// $plugin_name, $function_name, $is_admin, $expected
 			array( 'plugin_file/something.php', 'my_function', false, false ),
+			array( '00-e20r-utilities/class-loader.php', null, false, false ),
 			array( '00-e20r-utilities/class-loader.php', null, true, true ),
-			array( '00-e20r-utilities/class-loader.php', null, true, true ),
-			array( null, 'pmpro_getOption', false, true ),
-			array( null, 'pmpro_getOption', true, true ),
+			array( null, 'pmpro_getOption', false, false ),
+			array( null, 'pmpro_getOption', true, false ),
 			array( null, 'pmpro_not_a_function', false, false ),
 			array( null, 'pmpro_not_a_function', true, false ),
-			array( 'paid-memberships-pro/paid-memberships-pro.php', null, true, true ),
+			array( 'paid-memberships-pro/paid-memberships-pro.php', null, true, false ),
 			array( 'paid-memberships-pro/paid-memberships-pro.php', null, false, false ),
 		);
 	}
