@@ -79,27 +79,27 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		 *
 		 * @var string|null
 		 */
-		private static $text_domain = 'e20r-utility-licensing';
+		private $text_domain = '00-e20r-utilities';
 
 		/**
 		 * New or old Licensing plugin in store
 		 *
 		 * @var bool
 		 */
-		private static $new_version = false;
+		private $new_version = false;
 
 		/**
 		 * Use SSL certificate validation when checking license
 		 *
 		 * @var bool
 		 */
-		private static $ssl_verify = true;
+		private $ssl_verify = true;
 
 		/**
 		 * Configure the Licensing class (actions and settings)
 		 * Licensing constructor.
 		 */
-		private function __construct() {
+		public function __construct() {
 
 			$utils = Utilities::get_instance();
 
@@ -109,8 +109,28 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 
 			if ( isset( $_SERVER['HTTP_HOST'] ) && 'eighty20results.com' === $_SERVER['HTTP_HOST'] ) {
 				$utils->log( 'Running on own server. Deactivating SSL Verification' );
-				self::$ssl_verify = false;
+				$this->ssl_verify = false;
 			}
+
+			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+			$this->text_domain = apply_filters( 'e20r_licensing_text_domain', $this->text_domain );
+
+			// Determine whether we're using the new or old Licensing version
+			$this->new_version = (
+				defined( 'E20R_LICENSING_VERSION' ) &&
+				version_compare( E20R_LICENSING_VERSION, '3.0', 'ge' )
+			);
+
+			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				$utils->log( 'Using new or old version of licensing code..? ' . ( self::is_new_version() ? 'New' : 'Old' ) );
+			}
+
+			$this->ssl_verify = Utilities::is_local_server();
+
+			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				$utils->log( 'Do we verify the SSL certificate (no if local = home_url())? ' . ( self::get_ssl_verify() ? 'Yes' : 'No' ) );
+			}
+
 		}
 
 		/**
@@ -161,13 +181,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		 *
 		 * @return bool
 		 */
-		public static function get_ssl_verify() {
-
-			if ( empty( self::$instance ) ) {
-				self::get_instance();
-			}
-
-			return self::$ssl_verify;
+		public function get_ssl_verify() {
+			return $this->ssl_verify;
 		}
 
 		/**
@@ -175,25 +190,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		 *
 		 * @return bool
 		 */
-		public static function is_new_version() {
-			if ( empty( self::$instance ) ) {
-				self::get_instance();
-			}
-
-			return self::$new_version;
-		}
-
-		/**
-		 * Return the text domain for I18N (translation)
-		 *
-		 * @return string
-		 */
-		public static function get_text_domain() {
-			if ( empty( self::$instance ) ) {
-				self::get_instance();
-			}
-
-			return self::$text_domain;
+		public function is_new_version() {
+			return $this->new_version;
 		}
 
 		/**
@@ -216,7 +214,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 						__(
 							'No product name found for the "%s" SKU',
 							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-							'e20r-utility-licensing'
+							'00-e20r-utilities'
 						),
 						$product_sku
 					)
@@ -231,7 +229,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 						__(
 							'Error: Invalid/non-existent key specified for the "%s" license',
 							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-							'e20r-utility-licensing'
+							'00-e20r-utilities'
 						),
 						$product_name
 					)
@@ -246,7 +244,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 						__(
 							'Invalid SKU given for the "%s" license',
 							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-							'e20r-utility-licensing'
+							'00-e20r-utilities'
 						),
 						$product_name
 					)
@@ -254,25 +252,10 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				exit();
 			}
 
-			$license_settings = LicenseSettings::get_settings( $product_sku );
-
-			if ( empty( $license_settings ) ) {
-				wp_send_json_error(
-					sprintf(
-					// translators: The product name for the license is a filter provided value
-						__(
-							'No settings found for the "%s" license',
-							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-							'e20r-utility-licensing'
-						),
-						$product_name
-					)
-				);
-				exit();
-			}
+			$license_settings = new LicenseSettings( $product_sku );
 
 			$utils->log( 'Forcing verification/check against upstream license server' );
-			$status = LicenseServer::status( $license_key, $license_settings, true );
+			$status = LicenseServer::status( $license_key, $license_settings->all_settings(), true );
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 			$utils->log( 'License status: ' . print_r( $status, true ) );
 
@@ -283,7 +266,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 						__(
 							'Error: Invalid license key for "%s". It is not an active/available license',
 							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-							'e20r-utility-licensing'
+							'00-e20r-utilities'
 						),
 						$product_name
 					)
@@ -328,6 +311,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				self::get_instance();
 			}
 
+			$my_class    = self::$instance;
+
 			// Make sure the SKU/product stub is upper-cased
 			// $product_sku = strtoupper( $product_sku );
 
@@ -344,7 +329,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				)
 			);
 
-			$license_settings = LicenseSettings::get_settings();
+			$license_settings = new LicenseSettings( $product_sku );
 
 			if ( ! isset( $license_settings[ $product_sku ] ) ) {
 
@@ -363,10 +348,10 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 					$utils->log( "Adding {$product_sku} license settings" );
 				}
 
-				$license_settings[ $product_sku ] = LicenseSettings::defaults( $product_sku );
+				$license_settings[ $product_sku ] = $license_settings->defaults( $product_sku );
 			}
 
-			$l_settings  = $license_settings[ $product_sku ];
+			$l_settings  = $license_settings->all_settings();
 			$is_licensed = LicenseServer::status( $product_sku, $l_settings, $force );
 
 			/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
@@ -401,7 +386,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				$utils->log( 'Settings are: ' . print_r( $l_settings, true ) );
 			}
 
-			return self::is_active( $product_sku, $l_settings, $is_licensed );
+			return $my_class->is_active( $product_sku, $l_settings, $is_licensed );
 		}
 
 		/**
@@ -413,7 +398,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		 *
 		 * @return bool
 		 */
-		public static function is_active( $product_sku, $license_settings, $is_licensed = false ) {
+		public function is_active( $product_sku, $license_settings, $is_licensed = false ) {
 
 			$utils     = Utilities::get_instance();
 			$is_active = false;
@@ -446,7 +431,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				$l_settings = $license_settings;
 			}
 
-			if ( true === self::is_new_version() ) {
+			if ( true === $this->is_new_version() ) {
 
 				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( 'Status of license under new licensing plugin... Is licensed? ' . ( $is_licensed ? 'True' : 'False' ) );
@@ -458,7 +443,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 					'active' === $l_settings['status'] &&
 					true === $is_licensed
 				);
-			} elseif ( false === self::is_new_version() ) {
+			} elseif ( false === $this->is_new_version() ) {
 
 				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( 'Status of license under old licensing plugin... Is licensed? ' . ( $is_licensed ? 'True' : 'False' ) );
@@ -491,7 +476,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		 *
 		 * @return bool
 		 */
-		public static function is_license_expiring( $product_sku ) {
+		public function is_license_expiring( $product_sku ) {
 
 			$utils = Utilities::get_instance();
 
@@ -510,7 +495,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				$utils->log( 'Received settings for expiration check: ' . print_r( $settings, true ) );
 			}
 
-			if ( self::is_new_version() && isset( $settings['expire'] ) ) {
+			if ( $this->is_new_version() && isset( $settings['expire'] ) ) {
 				$expires = (int) $settings['expire'];
 			} elseif ( isset( $settings['expires'] ) ) {
 				$expires = (int) $settings['expires'];
@@ -661,7 +646,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 			if ( false === $decoded ) {
 
 				// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-				$msg = esc_attr__( 'Error transmitting to the remote licensing server', self::$text_domain );
+				$msg = esc_attr__( 'Error transmitting to the remote licensing server', '00-e20r-utilities' );
 
 				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( $msg );
@@ -727,7 +712,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 									__(
 										'For %1$s: %2$s',
 										// phpcs:ignore
-										self::$text_domain
+										'00-e20r-utilities'
 									),
 									$settings['key'],
 									$decoded->message
@@ -978,7 +963,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				add_query_arg(
 					array(
 						'page'         => 'e20r-licensing',
-						'license_stub' => urlencode( $license_stub ),
+						'license_stub' => rawurlencode( $license_stub ),
 					),
 					admin_url( 'options-general.php' )
 				)
@@ -994,26 +979,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 
 			if ( null === self::$instance ) {
 				self::$instance = new self();
-				$utils          = Utilities::get_instance();
-
-				// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-				self::$text_domain = apply_filters( 'e20r_licensing_text_domain', self::$text_domain );
-
-				// Determine whether we're using the new or old Licensing version
-				self::$new_version = (
-					defined( 'E20R_LICENSING_VERSION' ) &&
-					version_compare( E20R_LICENSING_VERSION, '3.0', 'ge' )
-				);
-
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-					$utils->log( 'Using new or old version of licensing code..? ' . ( self::is_new_version() ? 'New' : 'Old' ) );
-				}
-
-				self::$ssl_verify = Utilities::is_local_server();
-
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-					$utils->log( 'Do we verify the SSL certificate (no if local = home_url())? ' . ( self::get_ssl_verify() ? 'Yes' : 'No' ) );
-				}
 			}
 
 			return self::$instance;

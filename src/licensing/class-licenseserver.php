@@ -51,19 +51,20 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 		 */
 		public static function send( $api_params ) {
 
-			$utils = Utilities::get_instance();
+			$utils     = Utilities::get_instance();
+			$licensing = new Licensing();
 
 			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 				$utils->log( 'Attempting remote connection to ' . E20R_LICENSE_SERVER_URL );
 			}
 
-			if ( ! Licensing::is_new_version() ) {
+			if ( ! $licensing->is_new_version() ) {
 				$response = wp_remote_post(
 					E20R_LICENSE_SERVER_URL,
 					array(
 						// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 						'timeout'     => apply_filters( 'e20r-license-remote-server-timeout', 30 ),
-						'sslverify'   => Licensing::get_ssl_verify(),
+						'sslverify'   => $licensing->get_ssl_verify(),
 						'httpversion' => '1.1',
 						'decompress'  => true,
 						'body'        => $api_params,
@@ -111,7 +112,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 					add_query_arg( 'action', $action, E20R_LICENSE_SERVER_URL . '/wp-admin/admin-ajax.php' ),
 					array(
 						'timeout'     => apply_filters( 'e20r-license-remote-server-timeout', 30 ),
-						'sslverify'   => Licensing::get_ssl_verify(),
+						'sslverify'   => $licensing->get_ssl_verify(),
 						'httpversion' => '1.1',
 						'decompress'  => true,
 						'body'        => $api_params,
@@ -187,17 +188,19 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 		 */
 		public static function status( $sku, $settings = null, $force = false ) {
 
-			$utils = Utilities::get_instance();
+			$utils     = Utilities::get_instance();
+			$licensing = new Licensing();
 
 			// Default value for the license (it's not active)
 			$license_status = false;
 			global $current_user;
 
 			if ( is_null( $settings ) ) {
-				$settings = LicenseSettings::get_settings( $sku );
+				$license_settings = new LicenseSettings( $sku );
+				$settings         = $license_settings->all_settings();
 			}
 
-			if ( ! Licensing::is_new_version() && empty( $settings['key'] ) ) {
+			if ( ! $licensing->is_new_version() && empty( $settings['key'] ) ) {
 				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( "Old store: {$sku} has no key stored. Returning false" );
 				}
@@ -205,7 +208,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 				return $license_status;
 			}
 
-			if ( Licensing::is_new_version() && empty( $settings['the_key'] ) ) {
+			if ( $licensing->is_new_version() && empty( $settings['the_key'] ) ) {
 				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 					$utils->log( "New store: {$sku} has no key stored. Returning false" );
 				}
@@ -213,7 +216,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 				return $license_status;
 			}
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG && Licensing::is_new_version() ) {
+			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG && $licensing->is_new_version() ) {
 				$utils->log( 'Using the new store plugin' );
 			}
 
@@ -233,7 +236,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 
 				$product_name = $settings['fulltext_name'];
 
-				if ( ! Licensing::is_new_version() ) {
+				if ( ! $licensing->is_new_version() ) {
 					// Configure request for license check
 					$api_params = array(
 						'slm_action'  => 'slm_check',
@@ -284,7 +287,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 
 				$decoded = self::send( $api_params );
 
-				if ( ! Licensing::is_new_version() ) {
+				if ( ! $licensing->is_new_version() ) {
 					// License not validated
 					if ( ! isset( $decoded->result ) || 'success' !== $decoded->result ) {
 

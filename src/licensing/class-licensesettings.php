@@ -21,6 +21,7 @@
 
 namespace E20R\Utilities\Licensing;
 
+use E20R\Utilities\Licensing\Exceptions\NoLicenseKeyFoundException;
 use E20R\Utilities\Utilities;
 
 // Deny direct access to the file
@@ -28,7 +29,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die( 'Cannot access file directly' );
 }
 
-if ( ! defined ( 'E20R_MISSING_SETTING' ) ) {
+if ( ! defined( 'E20R_MISSING_SETTING' ) ) {
 	define( 'E20R_MISSING_SETTING', 1024 );
 }
 
@@ -89,9 +90,9 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 */
 		public function __construct( $product_sku = 'e20r_default_license' ) {
 
-			$this->utils = Utilities::get_instance();
+			$this->utils       = Utilities::get_instance();
 			$this->product_sku = $product_sku;
-			$this->excluded = array( 'excluded', 'utils', 'page_handle', 'settings', 'all_settings' );
+			$this->excluded    = array( 'excluded', 'utils', 'page_handle', 'settings', 'all_settings' );
 
 			if ( ! defined( 'E20R_LICENSE_SERVER_URL' ) || ( defined( 'E20R_LICENSE_SERVER_URL' ) && ! E20R_LICENSE_SERVER_URL ) ) {
 				$this->utils->log( "Error: Haven't added the 'E20R_LICENSE_SERVER_URL' constant to the wp-config file!" );
@@ -109,9 +110,9 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			}
 
 			if ( ! empty( $this->product_sku ) ) {
-				$defaults = $this->defaults( $product_sku );
+				$defaults           = $this->defaults( $product_sku );
 				$this->all_settings = get_option( 'e20r_license_settings', $defaults );
-				$this->settings = $this->all_settings[ $product_sku ];
+				$this->settings     = $this->all_settings[ $product_sku ];
 			}
 		}
 
@@ -125,6 +126,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		public function register() {
 
 			$license_list = array();
+			$licensing = new Licensing();
 
 			register_setting(
 				'e20r_license_settings', // group, used for settings_fields()
@@ -190,13 +192,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 					if ( 'active' === $license['status'] ) {
 						$is_licensed = true;
-						$key         = ( ! Licensing::is_new_version() && isset( $license['license_key'] ) ?
+						$key         = ( ! $licensing->is_new_version() && isset( $license['license_key'] ) ?
 							$license['license_key'] :
 							( isset( $license['product_sku'] ) ? $license['product_sku'] : null )
 
 						);
 
-						$is_active = Licensing::is_active(
+						$is_active = $licensing->is_active(
 							$key,
 							$license,
 							$is_licensed
@@ -219,7 +221,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 					$expiration_ts = 0;
 
-					if ( Licensing::is_new_version() ) {
+					if ( $licensing->is_new_version() ) {
 
 						if ( ! empty( $license['expire'] ) ) {
 							$expiration_ts = (int) $license['expire'];
@@ -252,7 +254,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 									__(
 										'Warning: No expiration info found for %s. Using default value (expired)',
 										// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
-										'e20r-utility-licensing'
+										'00-e20r-utilities'
 									),
 									$license_name
 								),
@@ -283,9 +285,9 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 							'is_active'        => $is_active,
 							'expiration_ts'    => $expiration_ts,
 							'has_subscription' => ( isset( $license['subscription_status'] ) && 'active' === $license['subscription_status'] ),
-							'value'            => ( Licensing::is_new_version() && isset( $license['the_key'] ) ? $license['the_key'] : isset( $license['key'] ) ) ? $license['key'] : null,
+							'value'            => ( $licensing->is_new_version() && isset( $license['the_key'] ) ? $license['the_key'] : isset( $license['key'] ) ) ? $license['key'] : null,
 							'email_field'      => 'license_email',
-							'product_sku'      => Licensing::is_new_version() && isset( $license['product_sku'] ) ?
+							'product_sku'      => $licensing->is_new_version() && isset( $license['product_sku'] ) ?
 								$license['product_sku'] :
 								null,
 							'email_value'      => isset( $license['email'] ) ? $license['email'] : null,
@@ -364,10 +366,10 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		}
 
 		/**
-		 * Set the
+		 * Set the license setting property
 		 *
-		 * @param      $key
-		 * @param null $value
+		 * @param string      $key      License setting key (name of property)
+		 * @param null|string $value    License setting value (value of property)
 		 *
 		 * @return bool
 		 *
@@ -377,15 +379,25 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			if ( ! isset( $this->{$key} ) ) {
 				$this->utils->log( "Error: '${key}' does not exist!" );
-				throw new \Exception( 'Error: The %1$s setting does not exists', E20R_MISSING_SETTING );
+				throw new \Exception(
+					sprintf( 'Error: The %1$s setting does not exists', $key ),
+					E20R_MISSING_SETTING
+				);
 			}
 
 			$this->{$key} = $value;
+			// phpcs:ignore
 			$this->utils->log( "Set '${key}' to " . print_r( $value, true ) );
 
 			return true;
 		}
 
+		public function get_settings( $sku ) {
+
+			if ( ! isset( $this->settings[$sku] ) ) {
+				throw new NoLicenseKeyFoundException( $sku );
+			}
+		}
 		/**
 		 *
 		 * Load local settings for the specified product
@@ -393,8 +405,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @param string $product_sku
 		 *
 		 * @return array
+		 * @throws \Exception
 		 */
 		public function load_settings( $product_sku = null ) {
+
+			$licensing = new Licensing();
 
 			if ( is_null( $product_sku ) ) {
 				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
@@ -414,13 +429,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$settings = $defaults;
 			}
 
-			foreach( $settings as $setting_key => $value ) {
+			if ( $licensing->is_new_version() ) {
+				$this->settings = new NewLicenseSettings( $product_sku );
+			} else {
+				$this->settings = new OldLicenseSettings( $product_sku );
+			}
 
-				if ( Licensing::is_new_version() ) {
-					$this->settings = new NewLicenseSettings( $product_sku );
-				} else {
-					$this->settings = new OldLicenseSettings( $product_sku );
-				}
+			foreach ( $settings as $setting_key => $value ) {
 
 				$this->settings->set( $setting_key, $value );
 			}
@@ -471,13 +486,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @return array
 		 */
-		private function all_settings() {
+		public function all_settings() {
 
 			$settings = array();
 
-			foreach( $this as $key => $value ) {
-				if ( ! in_array( $key, $this->excluded ) ) {
-					$settings[$key] = $value;
+			foreach ( $this as $key => $value ) {
+				if ( ! in_array( $key, $this->excluded, true ) ) {
+					$settings[ $key ] = $value;
 				}
 			}
 
