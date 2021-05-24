@@ -62,7 +62,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * @var null|string
 		 */
-		public static $plugin_slug = null;
+		public $plugin_slug = '00-e20r-utilities';
 
 		/**
 		 * @var null|Utilities
@@ -82,13 +82,13 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Utilities constructor.
 		 */
-		private function __construct() {
+		public function __construct() {
 
 			self::$library_url  = \plugins_url( null, __FILE__ );
 			self::$library_path = \plugin_dir_path( __FILE__ );
-			self::$plugin_slug = \apply_filters( 'e20r_licensing_text_domain', 'e20r-utilities-licensing' );
+			$this->plugin_slug  = \apply_filters( 'e20r_licensing_text_domain', '00-e20r-utilities' );
 
-			$this->log( 'Plugin Slug: ' . self::$plugin_slug );
+			$this->log( 'Plugin Slug: ' . $this->plugin_slug );
 
 			$this->blog_id = get_current_blog_id();
 
@@ -241,32 +241,30 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			$this->log( 'Processing load_textdomain' );
 
-			if ( empty( self::$plugin_slug ) ) {
+			if ( empty( $this->plugin_slug ) ) {
 				$this->log( 'Error attempting to load translation files!' );
 
 				return;
 			}
 
-			$domain_name = self::$plugin_slug;
+			$locale = apply_filters( 'plugin_locale', get_locale(), '00-e20r-utilities' );
 
-			$locale = apply_filters( 'plugin_locale', get_locale(), $domain_name );
-
-			$mofile        = "{$domain_name}-{$locale}.mo";
+			$mofile        = "00-e20r-utilities-{$locale}.mo";
 			$mofile_local  = plugin_dir_path( __FILE__ ) . 'languages/' . $mofile;
-			$mofile_global = WP_LANG_DIR . "/{$domain_name}/" . $mofile;
+			$mofile_global = WP_LANG_DIR . '/00-e20r-utilities/' . $mofile;
 
-			load_textdomain( "{$domain_name}", $mofile_local );
+			load_textdomain( '00-e20r-utilities', $mofile_local );
 
 			//Attempt to load the global translation first (if it exists)
 			if ( file_exists( $mofile_global ) ) {
-				load_textdomain( "{$domain_name}", $mofile_global );
+				load_textdomain( '00-e20r-utilities', $mofile_global );
 			}
 
 			//load local second
-			load_textdomain( "{$domain_name}", $mofile_local );
+			load_textdomain( '00-e20r-utilities', $mofile_local );
 
 			//load via plugin_textdomain/glotpress
-			load_plugin_textdomain( "{$domain_name}", false, dirname( __FILE__ ) . '/../../languages/' );
+			load_plugin_textdomain( '00-e20r-utilities', false, dirname( __FILE__ ) . '/../../languages/' );
 		}
 
 		/**
@@ -643,14 +641,52 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		}
 
 		/**
-		 * Print a message to the WP_DEBUG logger if configured (Tries to mask email addresses)
+		 * Define and return the path name for debug logging file
+		 *
+		 * @return false|string
+		 */
+		public function get_debug_name() {
+
+			if ( ! function_exists( 'wp_upload_dir' ) ) {
+				error_log("Error: Cannot find WP upload information (yet?)");
+				return false;
+			}
+
+			$log_file = sprintf(
+				'debug_%1$s.log',
+				date_i18n( 'Y_M_D', time() )
+			);
+
+			$upload_dir_info = wp_upload_dir();
+
+			if (empty( $upload_dir_info ) ) {
+				error_log("Error: Unable to define the upload directory information for WordPress!");
+				return false;
+			}
+
+			$log_directory = sprintf( '%1$s/e20r_debug',  $upload_dir_info['base_dir'] );
+			$log_name      = sprintf( '%1$s/%2$s', $log_directory, $log_file );
+
+			if ( ! file_exists( $log_directory ) ) {
+				if ( ! mkdir( $log_directory, 0755, true ) ) {
+					// phpcs:ignore
+					error_log("Unable to create the E20R Debug logging location: {$log_directory}");
+					return false;
+				}
+			}
+
+			return $log_name;
+		}
+		/**
+		 * Print a message to the daily E20R Log file if WP_DEBUG is configured (Does not try to mask email addresses)
 		 *
 		 * @param string $message
+		 * @return false|null
 		 */
 		public function log( $message ) {
 
 			if ( ! defined( 'WP_DEBUG' ) || defined( 'WP_DEBUG' ) && false === WP_DEBUG ) {
-				return;
+				return false;
 			}
 
 			/**
@@ -669,9 +705,17 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$timestamp        = gmdate( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
 			$calling_function = $this->who_called_me();
 
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( "[{$thread_id}]({$timestamp}) {$calling_function} - {$message}" );
+			// Log the message to the custom E20R debug log
+			$log_name = $this->get_debug_name();
 
+			if ( !empty( $log_name ) ) {
+				// phpcs:ignore
+				$log_fh = fopen( $log_name, 'a+' );
+				// phpcs:ignore
+				fprintf( $log_fh, "[{$thread_id}]({$timestamp}) {$calling_function} - {$message}" );
+				// phpcs:ignore
+				fclose( $log_fh );
+			}
 		}
 
 		/**
