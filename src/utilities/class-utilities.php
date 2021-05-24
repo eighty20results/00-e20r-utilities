@@ -664,7 +664,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				return false;
 			}
 
-			$log_directory = sprintf( '%1$s/e20r_debug',  $upload_dir_info['base_dir'] );
+			$log_directory = sprintf( '%1$s/e20r_debug',  $upload_dir_info['basedir'] );
 			$log_name      = sprintf( '%1$s/%2$s', $log_directory, $log_file );
 
 			if ( ! file_exists( $log_directory ) ) {
