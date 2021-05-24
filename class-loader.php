@@ -165,6 +165,6 @@ if ( function_exists( 'add_filter' ) ) {
 	\add_filter( 'e20r_utilities_module_installed', '__return_true', -1, 1 );
 }
 
-if ( class_exists( '\E20R\Utilities\Utilities' ) ) {
+if ( class_exists( '\\E20R\\Utilities\\Utilities' ) ) {
 	Utilities::configure_update( '00-e20r-utilities', __FILE__ );
 }
