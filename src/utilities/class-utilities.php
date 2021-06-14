@@ -23,6 +23,12 @@ namespace E20R\Utilities;
 
 // Disallow direct access to the class definition
 
+use Exception;
+use Puc_v4_Factory;
+use function apply_filters;
+use function plugin_dir_path;
+use function plugins_url;
+
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 	wp_die( 'Cannot access file directly' );
 }
@@ -84,9 +90,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		public function __construct() {
 
-			self::$library_url  = \plugins_url( null, __FILE__ );
-			self::$library_path = \plugin_dir_path( __FILE__ );
-			$this->plugin_slug  = \apply_filters( 'e20r_licensing_text_domain', '00-e20r-utilities' );
+			self::$library_url  = plugins_url( null, __FILE__ );
+			self::$library_path = plugin_dir_path( __FILE__ );
+			$this->plugin_slug  = apply_filters( 'e20r_licensing_text_domain', '00-e20r-utilities' );
 
 			$this->log( 'Plugin Slug: ' . $this->plugin_slug );
 
@@ -385,6 +391,11 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				return $delays;
 			}
 
+			if ( ! function_exists( 'pmprosd_daysUntilDate' ) ) {
+				self::$instance->log( 'The PMPro Set Expiration Date add-on is not an active plugin!' );
+				return $delays;
+			}
+
 			if ( true === pmpro_isLevelRecurring( $level ) ) {
 
 				self::$instance->log( "Level {$level->id} is a recurring payments level" );
@@ -440,7 +451,6 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 						// Process active discount code delays
 						if ( ! empty( $active_codes ) ) {
-
 							foreach ( $active_codes as $code ) {
 
 								// Get the delay value from the Subscription Delays plugin
@@ -648,7 +658,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		public function get_debug_name() {
 
 			if ( ! function_exists( 'wp_upload_dir' ) ) {
-				error_log("Error: Cannot find WP upload information (yet?)");
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( 'Error: Cannot find WP upload information (yet?)' );
 				return false;
 			}
 
@@ -659,29 +670,30 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			$upload_dir_info = wp_upload_dir();
 
-			if (empty( $upload_dir_info ) ) {
-				error_log("Error: Unable to define the upload directory information for WordPress!");
+			if ( empty( $upload_dir_info ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( 'Error: Unable to define the upload directory information for WordPress!' );
 				return false;
 			}
 
-			$log_directory = sprintf( '%1$s/e20r_debug',  $upload_dir_info['basedir'] );
+			$log_directory = sprintf( '%1$s/e20r_debug', $upload_dir_info['basedir'] );
 			$log_name      = sprintf( '%1$s/%2$s', $log_directory, $log_file );
 
 			if ( ! file_exists( $log_directory ) ) {
 				if ( ! mkdir( $log_directory, 0755, true ) ) {
-					// phpcs:ignore
-					error_log("Unable to create the E20R Debug logging location: {$log_directory}");
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( "Unable to create the E20R Debug logging location: {$log_directory}" );
 					return false;
 				}
 			}
-
 			return $log_name;
 		}
+
 		/**
 		 * Print a message to the daily E20R Log file if WP_DEBUG is configured (Does not try to mask email addresses)
 		 *
 		 * @param string $message
-		 * @return false|null
+		 * @return bool|null
 		 */
 		public function log( $message ) {
 
@@ -708,7 +720,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			// Log the message to the custom E20R debug log
 			$log_name = $this->get_debug_name();
 
-			if ( !empty( $log_name ) ) {
+			if ( ! empty( $log_name ) ) {
 				// phpcs:ignore
 				$log_fh = fopen( $log_name, 'a+' );
 				// phpcs:ignore
@@ -716,6 +728,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				// phpcs:ignore
 				fclose( $log_fh );
 			}
+
+			return true;
 		}
 
 		/**
@@ -748,7 +762,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		public function get_variable( $name, $default = null ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			return isset( $_REQUEST[ $name ] ) && ! empty( $_REQUEST[ $name ] ) ? $this->_sanitize( $_REQUEST[ $name ] ) : $default;
+			return isset( $_REQUEST[ $name ] ) && ! empty( $_REQUEST[ $name ] ) ? $this->sanitize( $_REQUEST[ $name ] ) : $default;
 		}
 
 		/**
@@ -1008,7 +1022,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				for ( $i = 0; $i < $length; ++ $i ) {
 					$string .= $keyspace[ random_int( 0, $max_len ) ];
 				}
-			} catch ( \Exception $e ) {
+			} catch ( Exception $e ) {
 				$this->log( 'Error generating random string: ' . $e->getMessage() );
 
 				return false;
@@ -1139,7 +1153,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				require_once plugin_dir_path( __FILE__ ) . '../inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
 			}
 
-			$plugin_updates = \Puc_v4_Factory::buildUpdateChecker(
+			$plugin_updates = Puc_v4_Factory::buildUpdateChecker(
 				sprintf( 'https://eighty20results.com/protected-content/%1$s/metadata.json', $plugin_slug ),
 				$plugin_path,
 				$plugin_slug
