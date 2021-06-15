@@ -22,6 +22,7 @@
 namespace E20R\Utilities\Licensing;
 
 use E20R\Utilities\Utilities;
+use Exception;
 
 if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 
@@ -112,10 +113,9 @@ if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 			$this->utils->log( 'Forcing verification/check against upstream license server' );
 			try {
 				$this->settings->set( 'product_sku', $product_sku );
-				$this->settings->load_settings( $product_sku );
-			} catch ( \Exception $e ) {
+			} catch ( Exception $e ) {
 				$this->utils->add_message(
-					__( 'Error: Unable to update SKU for license', 'e20r-utilities-licensing' ),
+					__( 'Error: Unable to configure SKU for license', 'e20r-utilities-licensing' ),
 					'error',
 					'backend'
 				);
