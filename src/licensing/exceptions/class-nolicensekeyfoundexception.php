@@ -21,21 +21,16 @@
 
 namespace E20R\Utilities\Licensing\Exceptions;
 
+use Exception;
 
-use Throwable;
-
-class SetValueException extends \Exception {
-
-}
-
-class GetValueException extends \Exception {
-
-}
-
-class NoLicenseKeyFoundException extends \Exception {
+class NoLicenseKeyFoundException extends Exception {
 	public function __construct( $license_key ) {
 
-		$message = sprintf( __( 'Error: The specified license key (%s) was not found!', '00-e20r-utilities' ), $license_key );
+		$message = sprintf(
+			// translators: %s - The License Key supplied
+			__( 'Error: The specified license key (%s) was not found!', 'e20r-utilities-licensing' ),
+			$license_key
+		);
 		parent::__construct( $message );
 	}
 }
