@@ -21,6 +21,7 @@
 
 namespace E20R\Utilities\Licensing;
 
+use E20R\Utilities\Licensing\Exceptions\InvalidSettingKeyException;
 use E20R\Utilities\Licensing\Exceptions\NoLicenseKeyFoundException;
 use E20R\Utilities\Utilities;
 
@@ -84,19 +85,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		protected $excluded = array();
 
 		/**
-		 * Instance of the current class
-		 *
-		 * @var LicenseSettings|null
-		 */
-		private static $instance = null;
-
-		/**
-		 * Instance of the License Page HTML renderer
-		 * @var null|LicensePage $page
-		 */
-		private $page = null;
-
-		/**
 		 * LicenseSettings constructor.
 		 *
 		 * @param string|null $product_sku
@@ -104,10 +92,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		public function __construct( $product_sku = 'e20r_default_license' ) {
 
 			$this->utils       = Utilities::get_instance();
-			$this->page        = new LicensePage();
 			$this->product_sku = $product_sku;
 			$this->excluded    = array( 'excluded', 'utils', 'page_handle', 'settings', 'all_settings', 'instance', 'page' );
-			self::$instance    = $this;
 
 			if (
 				! defined( 'E20R_LICENSE_SERVER_URL' ) ||
@@ -148,15 +134,24 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			if ( ! isset( $this->{$key} ) ) {
 				$this->utils->log( "Error: '${key}' does not exist!" );
-				throw new \Exception(
-					sprintf( 'Error: The %1$s setting does not exists', $key ),
+				throw new InvalidSettingKeyException(
+					sprintf(
+						// translators: %1$s - Key name for the failed setting update
+						__( 'Error: The %1$s setting does not exists', 'e20r-utilities-licensing' ),
+						$key
+					),
 					E20R_MISSING_SETTING
 				);
 			}
 
 			$this->{$key} = $value;
-			// phpcs:ignore
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 			$this->utils->log( "Set '${key}' to " . print_r( $value, true ) );
+
+			// (Re)Load the settings for the specified sku
+			if ( 'product_sku' === $key ) {
+				$this->load_settings( $value );
+			}
 
 			return true;
 		}
