@@ -722,11 +722,20 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			if ( ! empty( $log_name ) ) {
 				// phpcs:ignore
-				$log_fh = fopen( $log_name, 'a+' );
+				// $log_fh = fopen( $log_name, 'a+' );
 				// phpcs:ignore
-				fprintf( $log_fh, "[{$thread_id}]({$timestamp}) {$calling_function} - {$message}" );
+				// $log_fh,
+				error_log(
+					sprintf(
+							'[%s](%s) %s - %s',
+							$thread_id,
+							$timestamp,
+							$calling_function,
+							$message
+					)
+				);
 				// phpcs:ignore
-				fclose( $log_fh );
+				// fclose( $log_fh );
 			}
 
 			return true;
@@ -1150,7 +1159,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			 * One-click update handler & checker
 			 */
 			if ( ! class_exists( '\\Puc_v4_Factory' ) ) {
-				require_once plugin_dir_path( __FILE__ ) . '../inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
+				require_once plugin_dir_path( E20R_UTILITIES_BASE_FILE ) . 'inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
 			}
 
 			$plugin_updates = Puc_v4_Factory::buildUpdateChecker(
