@@ -12,21 +12,13 @@ This module is intended to simplify support for licensed WordPress plugins.
 1. Have the WooCommerce [License Keys for WooCommerce](https://wordpress.org/plugins/woo-license-keys/) plugin installed and configured on your website
 1. Optionally purchase and install the [WooCommerce License Keys (Extended)](https://www.10quality.com/product/woocommerce-license-keys/) plugin
 1. Create a "License" or "Simple Subscription" product, using the same SKU value as you used to define the 'key_prefix', 'stub' and 'product_sku' in the `LicenseClient::add_new_license_info()` method
-1. Add a client class for the licensing module by extending it from the E20R Licensing utlitity module base `LicenseClient` class. For example: `class My_LicenseClient extends \E20R\Utilities\Licensing\LicenseClient {}` (see below)
+1. Add a client class for the licensing module by extending it from the E20R Licensing utility module base `LicenseClient` class. For example: `class My_LicenseClient extends \E20R\Utilities\Licensing\LicenseClient {}` (see below)
 1. Adjust any E20R Licensing utilities module filters to match your needs (see "Filters & Hooks" section below)
 
 
 === Installation of the E20R Utilities module ===
 
-To install the E20R Licensing utility module, you'll need to add it as a sub-directory of your plugin.
-
-The easiest way to go about this _and_ ensure you stay up to date with bug fixes etc, is to add the E20R Utilities project on github as a Git sub-module in your own plugin development project/directory:
-
-`
-$ cd <path-to-project>
-$ git submodule add -b master git@github.com:eighty20results/Utilities Utilities
-$ git submodule update --remote
-`
+To install the E20R Licensing utility module, you'll need to download it from the [Eighty/20 Results web server](https://eighty20results.com/product/e20r-utilities-module-for-other-plugins/) and install it as a standard uploaded plugin, a 3rd party, WordPress plugin.
 
 === Using the E20R Licensing utility module ===
 
