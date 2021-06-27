@@ -1,0 +1,6 @@
+ARG WP_RELEASE latest
+FROM wordpress:$WP_RELEASE
+
+RUN docker-php-ext-install pdo_mysql
+RUN pecl install pcov && docker-php-ext-enable pcov
+# RUN pecl install runkit && docker-php-ext-enable runkit

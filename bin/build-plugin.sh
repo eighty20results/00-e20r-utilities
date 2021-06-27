@@ -1,22 +1,50 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 #
 # Build script for Eighty/20 Results WordPress plugins
 #
-# Copyright 2014 - 2020 (c) Eighty / 20 Results by Wicked Strong Chicks, LLC
+# Copyright 2014 - 2021 (c) Eighty / 20 Results by Wicked Strong Chicks, LLC
 #
 short_name="00-e20r-utilities"
 remote_server="eighty20results.com"
-declare -a include=("inc" "licensing" "utilities" "class-utility-loader.php" "README.txt")
-declare -a exclude=("*.yml" "*.phar" "composer.*" "vendor")
+declare -a include=( \
+	"docs" \
+	"inc" \
+	"src" \
+	"class-loader.php" \
+	"README.txt" \
+	"CHANGELOG.md"
+	)
+declare -a exclude=( \
+	".git" \
+	"docker" \
+	"bin" \
+	"Dockerfile" \
+	"tests" \
+	"Makefile" \
+	"metadata.json" \
+	"package.json" \
+	".github" \
+	".circleci" \
+	"docker-compose.yml" \
+	"build_readmes" \
+	"build" \
+	".idea" \
+	"*.yml" \
+	"*.phar" \
+	"composer.*" \
+	"vendor" \
+	)
 declare -a build=()
 plugin_path="${short_name}"
-version=$(egrep "^Version:" ../class-utility-loader.php | sed 's/[[:alpha:]|(|[:space:]|\:]//g' | awk -F- '{printf "%s", $1}')
+version=$(grep -E "^Version:" ../class-loader.php | \
+	sed 's/[[:alpha:]|(|[:space:]|\:]//g' | \
+	awk -F- '{printf "%s", $1}')
 metadata="../metadata.json"
 src_path="../"
 dst_path="../build/${plugin_path}"
 kit_path="../build/kits"
 kit_name="${kit_path}/${short_name}-${version}"
-
+remote_path="./www/eighty20results.com/public_html/protected-content/"
 echo "Building ${short_name} kit for version ${version}"
 
 mkdir -p "${kit_path}"
@@ -39,11 +67,13 @@ done
 
 for e in "${exclude[@]}"; do
   if ls "${src_path}${e}" 1> /dev/null 2>&1; then
-    find "${dst_path}" -type d -iname "${e}" -exec rm -rf {} \;
+  	if [[ "${e}" =~ '/' ]]; then
+			e=$(awk -F/ '{ print $NF }' <<< "${e}")
+		fi
+  	echo "Excluding ${e} from ${dst_path}"
+    find "${dst_path}" -iname "${e}" -exec rm -rf {} \;
   fi
 done
-
-# mkdir -p "${dst_path}/
 
 for b in "${build[@]}"; do
   if ls "${src_path}${b}" 1> /dev/null 2>&1; then
@@ -52,17 +82,26 @@ for b in "${build[@]}"; do
 done
 
 cd "${dst_path}/.." || exit 1
+echo ${PWD} && ls -l "${plugin_path}"
 zip -r "${kit_name}.zip" "${plugin_path}"
-ssh "${remote_server}" "cd ./${remote_server}/protected-content/ ; mkdir -p \"${short_name}\""
+# We _want_ to expand the variables on the client side
+# shellcheck disable=SC2029
+ssh "${remote_server}" "cd ${remote_path}; mkdir -p \"${short_name}\""
 
-echo "Copying ${kit_name}.zip to ${remote_server}:./${remote_server}/protected-content/${short_name}/"
-scp "${kit_name}.zip" "${remote_server}:./${remote_server}/protected-content/${short_name}/"
+echo "Copying ${kit_name}.zip to ${remote_server}:${remote_path}/${short_name}/"
+scp "${kit_name}.zip" "${remote_server}:${remote_path}/${short_name}/"
 
-echo "Copying ${metadata} to ${remote_server}:./${remote_server}/protected-content/${short_name}/"
-scp "${metadata}" "${remote_server}:./${remote_server}/protected-content/${short_name}/"
+echo "Copying ${metadata} to ${remote_server}:${remote_path}/${short_name}/"
+scp "${metadata}" "${remote_server}:${remote_path}/${short_name}/"
 
 echo "Linking ${short_name}/${short_name}-${version}.zip to ${short_name}.zip on remote server"
-ssh "${remote_server}" "cd ./${remote_server}/protected-content/ ; ln -sf \"${short_name}\"/\"${short_name}\"-\"${version}\".zip \"${short_name}\".zip"
+# We _want_ to expand the variables on the client side
+# shellcheck disable=SC2029
+ssh "${remote_server}" \
+	"cd ${remote_path}/ ; ln -sf \"${short_name}\"/\"${short_name}\"-\"${version}\".zip \"${short_name}\".zip"
+
+# Return to the root directory
+cd "${src_path}" || die 1
+
+# And clean up
 rm -rf "${dst_path}"
-
-
