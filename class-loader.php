@@ -38,11 +38,17 @@ if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 	wp_die( 'Cannot access file directly' );
 }
 
+if ( ! defined( 'E20R_UTILITIES_BASE_FILE' ) ) {
+	define( 'E20R_UTILITIES_BASE_FILE', __FILE__ );
+}
+
 if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 
 	class Loader {
 
 		public function __construct() {
+
+			// Load the composer autoloader for the 10quality utilities
 			if ( function_exists( 'plugin_dir_path' ) ) {
 				require_once \plugin_dir_path( __FILE__ ) . 'inc/autoload.php';
 			} else {
@@ -146,11 +152,6 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 			return true;
 		}
 	}
-}
-
-# Load the composer autoloader for the 10quality utilities
-if ( file_exists( __DIR__ . '/inc/autoload.php' ) ) {
-	require_once __DIR__ . '/inc/autoload.php';
 }
 
 try {
