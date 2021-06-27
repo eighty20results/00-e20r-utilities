@@ -7,14 +7,28 @@
 short_name="00-e20r-utilities"
 remote_server="eighty20results.com"
 declare -a include=( \
+	"docs" \
 	"inc" \
-	"licensing" \
-	"utilities" \
+	"src" \
 	"class-loader.php" \
 	"README.txt" \
 	"CHANGELOG.md"
 	)
 declare -a exclude=( \
+	".git" \
+	"docker" \
+	"bin" \
+	"Dockerfile" \
+	"tests" \
+	"Makefile" \
+	"metadata.json" \
+	"package.json" \
+	".github" \
+	".circleci" \
+	"docker-compose.yml" \
+	"build_readmes" \
+	"build" \
+	".idea" \
 	"*.yml" \
 	"*.phar" \
 	"composer.*" \
@@ -22,7 +36,7 @@ declare -a exclude=( \
 	)
 declare -a build=()
 plugin_path="${short_name}"
-version=$(egrep "^Version:" ../class-loader.php | \
+version=$(grep -E "^Version:" ../class-loader.php | \
 	sed 's/[[:alpha:]|(|[:space:]|\:]//g' | \
 	awk -F- '{printf "%s", $1}')
 metadata="../metadata.json"
@@ -68,7 +82,10 @@ for b in "${build[@]}"; do
 done
 
 cd "${dst_path}/.." || exit 1
+echo ${PWD} && ls -l "${plugin_path}"
 zip -r "${kit_name}.zip" "${plugin_path}"
+# We _want_ to expand the variables on the client side
+# shellcheck disable=SC2029
 ssh "${remote_server}" "cd ${remote_path}; mkdir -p \"${short_name}\""
 
 echo "Copying ${kit_name}.zip to ${remote_server}:${remote_path}/${short_name}/"
@@ -82,6 +99,9 @@ echo "Linking ${short_name}/${short_name}-${version}.zip to ${short_name}.zip on
 # shellcheck disable=SC2029
 ssh "${remote_server}" \
 	"cd ${remote_path}/ ; ln -sf \"${short_name}\"/\"${short_name}\"-\"${version}\".zip \"${short_name}\".zip"
+
+# Return to the root directory
+cd "${src_path}" || die 1
 
 # And clean up
 rm -rf "${dst_path}"

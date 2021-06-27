@@ -54,5 +54,4 @@ fabric.properties
 /composer.phar
 /composer.lock
 /build/
-/build_readmes/
 /.phpunit.result.cache

@@ -3,9 +3,9 @@ Contributors: eighty20results
 Tags: e20r-utilities, module, licensing, tools
 Requires at least: 5.0
 Tested up to: 5.7.2
-Stable tag: 
+Stable tag: 2.0
 
-Adds various utility functions and license capabilities for Eighty/20 Results developed plugins
+Adds various utility functions and license capabilities needed by some Eighty/20 Results developed plugins
 
 == Description ==
 The plugin consolidates required functionality for a number of Eighty / 20 Results developed plugins.
