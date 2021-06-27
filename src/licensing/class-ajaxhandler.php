@@ -51,9 +51,8 @@ if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 		 * Constructor for the AjaxHandler() class
 		 */
 		public function __construct() {
-			$this->utils    = Utilities::get_instance();
-			$this->settings = new LicenseSettings();
-			$this->server   = new LicenseServer();
+			$this->utils  = Utilities::get_instance();
+			$this->server = new LicenseServer();
 		}
 
 		/**
@@ -81,6 +80,8 @@ if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 				);
 				exit();
 			}
+
+			$this->settings = new LicenseSettings( $product_sku );
 
 			if ( empty( $license_key ) ) {
 				wp_send_json_error(
