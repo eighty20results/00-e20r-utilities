@@ -10,7 +10,7 @@ declare -a include=( \
 	"inc" \
 	"licensing" \
 	"utilities" \
-	"class-utility-loader.php" \
+	"class-loader.php" \
 	"README.txt" \
 	"CHANGELOG.md"
 	)
@@ -22,7 +22,7 @@ declare -a exclude=( \
 	)
 declare -a build=()
 plugin_path="${short_name}"
-version=$(egrep "^Version:" ../class-utility-loader.php | \
+version=$(egrep "^Version:" ../class-loader.php | \
 	sed 's/[[:alpha:]|(|[:space:]|\:]//g' | \
 	awk -F- '{printf "%s", $1}')
 metadata="../metadata.json"
@@ -85,5 +85,3 @@ ssh "${remote_server}" \
 
 # And clean up
 rm -rf "${dst_path}"
-
-
