@@ -85,6 +85,21 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		protected $excluded = array();
 
 		/**
+		 * Should we verify SSL certificate(s)
+		 *
+		 * @var bool $ssl_verify
+		 */
+		protected $ssl_verify = false;
+
+		/**
+		 * New or old version of licensing system
+		 *
+		 * @var bool $new_version
+		 *
+		 */
+		protected $new_version = false;
+
+		/**
 		 * LicenseSettings constructor.
 		 *
 		 * @param string|null $product_sku
@@ -94,6 +109,21 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			$this->utils       = Utilities::get_instance();
 			$this->product_sku = $product_sku;
 			$this->excluded    = array( 'excluded', 'utils', 'page_handle', 'settings', 'all_settings', 'instance', 'page' );
+
+			if ( isset( $_SERVER['HTTP_HOST'] ) && 'eighty20results.com' === $_SERVER['HTTP_HOST'] ) {
+				$this->utils->log( 'Running on own server. Deactivating SSL Verification' );
+				$this->ssl_verify = false;
+			}
+
+			// Determine whether we're using the new or old Licensing version
+			$this->new_version = (
+				defined( 'E20R_LICENSING_VERSION' ) &&
+				version_compare( E20R_LICENSING_VERSION, '3.0', 'ge' )
+			);
+
+			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				$this->utils->log( 'Using new or old version of licensing code..? ' . ( $this->new_version ? 'New' : 'Old' ) );
+			}
 
 			if (
 				! defined( 'E20R_LICENSE_SERVER_URL' ) ||
@@ -111,12 +141,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				);
 
 				return null;
-			}
-
-			if ( ! empty( $this->product_sku ) ) {
-				$defaults           = $this->defaults( $product_sku );
-				$this->all_settings = get_option( 'e20r_license_settings', $defaults );
-				$this->settings     = $this->all_settings[ $product_sku ];
 			}
 		}
 
@@ -157,11 +181,26 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		}
 
 		/**
+		 * Return all settings for a given license (SKU/Key)
+		 *
 		 * @param string $sku
 		 *
 		 * @throws NoLicenseKeyFoundException
 		 */
-		public function get_settings( $sku ) {
+		public function get_settings( $sku = null ) {
+
+			$excluded = apply_filters(
+				'e20r_licensing_excluded',
+				array(
+					'e20r_default_license',
+					'example_gateway_addon',
+					'new_licenses',
+				)
+			);
+
+			if ( null === $sku || in_array( $sku, $excluded, true ) ) {
+				return array();
+			}
 
 			if ( ! isset( $this->settings[ $sku ] ) ) {
 				throw new NoLicenseKeyFoundException( $sku );
@@ -181,7 +220,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 */
 		public function load_settings( $product_sku = null ) {
 
-			$licensing = new Licensing();
+			if ( ! empty( $this->product_sku ) ) {
+				$defaults           = $this->defaults( $product_sku );
+				$this->all_settings = get_option( 'e20r_license_settings', $defaults );
+				$this->settings     = $this->all_settings[ $product_sku ];
+			}
 
 			if ( is_null( $product_sku ) ) {
 				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
@@ -201,7 +244,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$settings = $defaults;
 			}
 
-			if ( $licensing->is_new_version() ) {
+			if ( $this->new_version ) {
 				$this->settings = new NewLicenseSettings( $product_sku );
 			} else {
 				$this->settings = new OldLicenseSettings( $product_sku );
@@ -278,9 +321,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @return array
 		 */
 		public function defaults( $product_sku = 'e20r_default_license' ) {
-
-			$this->product_sku = $product_sku;
-			return $this->settings->all_settings();
+			return $this->all_settings();
 		}
 
 		/**
@@ -378,7 +419,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 								$this->utils->log( 'Loading updated settings from server' );
 							}
 
-							$server = new LicenseServer( $licensing->is_new_version(), $licensing->get_ssl_verify() );
+							$server = new LicenseServer( $this->new_version, $this->ssl_verify );
 
 							if ( true === $server->status( $product, $license_settings[ $product ], true ) ) {
 								$result['settings'] = $this->merge( $product, $license_settings[ $product ] );
