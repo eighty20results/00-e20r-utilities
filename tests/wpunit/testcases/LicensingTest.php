@@ -235,10 +235,10 @@ class LicensingTest extends Unit {
 	 */
 	public function test_get_instance() {
 
-		Filters\expectApplied( 'e20r-licensing-text-domain' )
+		Filters\expectApplied( 'e20r_licensing_text_domain' )
 			->with( 'e20r-licensing-utility' );
 
-		self::assertInstanceOf( '\\E20R\\Utilities\\Licensing\\Licensing', Licensing::get_instance() );
+		self::assertInstanceOf( '\\E20R\\Utilities\\Licensing\\Licensing', new Licensing() );
 	}
 
 	public function test_get_text_domain() {
