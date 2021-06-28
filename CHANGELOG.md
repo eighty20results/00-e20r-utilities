@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.2] - 2021-06-28
+- BUG FIX: Use the correct branch (main) (Thomas Sjolshagen)
+- BUG FIX: Didn't include inc and build_readmes (Thomas Sjolshagen)
+- BUG FIX: Re-added the post-install/post-update commands for phpcs (Thomas Sjolshagen)
+- BUG FIX: Updated config for phpunit (Thomas Sjolshagen)
+- BUG FIX: Stop using CircleCI for now (Thomas Sjolshagen)
+
+
 ## [2.0.1] - 2021-06-28
 - BUG FIX: Didn't exclude MacOS specific files (Thomas Sjolshagen)
 - BUG FIX: Refactored the utilities module presence filter (Thomas Sjolshagen)
