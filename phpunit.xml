@@ -18,8 +18,27 @@
   ~
   ~  You can contact us at mailto:info@eighty20results.com
   -->
-
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/7.2/phpunit.xsd" bootstrap="tests/wpunit/bootstrap.php" backupGlobals="true" colors="true" convertErrorsToExceptions="true" convertNoticesToExceptions="true" convertWarningsToExceptions="true" verbose="true" printerClass="PHPUnit\TextUI\ResultPrinter" >
+<phpunit
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/6.3/phpunit.xsd"
+		backupGlobals="true"
+		backupStaticAttributes="false"
+		bootstrap="tests/phpunit/bootstrap.php"
+		colors="false"
+		convertErrorsToExceptions="true"
+		convertNoticesToExceptions="true"
+		convertWarningsToExceptions="true"
+		forceCoversAnnotation="false"
+		processIsolation="false"
+		stopOnError="false"
+		stopOnFailure="false"
+		stopOnIncomplete="false"
+		stopOnSkipped="false"
+		stopOnRisky="false"
+		timeoutForSmallTests="1"
+		timeoutForMediumTests="10"
+		timeoutForLargeTests="60"
+		verbose="false">
 	<testsuites>
 		<testsuite name="E20R Utilities Test Suite">
 			<directory suffix="Test.php">./tests/wpunit/testcases/</directory>
