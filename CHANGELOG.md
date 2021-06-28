@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [] - 2021-06-28
+- BUG FIX: Didn't exclude MacOS specific files (Thomas Sjolshagen)
+- BUG FIX: Refactored the utilities module presence filter (Thomas Sjolshagen)
+- BUG FIX: Updates to fix build environment (Thomas Sjolshagen)
+
+
 ## v2.0 - 2021-06-27
 - BUG FIX: Forgot to rename plugin source for build script (Thomas Sjolshagen)
 - BUG FIX: Use the expected repository (Thomas Sjolshagen)
