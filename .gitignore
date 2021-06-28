@@ -55,3 +55,4 @@ fabric.properties
 /composer.lock
 /build/
 /.phpunit.result.cache
+.DS_Store
