@@ -54,6 +54,8 @@ fabric.properties
 /composer.phar
 /composer.lock
 /build/
+/inc/
+/build_readmes/
 /.phpunit.result.cache
 .DS_Store
 

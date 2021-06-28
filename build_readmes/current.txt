@@ -1,3 +1,5 @@
-BUG FIX: Didn't exclude MacOS specific files (Thomas Sjolshagen)
-BUG FIX: Refactored the utilities module presence filter (Thomas Sjolshagen)
-BUG FIX: Updates to fix build environment (Thomas Sjolshagen)
+BUG FIX: Use the correct branch (main) (Thomas Sjolshagen)
+BUG FIX: Didn't include inc and build_readmes (Thomas Sjolshagen)
+BUG FIX: Re-added the post-install/post-update commands for phpcs (Thomas Sjolshagen)
+BUG FIX: Updated config for phpunit (Thomas Sjolshagen)
+BUG FIX: Stop using CircleCI for now (Thomas Sjolshagen)
