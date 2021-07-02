@@ -1,0 +1,35 @@
+# Directories
+/.github export-ignore
+/.circleci export-ignore
+/.wordpress-org export-ignore
+/bin export-ignore
+/build_env export-ignore
+/build_readmes export-ignore
+/build export-ignore
+/docker-env export-ignore
+/docker export-ignore
+/plugin-updates export-ignore
+/node_modules export-ignore
+/tests export-ignore
+
+# Files
+/.cvsignore export-ignore
+/.dockerignore export-ignore
+/.editorconfig export-ignore
+/.env.testing
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.phpunit.result.cache export-ignore
+/.phpcs.xml.dist export-ignore
+/action.yml export-ignore
+/codeception.dist.yml export-ignore
+/composer.json export-ignore
+/composer.lock export-ignore
+/composer.phar export-ignore
+/docker-compose.yml export-ignore
+/Dockerfile export-ignore
+/Makefile export-ignore
+/patchwork.json export-ignore
+/phpcs.xml.dist export-ignore
+/phpstan.dist.neon export-ignore
+/phpunit.xml export-ignore
