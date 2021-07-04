@@ -59,3 +59,4 @@ fabric.properties
 /.phpunit.result.cache
 .DS_Store
 
+/docker.hub.key
