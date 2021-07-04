@@ -441,7 +441,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				$settings = $this->settings->get_settings( $product_sku );
 				$expires  = null;
 			} catch ( \Exception $e ) {
-				$this->utils->log("Warning: Cannot find license for ${product_sku}: " . $e->getMessage() );
+				$this->utils->log( "Warning: Cannot find license for ${product_sku}: " . $e->getMessage() );
 				return true;
 			}
 
@@ -514,7 +514,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		public function activate( $product_sku, $settings ) {
 
 			$state = null;
-			// $product_sku = strtolower( $product_sku ); // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+			// phpcs:ignore
+			// $product_sku = strtolower( $product_sku );
 
 			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
