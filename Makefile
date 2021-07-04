@@ -299,9 +299,15 @@ readme: changelog # metadata
 	@./bin/readme.sh
 
 new-release: test clean-inc composer-prod
-	@rm -rf $(COMPOSER_DIR)/wp_plugins
-	@mkdir -p build/kits/
-	@git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME).zip --worktree-attributes main
+	@if [[ ! -f .gitattributes ]]; then \
+  		echo "Executing the in-plugin build process" && \
+  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh ; \
+	else ; \
+		echo "Using the git archive build process" && \
+		rm -rf $(COMPOSER_DIR)/wp_plugins && \
+		mkdir -p build/kits/ && \
+		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME).zip --worktree-attributes main ; \
+	fi
 
 #new-release: test composer-prod
 #	@./build_env/get_version.sh && \
