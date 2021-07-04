@@ -219,7 +219,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 			$license_settings = new LicenseSettings( $sku );
 
 			if ( is_null( $settings ) ) {
-				$settings         = $license_settings->all_settings();
+				$settings = $license_settings->all_settings();
 			}
 
 			if ( ! $this->is_new_version && empty( $settings['key'] ) ) {
