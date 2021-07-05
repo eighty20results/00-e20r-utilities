@@ -190,9 +190,11 @@ e20r-deps: clean-wp-deps
 				cd $(E20R_UTILITIES_PATH) && \
 				make new-release && \
 				make stop-stack && \
-				cp "$$(ls -art build/kits/* | tail -1)" $(COMPOSER_DIR)/wp_plugins/ && \
+				echo "Copy $${e20r_plugin}.zip to $(BASE_DIR)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
+				cp "$$(ls -art build/kits/* | tail -1)" "$(BASE_DIR)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
 				cd $(BASE_DIR) ; \
 			fi ; \
+			echo "'Installing' the $${e20r_plugin}.zip plugin" && \
 			$(UNZIP) -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -d $(COMPOSER_DIR)/wp_plugins/ 2>&1 > /dev/null && \
 			rm -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
 		fi ; \
@@ -316,8 +318,11 @@ changelog: build_readmes/current.txt
 readme: changelog # metadata
 	@./bin/readme.sh
 
+# FIXME: Normally we'll use this line to get the plugin version
+# @export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh loader)
+
 new-release: test clean-inc composer-prod
-	@export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) && \
+	@export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh loader) && \
 	if [[ ! -f .gitattributes ]]; then \
   		echo "Executing the in-plugin build process" && \
   		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh ; \
