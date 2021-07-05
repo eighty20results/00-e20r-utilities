@@ -30,7 +30,6 @@ services:
       WORDPRESS_DEBUG_DISPLAY: 0
     volumes:
       - ${LOCAL_PLUGIN_DIR}:/var/www/html/wp-content/plugins/${E20R_PLUGIN_NAME}
-      - ${SQL_BACKUP_FILE}/${E20R_PLUGIN_NAME}.sql:/docker-entrypoint-initdb.d/${E20R_PLUGIN_NAME}.sql
     depends_on:
       - database
 
@@ -46,6 +45,8 @@ services:
       MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_RANDOM_ROOT_PASSWORD: ${MYSQL_RANDOM_ROOT_PASSWORD}
+    volumes:
+      - ${LOCAL_PLUGIN_DIR}/tests/_data:/docker-entrypoint-initdb.d
 
 volumes:
   wordpress:
