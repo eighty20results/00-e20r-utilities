@@ -328,7 +328,7 @@ new-release: test stop-stack clean-inc composer-prod
 		echo "Using the git archive build process" && \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \
-		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$(E20R_PLUGIN_VERSION).zip --worktree-attributes main ; \
+		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip --worktree-attributes main ; \
 	fi
 
 #new-release: test composer-prod
