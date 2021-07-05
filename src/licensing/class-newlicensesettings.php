@@ -114,6 +114,11 @@ class NewLicenseSettings extends LicenseSettings {
 		parent::__construct( $product_sku );
 
 		$this->product_sku = $product_sku;
-		$this->load_settings();
+		try {
+			$this->load_settings( $product_sku );
+		} catch ( \Exception $e ) {
+			echo 'Error: ' . $e->getMessage(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			return false;
+		}
 	}
 }
