@@ -69,9 +69,11 @@ class NewLicenseSettingsTest extends \Codeception\Test\Unit {
 
 		Functions\expect( 'get_option' )
 			->with( 'e20r_license_settings' )
-			->andReturnUsing( function() use ($settings, $sku ) {
-				return $settings->defaults( $sku );
-			});
+			->andReturnUsing(
+				function() use ($settings, $sku ) {
+					return $settings->defaults( $sku );
+				}
+			);
 
 
 		self::assertEquals( $expected, $settings->get( 'product_sku' ) );
