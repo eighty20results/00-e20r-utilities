@@ -140,10 +140,8 @@ real-clean: stop-stack clean clean-inc
 		echo "Stopping docker-compose stack" ; \
 		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) rm --stop --force -v ; \
 	fi ; \
-	echo "Removing docker images" ; \
-	docker image remove $(PROJECT)_wordpress --force && \
-	docker image remove $(DB_IMAGE) --force
-
+	echo "Removing docker images" && \
+	docker image remove $(PROJECT)_wordpress --force
 
 php-composer:
 	@if [[ -z "$(PHP_BIN)" ]]; then \
