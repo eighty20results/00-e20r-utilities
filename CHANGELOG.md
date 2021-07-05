@@ -6,6 +6,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.2] - 2021-07-05
+- BUG FIX: Removing the containers didn't work (Thomas Sjolshagen)
+- BUG FIX: Didn't stop the test stack when testing is done (Thomas Sjolshagen)
+- BUG FIX: Wrong variable name used for dependency building/loading (Thomas Sjolshagen)
+- BUG FIX: docker-composer up failed due to missing volume definition (Thomas Sjolshagen)
+- BUG FIX: Port collisions when this plugin is a dependency for another plugin build (Thomas Sjolshagen)
+- BUG FIX: Added a few bug fixes to Makefile (Thomas Sjolshagen)
+- BUG FIX: Add exception handling to NewLicenseSettings() constructor (Thomas Sjolshagen)
+- BUG FIX: WPCS update (nit) (Thomas Sjolshagen)
+- BUG FIX: Didn't mock all uses of get_option() BUG FIX: Refactored LicensingTest.php BUG FIX: markTestSkipped() is static (Thomas Sjolshagen)
+- BUG FIX: Wrong path for source file (Thomas Sjolshagen)
+- BUG FIX: Initial commit - extracts version info for plugin (Thomas Sjolshagen)
+- Custom .gitignore for the _data test directory (Thomas Sjolshagen)
+- BUG FIX: Missing settings for docker-compose test environment (Thomas Sjolshagen)
+- BUG FIX: Wrong name for .env file (Thomas Sjolshagen)
+- BUG FIX: Exclude docker key file (if it exists) (Thomas Sjolshagen)
+- BUG FIX: Wrong path to docker key file (if it exists) (Thomas Sjolshagen)
+- BUG FIX: Wrong name for .env file (Thomas Sjolshagen)
+- BUG FIX: Didn't use git archive to build new plugin archive (Thomas Sjolshagen)
+- BUG FIX: Clean up PHPCS errors in class-licensing.php (Thomas Sjolshagen)
+- BUG FIX: Clean up PHPCS errors in class-licenseserver.php (Thomas Sjolshagen)
+- BUG FIX: Initial commit of .gitattributes (Thomas Sjolshagen)
+- BUG FIX: Refactored Makefile to support plugin_config.mk (Thomas Sjolshagen)
+- BUG FIX: Initial commit of plugin_config.mk (Thomas Sjolshagen)
+- Bug fix/from 109 (#101) (Thomas Sjølshagen)
+- BUG FIX: Stop using CircleCI for now (Thomas Sjolshagen)
+- V2.0.1 (#99) (Thomas Sjølshagen)
+
 ## [2.0.2] - 2021-06-28
 - BUG FIX: Use the correct branch (main) (Thomas Sjolshagen)
 - BUG FIX: Didn't include inc and build_readmes (Thomas Sjolshagen)
