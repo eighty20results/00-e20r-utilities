@@ -49,9 +49,15 @@ class LicensingTest extends Unit {
 
 		Functions\expect( 'get_option' )
 			->with( 'e20r_license_settings' )
-			->andReturnUsing( function() {
-				return 'test';
-			});
+			->andReturnUsing(
+				function() {
+					return 'test';
+				}
+			);
+
+		Functions\expect( 'get_option' )
+			->with( 'home' )
+			->andReturn( 'https://localhost:7253/' );
 
 		Functions\expect( 'plugin_dir_path' )
 			->andReturn( sprintf( '/var/www/html/wp-content/plugins/00-e20r-utilities/' ) );
@@ -81,7 +87,7 @@ class LicensingTest extends Unit {
 	 */
 	public function test_load_hooks() {
 
-		$class = Licensing::get_instance();
+		$class = new Licensing();
 
 		Actions\expectAdded( 'admin_enqueue_scripts' )
 			->with( array( $class, 'enqueue' ), 10 );
@@ -141,9 +147,11 @@ class LicensingTest extends Unit {
 	 * @test
 	 */
 	public function test_get_license_page_url( $stub, $expected ) {
+		$licensing = new Licensing( $stub );
+
 		self::assertEquals(
 			$expected,
-			Licensing::get_license_page_url( $stub ),
+			$licensing->get_license_page_url( $stub ),
 			sprintf( 'Testing that license server URL contains "%s"', $stub )
 		);
 	}
@@ -173,9 +181,10 @@ class LicensingTest extends Unit {
 	 * @test
 	 */
 	public function test_neg_get_license_page_url( $stub, $expected ) {
+		$licensing = new Licensing( $stub );
 		self::assertNotEquals(
 			$expected,
-			Licensing::get_license_page_url( $stub ),
+			$licensing->get_license_page_url( $stub ),
 			sprintf( 'Testing that license server URL contains "%s"', $stub )
 		);
 	}
@@ -203,11 +212,11 @@ class LicensingTest extends Unit {
 	 */
 	public function test_is_new_version( $expected ) {
 
-		if (!extension_loaded('runkit')) {
-			$this->markTestSkipped('This test requires the runkit extension.');
+		if ( ! extension_loaded( 'runkit' ) ) {
+			self::markTestSkipped( 'This test requires the runkit extension.' );
 		}
 
-		runkit_constant_remove('WP_PLUGIN_DIR');
+		runkit_constant_remove( 'WP_PLUGIN_DIR' );
 		$licensing = new Licensing();
 
 		self::assertEquals( $expected, $licensing->is_new_version() );
