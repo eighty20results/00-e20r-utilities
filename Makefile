@@ -304,7 +304,7 @@ build-test: docker-deps start-stack db-import
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress $(PWD)/$(COMPOSER_DIR)/bin/codecept build -v
 
-test: clean deps code-standard-test start-stack db-import wp-unit-test # TODO: phpstan-test between phpcs & unit tests
+test: clean deps code-standard-test start-stack db-import wp-unit-test stop-stack # TODO: phpstan-test between phpcs & unit tests
 
 git-log:
 	@./bin/create_log.sh
@@ -321,7 +321,7 @@ readme: changelog # metadata
 # FIXME: Normally we'll use this line to get the plugin version
 # @export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh loader)
 
-new-release: test clean-inc composer-prod
+new-release: test stop-stack clean-inc composer-prod
 	@export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh loader) && \
 	if [[ ! -f .gitattributes ]]; then \
   		echo "Executing the in-plugin build process" && \
