@@ -41,7 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BUG FIX: Updated config for phpunit (Thomas Sjolshagen)
 - BUG FIX: Stop using CircleCI for now (Thomas Sjolshagen)
 
-
 ## [2.0.1] - 2021-06-28
 - BUG FIX: Didn't exclude MacOS specific files (Thomas Sjolshagen)
 - BUG FIX: Refactored the utilities module presence filter (Thomas Sjolshagen)
@@ -52,7 +51,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BUG FIX: Use the expected repository (Thomas Sjolshagen)
 - BUG FIX: Minor nits (Thomas Sjolshagen)
 - BUG FIX: More tweaking for wp unit tests (Thomas Sjolshagen)
-- BUG FIX: Still using error_log() for now (Thomas Sjolshagen)
 - BUG FIX: Still using error_log() for now (Thomas Sjolshagen)
 - BUG FIX: Refactored - Plugin uses own autoloader (Thomas Sjolshagen)
 - BUG FIX: Refactored - Moving away from Singleton pattern (Thomas Sjolshagen)
@@ -76,7 +74,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BUG FIX: Fix I18N slug name BUG FIX: Be a little smarter about debug logging (own file & dir) (Thomas Sjolshagen)
 - BUG FIX: Fix I18N slug name (Thomas Sjolshagen)
 
-
 ## v1.0.8 - 2021-03-01
 
 * BUG FIX: Problems updating update module call-out in other plugins embedding 00-e20r-utilities
@@ -96,7 +93,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * BUG FIX: Wrong path when loading the plugin update checker
 * ENH: Bumping version number and change log management logic
-
 
 ## 1.0.3 -
 * BUG FIX: Attempting to fix plugin updater

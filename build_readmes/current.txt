@@ -1,3 +1,5 @@
+BUG FIX: Automate docs/readme generation (Thomas Sjolshagen)
+BUG FIX: Incorrect version updated during build (v2.0.2 for WP 5.7.2) (Thomas Sjolshagen)
 BUG FIX: Removing the containers didn't work (Thomas Sjolshagen)
 BUG FIX: Didn't stop the test stack when testing is done (Thomas Sjolshagen)
 BUG FIX: Wrong variable name used for dependency building/loading (Thomas Sjolshagen)
