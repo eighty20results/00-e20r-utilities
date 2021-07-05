@@ -39,10 +39,10 @@ plugin_path="${short_name}"
 version=$(grep -E "^Version:" ../class-loader.php | \
 	sed 's/[[:alpha:]|(|[:space:]|\:]//g' | \
 	awk -F- '{printf "%s", $1}')
-metadata="../metadata.json"
-src_path="../"
-dst_path="../build/${plugin_path}"
-kit_path="../build/kits"
+metadata="./metadata.json"
+src_path="./"
+dst_path="./build/${plugin_path}"
+kit_path="./build/kits"
 kit_name="${kit_path}/${short_name}-${version}"
 remote_path="./www/eighty20results.com/public_html/protected-content/"
 echo "Building ${short_name} kit for version ${version}"
