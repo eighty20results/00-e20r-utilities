@@ -37,10 +37,10 @@ declare -a exclude=( \
 declare -a build=()
 plugin_path="${short_name}"
 version=$(./bin/get_plugin_version.sh loader)
-metadata="./metadata.json"
-src_path="$(pwd)"
+metadata="../metadata.json"
+src_path="$(pwd)/"
 dst_path="./build/${plugin_path}"
-kit_path="./build/kits"
+kit_path="./kits"
 kit_name="${kit_path}/${short_name}-${version}.zip"
 remote_path="./www/eighty20results.com/public_html/protected-content/"
 echo "Building ${short_name} kit for version ${version}"
@@ -80,7 +80,7 @@ for b in "${build[@]}"; do
 done
 
 cd "${dst_path}/.." || exit 1
-echo ${PWD} && ls -l "${plugin_path}"
+echo ${PWD} && ls -l
 zip -r "${kit_name}" "${plugin_path}"
 # We _want_ to expand the variables on the client side
 # shellcheck disable=SC2029
