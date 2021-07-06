@@ -319,9 +319,9 @@ readme: changelog # metadata
 # FIXME: Normally we'll use this line to get the plugin version
 # @export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh loader)
 
-new-release: test stop-stack clean-inc composer-prod
+build: test stop-stack clean-inc composer-prod
 	@export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh loader) && \
-	if [[ ! -f .gitattributes ]]; then \
+	if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
   		echo "Executing the in-plugin build process" && \
   		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh ; \
 	else \
