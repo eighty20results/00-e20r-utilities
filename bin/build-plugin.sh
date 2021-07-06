@@ -36,14 +36,12 @@ declare -a exclude=( \
 	)
 declare -a build=()
 plugin_path="${short_name}"
-version=$(grep -E "^Version:" ../class-loader.php | \
-	sed 's/[[:alpha:]|(|[:space:]|\:]//g' | \
-	awk -F- '{printf "%s", $1}')
+version=$(./bin/get_plugin_version.sh loader)
 metadata="./metadata.json"
-src_path="./"
+src_path="$(pwd)"
 dst_path="./build/${plugin_path}"
 kit_path="./build/kits"
-kit_name="${kit_path}/${short_name}-${version}"
+kit_name="${kit_path}/${short_name}-${version}.zip"
 remote_path="./www/eighty20results.com/public_html/protected-content/"
 echo "Building ${short_name} kit for version ${version}"
 
@@ -83,13 +81,13 @@ done
 
 cd "${dst_path}/.." || exit 1
 echo ${PWD} && ls -l "${plugin_path}"
-zip -r "${kit_name}.zip" "${plugin_path}"
+zip -r "${kit_name}" "${plugin_path}"
 # We _want_ to expand the variables on the client side
 # shellcheck disable=SC2029
 ssh "${remote_server}" "cd ${remote_path}; mkdir -p \"${short_name}\""
 
-echo "Copying ${kit_name}.zip to ${remote_server}:${remote_path}/${short_name}/"
-scp "${kit_name}.zip" "${remote_server}:${remote_path}/${short_name}/"
+echo "Copying ${kit_name} to ${remote_server}:${remote_path}/${short_name}/"
+scp "${kit_name}" "${remote_server}:${remote_path}/${short_name}/"
 
 echo "Copying ${metadata} to ${remote_server}:${remote_path}/${short_name}/"
 scp "${metadata}" "${remote_server}:${remote_path}/${short_name}/"
