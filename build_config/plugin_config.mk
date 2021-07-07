@@ -1,4 +1,5 @@
 E20R_PLUGIN_NAME ?= 00-e20r-utilities
+E20R_PLUGIN_BASE_FILE ?= %.php
 WP_DEPENDENCIES ?= paid-memberships-pro
 E20R_DEPENDENCIES ?=
 
