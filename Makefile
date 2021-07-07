@@ -301,8 +301,7 @@ unit-test: deps
 wp-unit-test: docker-deps start-stack db-import
 	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 		exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
-		wordpress $(COMPOSER_DIR)/bin/codecept run -v wpunit
-		# --coverage --coverage-html
+		wordpress $(COMPOSER_DIR)/bin/codecept run -v --debug wpunit
 
 acceptance-test: docker-deps start-stack db-import
 	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
@@ -329,12 +328,12 @@ readme: changelog metadata
 	@./bin/readme.sh
 
 $(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
-	@export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) \
-	if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
+	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
   		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh ; \
 	else \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \
+		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) \
 		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip --worktree-attributes main ; \
 	fi
 
