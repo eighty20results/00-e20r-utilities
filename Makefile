@@ -24,13 +24,24 @@ WP_PLUGIN_URL ?= "https://downloads.wordpress.org/plugin/"
 E20R_PLUGIN_URL ?= "https://eighty20results.com/protected-content"
 WP_CONTAINER_NAME ?= codecep-wp-$(E20R_PLUGIN_NAME)
 DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
-CONTAINER_ACCESS_TOKEN := $(shell [[ -f ./docker.hub.key ]] && cat ./docker.hub.key)
+CONTAINER_ACCESS_TOKEN := $(shell if [[ -f ./docker.hub.key ]]; then cat ./docker.hub.key ; fi)
 
 CONTAINER_REPO ?= 'docker.io/$(DOCKER_USER)'
 DOCKER_IS_RUNNING := $(shell ps -ef | grep Docker.app | wc -l | xargs)
 
 ifeq ($(CONTAINER_ACCESS_TOKEN),)
 CONTAINER_ACCESS_TOKEN := $(shell echo "$${CONTAINER_ACCESS_TOKEN}" )
+endif
+
+# Determine if there is a local (to this system) instance of the E20R Utilities module repository
+ifeq ($(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php), "")
+	LOCAL_E20R_UTILITIES_REPO := 0
+else
+	LOCAL_E20R_UTILITIES_REPO := 1
+endif
+
+ifeq (1, $(LOCAL_E20R_UTILITIES_REPO))
+	NEW_LICENSING_MODEL := 1
 endif
 
 #ifeq ($(CONTAINER_ACCESS_TOKEN),)
@@ -133,7 +144,7 @@ image-pull: repo-login
         	docker pull $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION); \
      fi
 
-real-clean: stop-stack clean clean-inc
+real-clean: stop-stack clean clean-inc clean-wp-deps
 	@echo "Make sure docker-compose stack for $(PROJECT) isn't running"
 	@echo "Stack is running: $(STACK_RUNNING)"
 	@if [[ 2 -ne "$(STACK_RUNNING)" ]]; then \
@@ -171,32 +182,33 @@ docker-compose:
 clean-wp-deps:
 	@rm -rf $(COMPOSER_DIR)/wp_plugins/*
 
-# git archive --prefix="$${e20r_plugin}/" --format=zip --output="$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" --worktree-attributes main && \
+# git archive --prefix="$${e20r_plugin}/" --format=zip --output="$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" --worktree-attributes main &&
 
-e20r-deps: clean-wp-deps
-	@echo "Loading E20R custom plugin dependencies"
+e20r-deps:
+	@echo "Loading defined E20R custom plugin dependencies: $(NEW_LICENSING_MODEL)"
 	@for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
-  		NEW_LICENSING="$$( [[ 0 -eq `grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php` ]] ; echo $? )" ; \
-  		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" ]]; then \
-			echo "Download / install $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-			mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-			if [[ "00-e20r-utilities" -ne "${e20r_plugin}" || ( "0" -ne "${NEW_LICENSING}" && "00-e20r-utilities" -ne "${e20r_plugin}" ) ]]; then \
+		echo "Checking for presence of $${e20r_plugin}..." ; \
+		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
+			echo "Download or build $${e20r_plugin}.zip dependency" && \
+			if [[ "00-e20r-utilities" -ne "$${e20r_plugin}" || -z "${NEW_LICENSING_MODEL}" ]]; then \
 				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -s ; \
-			elif [[ "00-e20r-utilities" -eq "${e20r_plugin}" && "0" -eq "${NEW_LICENSING}" ]]; then \
+				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
+			elif [[ "00-e20r-utilities" -eq "$${e20r_plugin}" && "1" -eq "${NEW_LICENSING_MODEL}" ]]; then \
 				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 				cd $(E20R_UTILITIES_PATH) && \
-				make new-release && \
+				make build && \
 				make stop-stack && \
-				echo "Copy $${e20r_plugin}.zip to $(BASE_DIR)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
-				cp "$$(ls -art build/kits/* | tail -1)" "$(BASE_DIR)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
-				cd $(BASE_DIR) ; \
+				new_kit="$$(ls -art build/kits/$${e20r_plugin}* | tail -1)" && \
+				echo "Copy $${new_kit} to $(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
+				cp "$${new_kit}" "$(BASE_PATH)/$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" && \
+				cd $(BASE_PATH) ; \
 			fi ; \
-			echo "'Installing' the $${e20r_plugin}.zip plugin" && \
+			mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
+			echo "Installing the $${e20r_plugin}.zip plugin" && \
 			$(UNZIP) -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" -d $(COMPOSER_DIR)/wp_plugins/ 2>&1 > /dev/null && \
 			rm -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
 		fi ; \
-  	done
+	done
 
 is-docker-running:
 	@if [[ "0" -eq $(DOCKER_IS_RUNNING) ]]; then \
@@ -313,23 +325,21 @@ metadata:
 changelog: build_readmes/current.txt
 	@./bin/changelog.sh
 
-readme: changelog # metadata
+readme: changelog metadata
 	@./bin/readme.sh
 
-# FIXME: Normally we'll use this line to get the plugin version
-# @export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh loader)
-
-build: test stop-stack clean-inc composer-prod
-	@export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh loader) && \
+$(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
+	@export E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) \
 	if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
-  		echo "Executing the in-plugin build process" && \
   		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh ; \
 	else \
-		echo "Using the git archive build process" && \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \
 		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip --worktree-attributes main ; \
 	fi
+
+build: $(E20R_PLUGIN_BASE_FILE)
+	@echo "Built kit for $(E20R_PLUGIN_NAME)"
 
 #new-release: test composer-prod
 #	@./build_env/get_version.sh && \
