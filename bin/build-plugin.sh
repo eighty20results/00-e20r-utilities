@@ -80,7 +80,6 @@ for b in "${build[@]}"; do
 done
 
 cd "${dst_path}/.." || exit 1
-echo ${PWD} && ls -l
 zip -r "${kit_name}" "${plugin_path}"
 # We _want_ to expand the variables on the client side
 # shellcheck disable=SC2029
