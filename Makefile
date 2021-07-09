@@ -71,7 +71,7 @@ STACK_RUNNING := $(shell APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(A
 	clean-inc \
 	clean-wp-deps \
 	real-clean \
-	deps \
+	wp-deps \
 	e20r-deps \
 	is-docker-running \
 	docker-deps \
@@ -104,7 +104,6 @@ clean:
 		if [[ -f $(COMPOSER_DIR)/bin/codecept ]]; then \
 			$(COMPOSER_DIR)/bin/codecept clean ; \
 		fi ; \
-		rm -rf $(COMPOSER_DIR)/wp_plugins ; \
 	fi
 	@rm -rf _actions/
 	@rm -rf workflow
@@ -216,9 +215,9 @@ is-docker-running:
 		exit 1; \
 	fi
 
-docker-deps: is-docker-running docker-compose deps
+docker-deps: is-docker-running docker-compose wp-deps
 
-deps: clean composer-dev e20r-deps
+wp-deps: clean composer-dev e20r-deps
 	@echo "Loading WordPress plugin dependencies"
 	@for dep_plugin in $(WP_DEPENDENCIES) ; do \
   		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" ]]; then \
@@ -277,33 +276,40 @@ db-backup:
 	docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) exec database \
  		/usr/bin/mysqldump -u$(MYSQL_USER) -p'$(MYSQL_PASSWORD)' -h$(WORDPRESS_DB_HOST) $(MYSQL_DATABASE) > $(SQL_BACKUP_FILE)/$(E20R_PLUGIN_NAME).sql
 
-phpstan-test: start-stack db-import
-	@echo "Loading the WordPress test stack"
-	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
-		exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
-		wordpress php -d display_errors=on $(COMPOSER_DIR)/bin/phpstan.phar analyse -c ./phpstan.dist.neon --memory-limit 128M
+phpstan-test: wp-deps
+	@echo "Loading the PHP-Stan tests for $(PROJECT)"
+	@inc/bin/phpstan analyze \
+		-v \
+		--debug \
+		--ansi \
+		--no-interaction \
+		--memory-limit=128 \
+		--configuration=./phpstan.dist.neon
 
-code-standard-test:
-	@echo "Running WP Code Standards testing"
+code-standard-test: wp-deps
+	@echo "Running WP Code Standards testing for $(PROJECT)"
 	@$(COMPOSER_DIR)/bin/phpcs \
 		--runtime-set ignore_warnings_on_exit true \
 		--report=full \
 		--colors \
 		-p \
 		--standard=WordPress-Extra \
-		--ignore='$(COMPOSER_DIR)/*,node_modules/*,src/utilities/*' \
+		--ignore='$(PHP_IGNORE_PATHS)' \
 		--extensions=php \
-		*.php src/*/*.php
+		$(PHP_CODE_PATHS)
 
-unit-test: deps
+unit-test: wp-deps
+	@echo "Running Unit tests for $(PROJECT)"
 	@$(COMPOSER_DIR)/bin/codecept run -v --debug unit
 
 wp-unit-test: docker-deps start-stack db-import
+	@echo "Running WP Unit tests for $(PROJECT)"
 	@docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 		exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
 		wordpress $(COMPOSER_DIR)/bin/codecept run -v --debug wpunit
 
 acceptance-test: docker-deps start-stack db-import
+	@echo "Running Acceptance tests for $(PROJECT)"
 	@docker-compose $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress $(COMPOSER_DIR)/bin/codecept run -v acceptance
@@ -313,7 +319,7 @@ build-test: docker-deps start-stack db-import
 	 exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
 	 wordpress $(PWD)/$(COMPOSER_DIR)/bin/codecept build -v
 
-test: clean deps code-standard-test start-stack db-import wp-unit-test stop-stack # TODO: phpstan-test between phpcs & unit tests
+test: clean wp-deps code-standard-test start-stack db-import wp-unit-test stop-stack # TODO: phpstan-test between phpcs & unit tests
 
 git-log:
 	@./bin/create_log.sh
