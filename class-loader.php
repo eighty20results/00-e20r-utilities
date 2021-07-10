@@ -89,35 +89,43 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 
 			$filename = "class-{$c_name}.php";
 
-			$iterator = new RecursiveDirectoryIterator(
-				$base_path,
-				RecursiveDirectoryIterator::SKIP_DOTS |
-				RecursiveIteratorIterator::SELF_FIRST |
-				RecursiveIteratorIterator::CATCH_GET_CHILD |
-				RecursiveDirectoryIterator::FOLLOW_SYMLINKS
-			);
+			try {
+				$iterator = new RecursiveDirectoryIterator(
+					$base_path,
+					RecursiveDirectoryIterator::SKIP_DOTS |
+					RecursiveIteratorIterator::SELF_FIRST |
+					RecursiveIteratorIterator::CATCH_GET_CHILD |
+					RecursiveDirectoryIterator::FOLLOW_SYMLINKS
+				);
+			} catch ( \Exception $e ) {
+				print 'Error: ' . $e->getMessage(); // phpcs:ignore
+				return;
+			}
 
-			// Locate class member files, recursively
-			$filter = new RecursiveCallbackFilterIterator(
-				$iterator,
-				/** @SuppressWarnings("unused") */
-				function ( $current, $key, $iterator ) use ( $filename ) {
-					$file_name = $current->getFilename();
+			try {
+				// Locate class member files, recursively
+				$filter = new RecursiveCallbackFilterIterator(
+					$iterator,
+					function ( $current, $key, $iterator ) use ( $filename ) {
 
-					// Skip hidden files and directories.
-					if ( '.' === $file_name[0] || '..' === $file_name ) {
-						return false;
+						// Skip hidden files and directories.
+						if ( '.' === $current->getFilename()[0] || '..' === $current->getFilename() ) {
+							return false;
+						}
+
+						if ( $current->isDir() ) {
+							// Only recurse into intended subdirectories.
+							return $current->getFilename() === $filename;
+						} else {
+							// Only consume files of interest.
+							return str_starts_with( $current->getFilename(), $filename );
+						}
 					}
-
-					if ( $current->isDir() ) {
-						// Only recurse into intended subdirectories.
-						return $file_name() === $filename;
-					} else {
-						// Only consume files of interest.
-						return strpos( $file_name, $filename ) === 0;
-					}
-				}
-			);
+				);
+			} catch ( \Exception $e ) {
+				echo 'Autoloader error: ' . $e->getMessage(); // phpcs:ignore
+				return;
+			}
 
 			try {
 				/** @SuppressWarnings("unused") */
