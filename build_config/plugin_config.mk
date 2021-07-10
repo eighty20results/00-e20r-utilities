@@ -20,3 +20,6 @@ APACHE_RUN_GROUP ?= $(shell id -u)
 
 WP_VERSION ?= latest
 DB_VERSION ?= latest
+
+PHP_CODE_PATHS := *.php src/*/*.php src/*/*/*.php
+PHP_IGNORE_PATHS := $(COMPOSER_DIR)/*,node_modules/*,src/utilities/*
