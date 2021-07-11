@@ -99,7 +99,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 			// Look for duplicate messages
 			foreach ( $this->msg as $key => $msg ) {
 
-				if ( ! empty( $message ) && ! empty( $msg ) && false !== strpos( $message, $msg ) ) {
+				if ( ! empty( $msg ) && false !== strpos( $message, $msg ) ) {
 					$msg_found[] = $key;
 				}
 
@@ -142,7 +142,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		 *
 		 * @return int
 		 */
-		private function convert_destination( $destination ) {
+		public function convert_destination( $destination ) {
 
 			if ( is_numeric( $destination ) ) {
 				return $destination;
