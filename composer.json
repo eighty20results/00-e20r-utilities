@@ -54,7 +54,8 @@
         "psr-4": {
             "E20R\\": "",
             "E20R\\Utilities\\": "src/",
-            "E20R\\Test\\": "tests/"
+            "E20R\\Test\\Unit\\": "tests/unit/testcases",
+            "E20R\\Test\\WPUnit\\": "tests/wpunit/testcases"
         }
     },
     "scripts": {
