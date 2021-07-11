@@ -113,10 +113,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				add_filter( 'http_request_args', array( $this, 'set_ssl_validation_for_updates' ), 9999, 2 );
 
 				if ( ! has_action( 'admin_notices', array( $messages, 'display' ) ) ) {
-
 					$this->log( 'Loading message(s) for backend' );
 					add_action( 'admin_notices', array( $messages, 'display' ), 10 );
-
 				}
 			} else {
 
@@ -369,8 +367,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * Return the cache key for the Utilities class
 		 * @return string
 		 */
-		public static function get_util_cache_key() {
-
+		public function get_util_cache_key() {
 			return self::$cache_key;
 		}
 
