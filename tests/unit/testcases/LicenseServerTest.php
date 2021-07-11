@@ -19,13 +19,50 @@
  *
  */
 
-namespace E20R\Utilities\Licensing\Test;
+namespace E20R\Test\Unit;
 
 use Codeception\Test\Unit;
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use E20R\Utilities\Licensing\LicenseServer;
-use PHPUnit\Framework\TestCase;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
 class LicenseServerTest extends Unit {
+
+	use MockeryPHPUnitIntegration;
+
+	/**
+	 * The setup function for this Unit Test suite
+	 *
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
+
+		Functions\when( 'plugin_dir_path' )
+			->justReturn( __DIR__ );
+
+		$this->loadFiles();
+
+	}
+
+	/**
+	 * Teardown function for the Unit Tests
+	 *
+	 * @return void
+	 */
+	protected function tearDown(): void {
+		Monkey\tearDown();
+		parent::tearDown();
+	}
+
+	/**
+	 * Load source files for the Unit Test to execute
+	 */
+	public function loadFiles() {
+		require_once __DIR__ . '/../../../inc/autoload.php';
+		require_once __DIR__ . '/../../../src/licensing/class-licenseserver.php';
+	}
 
 	public function testGetStatus() {
 
