@@ -19,7 +19,7 @@
  *
  */
 
-namespace E20R\Utilities\Licensing\Test;
+namespace E20R\Test\Unit;
 
 use E20R\Utilities\Licensing\NewLicenseSettings;
 use Brain\Monkey;
@@ -35,17 +35,19 @@ class NewLicenseSettingsTest extends \Codeception\Test\Unit {
 		Monkey\setUp();
 
 		Functions\expect( 'plugins_url' )
-			->andReturn( sprintf( 'https://localhost:7253/wp-content/plugins/' ) );
+			->andReturn( sprintf( 'https://localhost:7254/wp-content/plugins/' ) );
 
 		Functions\expect( 'admin_url' )
 			->with( 'options-general.php' )
-			->andReturn( 'https://localhost:7253/wp-admin/options-general.php' );
+			->andReturn( 'https://localhost:7254/wp-admin/options-general.php' );
 
 		Functions\expect( 'plugin_dir_path' )
 			->andReturn( sprintf( '/var/www/html/wp-content/plugins/00-e20r-utilities/src/licensing' ) );
 
 		Functions\expect( 'get_current_blog_id' )
 			->andReturn( 1 );
+
+		$this->loadFiles();
 	}
 
 	/**
@@ -59,6 +61,14 @@ class NewLicenseSettingsTest extends \Codeception\Test\Unit {
 	}
 
 	/**
+	 * Load source files for the Unit Test to execute
+	 */
+	public function loadFiles() {
+		require_once __DIR__ . '/../../../inc/autoload.php';
+		require_once __DIR__ . '/../../../src/licensing/class-newlicensesettings.php';
+	}
+
+	/**
 	 * Test create license settings class (new API)
 	 *
 	 * @dataProvider fixture_license_settings
@@ -68,13 +78,12 @@ class NewLicenseSettingsTest extends \Codeception\Test\Unit {
 		$settings = new NewLicenseSettings( $sku );
 
 		Functions\expect( 'get_option' )
-			->with( 'e20r_license_settings' )
+			->with( \Mockery::contains( 'e20r_license_settings' ) )
 			->andReturnUsing(
-				function() use ($settings, $sku ) {
+				function() use ( $settings, $sku ) {
 					return $settings->defaults( $sku );
 				}
 			);
-
 
 		self::assertEquals( $expected, $settings->get( 'product_sku' ) );
 	}
