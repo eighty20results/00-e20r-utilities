@@ -139,7 +139,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				$this->utils->log( 'Loading the Licensing class...' );
 			}
 
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			$this->text_domain = apply_filters( 'e20r_licensing_text_domain', $this->text_domain );
 			$this->ssl_verify  = $this->utils::is_local_server();
 
