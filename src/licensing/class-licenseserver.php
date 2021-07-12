@@ -47,6 +47,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 		const E20R_LICENSE_SECRET_KEY = '5687dc27b50520.33717427';
 		const E20R_LICENSE_STORE_CODE = 'L4EGy6Y91a15ozt';
 
+		/**
+		 * Utilities class (logging, etc)
+		 *
+		 * @var Utilities|null $utils
+		 */
 		private $utils = null;
 
 		/**
@@ -62,7 +67,28 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 		 */
 		private $use_ssl = true;
 
-		public function __construct( $is_new = false, $use_ssl = true ) {
+		/**
+		 * Whether to log Licensing specific (extra) debug information
+		 *
+		 * @var bool $log_debug
+		 */
+		private $log_debug = false;
+
+		/**
+		 * The License settings class
+		 *
+		 * @var null|LicenseSettings $license_settings
+		 */
+		private $license_settings = null;
+
+		/**
+		 * LicenseServer constructor.
+		 *
+		 * @param bool $is_new
+		 * @param bool $use_ssl
+		 */
+		public function __construct( bool $is_new = false, bool $use_ssl = false ) {
+			$this->log_debug      = defined( 'E20R_LICENSING_DEBUG' ) && E20R_LICENSING_DEBUG;
 			$this->utils          = Utilities::get_instance();
 			$this->is_new_version = $is_new;
 			$this->use_ssl        = $use_ssl;
@@ -74,11 +100,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 		 *
 		 * @param array $api_params
 		 *
-		 * @return \stdClass|false
+		 * @return \stdClass|bool
 		 */
 		public function send( $api_params ) {
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				$this->utils->log( 'Attempting remote connection to ' . E20R_LICENSE_SERVER_URL );
 			}
 
@@ -128,7 +154,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 
 				unset( $api_params['action'] );
 
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				if ( $this->log_debug ) {
 					$this->utils->log( "Expensive: Connecting to upstream license server!" );
 				}
 
@@ -149,7 +175,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 			if ( is_wp_error( $response ) ) {
 				// translators: The error message is supplied from the repsponse object
 				$msg = sprintf( esc_attr__( 'E20R Licensing: %s', 'e20r-licensing-utility' ), $response->get_error_message() );
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				if ( $this->log_debug ) {
 					$this->utils->log( $msg );
 				}
 				$this->utils->add_message( $msg, 'error' );
@@ -190,7 +216,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 						);
 				}
 
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				if ( $this->log_debug ) {
 					$this->utils->log( 'Response from remote server: <' . $license_data . '>' );
 					$this->utils->log( 'JSON decode error: ' . $error );
 				}
@@ -210,74 +236,74 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 		 *
 		 * @return bool
 		 */
-		public function status( $sku, $settings = null, $force = false ) {
+		public function status( $sku, $settings = null, $force = false ) : bool {
 
 			// Default value for the license (it's not active)
-			$license_status = false;
-			global $current_user;
+			$license_status = null;
 
-			$license_settings = new LicenseSettings( $sku );
+			$this->license_settings = new LicenseSettings( $sku );
+			$use_new                = (bool) $this->license_settings->get( 'new_version' );
 
 			if ( is_null( $settings ) ) {
-				$settings = $license_settings->all_settings();
+				$settings = $this->license_settings->all_settings();
 			}
 
-			if ( ! $this->is_new_version && empty( $settings['key'] ) ) {
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( ! $use_new && empty( $settings['key'] ) ) {
+				if ( $this->log_debug ) {
 					$this->utils->log( "Old store: {$sku} has no key stored. Returning false" );
 				}
-
-				return $license_status;
+				return false;
 			}
 
-			if ( $this->is_new_version && empty( $settings['the_key'] ) ) {
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $use_new && empty( $settings['the_key'] ) ) {
+				if ( $this->log_debug ) {
 					$this->utils->log( "New store: {$sku} has no key stored. Returning false" );
 				}
-
-				return $license_status;
+				return false;
 			}
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG && $this->is_new_version ) {
+			if ( $this->log_debug && $use_new ) {
 				$this->utils->log( 'Using the new store plugin' );
 			}
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-				$this->utils->log( "Local license settings for {$sku}" /* . print_r( $settings, true ) phpcs:ignore */ );
-			}
+			$license_status = (bool) Cache::get( "{$sku}_status", 'e20r_licensing' );
 
 			$this->utils->log( 'Force check against upstream server? ' . ( $force ? 'Yes' : 'No' ) );
-			$license_status = (bool) Cache::get( "{$sku}_status", 'e20r_licensing' );
 			$this->utils->log( "Cached license status is ({$license_status}): " . ( $license_status ? 'Active' : 'empty' ) );
 
-			if ( true === $force || false === $force && true !== $license_status ) {
-
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-					$this->utils->log( "Connecting to license server to validate license for {$sku}" );
+			if ( false === $force && null !== $license_status ) {
+				if ( $this->log_debug ) {
+					$this->utils->log( "Using the cached (local) license status ({$license_status}) info for {$sku}" );
 				}
+				return $license_status;
+			}
 
-				$product_name = $settings['fulltext_name'];
+			if ( $this->log_debug ) {
+				$this->utils->log( "Connecting to license server to validate license for {$sku}" );
+			}
 
-				if ( ! $this->is_new_version ) {
-					// Configure request for license check
-					$api_params = array(
-						'slm_action'  => 'slm_check',
-						'secret_key'  => self::E20R_LICENSE_SECRET_KEY,
-						'license_key' => $settings['key'],
-						// 'registered_domain' => $_SERVER['SERVER_NAME'] phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-					);
-				} else {
+			if ( false === $use_new ) {
+				// Configure request for license check
+				$api_params = array(
+					'slm_action'  => 'slm_check',
+					'secret_key'  => self::E20R_LICENSE_SECRET_KEY,
+					'license_key' => $settings['key'],
+					// 'registered_domain' => $_SERVER['SERVER_NAME'] phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+				);
+			} else {
 
-					// Use the 10quality License Key management client
-					// Returns a boolean if successful
+				$license_settings = $this->license_settings;
+
+				// Use the 10quality License Key management client
+				// Returns a boolean if successful
+				try {
 					return Api::validate(
 						Client::instance(),
 						function() use ( $settings ) {
 							return new LicenseRequest( $settings['key'] );
 						},
 						function() use ( $sku, $settings, $license_settings ) {
-
-							if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+							if ( $this->log_debug ) {
 								// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 								$this->utils->log( "Saving settings for {$sku}: " . print_r( $settings, true ) );
 							}
@@ -286,189 +312,217 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 							return $license_settings->update( $sku, $settings );
 						}
 					);
-
-					/** FIXME: Remove this when the new client API works as expected
-					if ( ! isset( $settings['activation_id'] ) ) {
-						$this->utils->log( "Assume the license is inactive and return" );
-
-						return false;
-					}
-
-					$api_params = array(
-						'action'        => 'license_key_validate',
-						'store_code'    => self::E20R_LICENSE_STORE_CODE,
-						'license_key'   => $settings['the_key'],
-						'domain'        => isset( $_SERVER['SERVER_NAME'] ) ? $_SERVER['SERVER_NAME'] : 'Unknown',
-						'sku'           => $settings['product_sku'],
-						'activation_id' => $settings['activation_id'],
-					);
-					*/
-				}
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-					$this->utils->log( "Transmitting request to License server for {$sku}" );
+				} catch ( \Exception $e ) {
+					$this->utils->log( "Validation error: " . $e->getMessage() ); //phpcs:ignore
+					return false;
 				}
 
-				$decoded = self::send( $api_params );
+				/** FIXME: Remove this when the new client API works as expected
+				if ( ! isset( $settings['activation_id'] ) ) {
+					$this->utils->log( "Assume the license is inactive and return" );
 
-				if ( ! $this->is_new_version ) {
-					// License not validated
-					if ( ! isset( $decoded->result ) || 'success' !== $decoded->result ) {
+					return false;
+				}
 
-						if ( isset( $settings['fulltext_name'] ) ) {
-							$name = $settings['fulltext_name'];
+				$api_params = array(
+					'action'        => 'license_key_validate',
+					'store_code'    => self::E20R_LICENSE_STORE_CODE,
+					'license_key'   => $settings['the_key'],
+					'domain'        => isset( $_SERVER['SERVER_NAME'] ) ? $_SERVER['SERVER_NAME'] : 'Unknown',
+					'sku'           => $settings['product_sku'],
+					'activation_id' => $settings['activation_id'],
+				);
+				*/
+			}
+
+			if ( $this->log_debug ) {
+				$this->utils->log( "Transmitting request to License server for {$sku}" );
+			}
+
+			$decoded = $this->send( $api_params );
+
+			if ( true === (bool) $this->license_settings->get( 'new_version' ) ) {
+				$license_status = $this->process_new_license_info( $sku, $decoded, $settings );
+			} else {
+				$license_status = $this->process_old_license_info( $sku, $decoded, $settings );
+			}
+
+			return $license_status;
+		}
+
+		/**
+		 * Using the new licensing plugin for WooCommerce (different format)
+		 *
+		 * @param string $sku
+		 * @param \stdClass $decoded
+		 * @param array $settings
+		 *
+		 * @return bool
+		 */
+		private function process_new_license_info( $sku, $decoded, $settings ) : bool {
+
+			global $current_user;
+
+			$product_name   = $settings['fulltext_name'];
+			$license_status = (bool) Cache::get( "{$sku}_status", 'e20r_licensing' );
+
+			// License not validated
+			if ( ! isset( $decoded->result ) || 'success' !== $decoded->result ) {
+				$msg = sprintf(
+					// translators: License name is provided by the calling plugin
+					__( 'Sorry, no valid license found for: %s', 'e20r-licensing-utility' ),
+					$product_name
+				);
+				if ( $this->log_debug ) {
+					$this->utils->log( $msg );
+				}
+				$this->utils->add_message( $msg, 'error', 'backend' );
+
+				Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
+				return $license_status;
+			}
+
+			if ( is_array( $decoded->registered_domains ) ) {
+				if ( $this->log_debug ) {
+					$this->utils->log( 'Processing license data for (count: ' . count( $decoded->registered_domains ) . ' domains )' );
+				}
+
+				foreach ( $decoded->registered_domains as $domain ) {
+
+					if ( isset( $domain->registered_domain ) && $domain->registered_domain === $_SERVER['SERVER_NAME'] ) {
+
+						if ( '0000-00-00' !== $decoded->date_renewed ) {
+							$settings['renewed'] = strtotime( $decoded->date_renewed, time() );
 						} else {
-							$name = $product_name;
+							$settings['renewed'] = time();
 						}
+						$settings['domain']        = $domain->registered_domain;
+						$settings['fulltext_name'] = $product_name;
+						$settings['expires']       = isset( $decoded->date_expiry ) ? strtotime( $decoded->date_expiry, time() ) : null;
+						$settings['status']        = $decoded->status;
+						$settings['first_name']    = isset( $current_user->first_name ) ? $current_user->first_name : null;
+						$settings['last_name']     = isset( $current_user->last_name ) ? $current_user->last_name : null;
+						$settings['email']         = $decoded->email;
+						$settings['timestamp']     = time();
 
-						$msg = sprintf(
-							// translators: License name is provided by the calling plugin
-							__( 'Sorry, no valid license found for: %s', 'e20r-licensing-utility' ),
-							$name
-						);
-						if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-							$this->utils->log( $msg );
+						if ( $this->log_debug ) {
+							// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+							$this->utils->log( "Saving license data for {$domain->registered_domain}: " . print_r( $settings, true ) );
 						}
-						$this->utils->add_message( $msg, 'error', 'backend' );
+						if ( false === $this->license_settings->update( $sku, $settings ) ) {
 
-						Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
-						return $license_status;
-					}
-
-					if ( is_array( $decoded->registered_domains ) ) {
-						if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-							$this->utils->log( 'Processing license data for (count: ' . count( $decoded->registered_domains ) . ' domains )' );
-						}
-
-						foreach ( $decoded->registered_domains as $domain ) {
-
-							if ( isset( $domain->registered_domain ) && $domain->registered_domain === $_SERVER['SERVER_NAME'] ) {
-
-								if ( '0000-00-00' !== $decoded->date_renewed ) {
-									$settings['renewed'] = strtotime( $decoded->date_renewed, time() );
-								} else {
-									$settings['renewed'] = time();
-								}
-								$settings['domain']        = $domain->registered_domain;
-								$settings['fulltext_name'] = $product_name;
-								$settings['expires']       = isset( $decoded->date_expiry ) ? strtotime( $decoded->date_expiry, time() ) : null;
-								$settings['status']        = $decoded->status;
-								$settings['first_name']    = isset( $current_user->first_name ) ? $current_user->first_name : null;
-								$settings['last_name']     = isset( $current_user->last_name ) ? $current_user->last_name : null;
-								$settings['email']         = $decoded->email;
-								$settings['timestamp']     = time();
-
-								if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-									// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-									$this->utils->log( "Saving license data for {$domain->registered_domain}: " . print_r( $settings, true ) );
-								}
-								if ( false === $license_settings->update( $sku, $settings ) ) {
-
-									$msg = sprintf(
-										// translators: The license name is received from the plugin being licensed
-										__( 'Unable to save the %s license settings', 'e20r-licensing-utility' ),
-										$settings['fulltext_name']
-									);
-									if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-										$this->utils->log( $msg );
-									}
-									$this->utils->add_message( $msg, 'error', 'backend' );
-								}
-
-								$license_status = ( 'active' === $settings['status'] );
-								if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-									$this->utils->log( "Current status for {$sku} license: " . ( $license_status ? 'active' : 'inactive/deactivated/blocked' ) );
-								}
-							} else {
-								if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-									$this->utils->log( 'Wrong domain, or domain info not found' );
-								}
+							$msg = sprintf(
+							// translators: The license name is received from the plugin being licensed
+								__( 'Unable to save the %s license settings', 'e20r-licensing-utility' ),
+								$settings['fulltext_name']
+							);
+							if ( $this->log_debug ) {
+								$this->utils->log( $msg );
 							}
+							$this->utils->add_message( $msg, 'error', 'backend' );
+						}
+
+						$license_status = ( 'active' === $settings['status'] );
+						if ( $this->log_debug ) {
+							$this->utils->log( "Current status for {$sku} license: " . ( $license_status ? 'active' : 'inactive/deactivated/blocked' ) );
 						}
 					} else {
-
-						// 'activation_id' => $settings['activation_id'] phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-
-						if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-							$this->utils->log( "The {$sku} license is on the server, but not active for this domain" );
+						if ( $this->log_debug ) {
+							$this->utils->log( 'Wrong domain, or domain info not found' );
 						}
-						$license_status = false;
 					}
-
-					if ( isset( $settings['expires'] ) && $settings['expires'] < time() || ( isset( $settings['active'] ) && 'active' !== $settings['status'] ) ) {
-
-						$msg = sprintf(
-							// translators: The license name is set by the plugin being licensed
-							__( 'Your %s license has expired!', 'e20r-licensing-utility' ),
-							$settings['fulltext_name']
-						);
-
-						if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-							$this->utils->log( $msg );
-						}
-						$this->utils->add_message( $msg, 'error' );
-						$license_status = false;
-					}
-
-					$this->utils->log( "Save the value for '{$sku}_status' to cache: {$license_status}" );
-					Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
-				} else {
-
-					if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-						$this->utils->log( 'Returned data from (new) validation check: ' . print_r( $decoded, true ) );
-					}
-
-					if ( empty( $decoded ) ) {
-						// translators: License name is provided by the calling plugin
-						$msg = esc_attr__( 'No data received from license server for %1$s. Please contact the store owner!', 'e20r-utilities-licensing' );
-
-						$this->utils->add_message(
-							sprintf( $msg, $settings['fulltext_name'] ),
-							'error',
-							'backend'
-						);
-
-						$license_status = false;
-						Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
-						return $license_status;
-					}
-
-					if ( 1 === (int) $decoded->error && ( isset( $decoded->status ) && 500 === (int) $decoded->status ) ) {
-						// translators: License name is provided by the calling plugin and the error from the decoded request
-						$msg = esc_attr__( 'Error validating the %1$s license: %2$s -> %3$s', 'e20r-utilities-licensing' );
-
-						foreach ( (array) $decoded->errors as $error_key => $error_info ) {
-
-							$this->utils->add_message(
-								sprintf( $msg, $settings['fulltext_name'], $error_key, array_pop( $error_info ) ),
-								'error',
-								'backend'
-							);
-						}
-
-						$license_status = false;
-						Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
-						return $license_status;
-					}
-
-					if ( isset( $decoded->status ) && 200 === (int) $decoded->status ) {
-
-						$this->utils->log( 'License is valid, so should be returning success' );
-
-						if ( isset( $decoded->data->status ) && 'active' === $decoded->data->status ) {
-							$license_status = true;
-						}
-
-						$this->utils->log( 'License status: ' . ( $license_status ? 'True' : 'False' ) );
-					}
-
-					Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
 				}
 			} else {
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
-					$this->utils->log( "Loaded the cached (local) license status ({$license_status}) info for {$sku}" );
+				// 'activation_id' => $settings['activation_id'] phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+				if ( $this->log_debug ) {
+					$this->utils->log( "The {$sku} license is on the server, but not active for this domain" );
 				}
+				$license_status = false;
 			}
+
+			if ( isset( $settings['expires'] ) && $settings['expires'] < time() || ( isset( $settings['active'] ) && 'active' !== $settings['status'] ) ) {
+				$msg = sprintf(
+				// translators: The license name is set by the plugin being licensed
+					__( 'Your %s license has expired!', 'e20r-licensing-utility' ),
+					$settings['fulltext_name']
+				);
+
+				if ( $this->log_debug ) {
+					$this->utils->log( $msg );
+				}
+				$this->utils->add_message( $msg, 'error' );
+				$license_status = false;
+			}
+
+			$this->utils->log( "Save the value for '{$sku}_status' to cache: {$license_status}" );
+			Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
+
+			return $license_status;
+		}
+
+		/**
+		 * Process the original type of license information
+		 *
+		 * @param string $sku
+		 * @param \stdClass $decoded
+		 * @param array $settings
+		 *
+		 * @return bool
+		 */
+		private function process_old_license_info( $sku, $decoded, $settings ) : bool {
+
+			$license_status = (bool) Cache::get( "{$sku}_status", 'e20r_licensing' );
+
+			if ( $this->log_debug ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+				$this->utils->log( 'Returned data from (new) validation check: ' . print_r( $decoded, true ) );
+			}
+
+			if ( empty( $decoded ) ) {
+				// translators: License name is provided by the calling plugin
+				$msg = esc_attr__( 'No data received from license server for %1$s. Please contact the store owner!', 'e20r-utilities-licensing' );
+
+				$this->utils->add_message(
+					sprintf( $msg, $settings['fulltext_name'] ),
+					'error',
+					'backend'
+				);
+
+				$license_status = false;
+				Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
+				return $license_status;
+			}
+
+			if ( 1 === (int) $decoded->error && ( isset( $decoded->status ) && 500 === (int) $decoded->status ) ) {
+				// translators: License name is provided by the calling plugin and the error from the decoded request
+				$msg = esc_attr__( 'Error validating the %1$s license: %2$s -> %3$s', 'e20r-utilities-licensing' );
+
+				foreach ( (array) $decoded->errors as $error_key => $error_info ) {
+
+					$this->utils->add_message(
+						sprintf( $msg, $settings['fulltext_name'], $error_key, array_pop( $error_info ) ),
+						'error',
+						'backend'
+					);
+				}
+
+				$license_status = false;
+				Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
+				return $license_status;
+			}
+
+			if ( isset( $decoded->status ) && 200 === (int) $decoded->status ) {
+
+				$this->utils->log( 'License is valid, so should be returning success' );
+
+				if ( isset( $decoded->data->status ) && 'active' === $decoded->data->status ) {
+					$license_status = true;
+				}
+
+				$this->utils->log( 'License status: ' . ( $license_status ? 'True' : 'False' ) );
+			}
+
+			Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
 
 			return $license_status;
 		}
