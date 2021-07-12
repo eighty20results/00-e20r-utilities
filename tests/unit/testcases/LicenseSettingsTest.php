@@ -23,6 +23,7 @@ namespace E20R\Test\Unit;
 
 use Codeception\Test\Unit;
 use Brain\Monkey;
+use Brain\Monkey\Functions;
 use E20R\Utilities\Licensing\LicenseSettings;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
@@ -64,7 +65,12 @@ class LicenseSettingsTest extends Unit {
 	}
 
 	public function testMerge() {
-
+		Functions\stubs(
+			array(
+				'plugin_dir_path' => '/var/www/html/wp-content/plugins/00-e20r-utilities/',
+				'sanitize_email'  => null,
+			)
+		);
 	}
 
 	public function testValidate() {

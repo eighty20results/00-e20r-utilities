@@ -23,6 +23,7 @@ namespace E20R\Test\Unit;
 
 use Codeception\Test\Unit;
 use Brain\Monkey;
+use Brain\Monkey\Functions;
 use E20R\Utilities\Licensing\LicenseClient;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
@@ -39,7 +40,6 @@ class LicenseClientTest extends Unit {
 		parent::setUp();
 		Monkey\setUp();
 		$this->loadFiles();
-
 	}
 
 	/**
@@ -56,18 +56,24 @@ class LicenseClientTest extends Unit {
 	 * Load source files for the Unit Test to execute
 	 */
 	public function loadFiles() {
+		// require_once __DIR__ . '/../../../class-loader.php';
 		require_once __DIR__ . '/../../../src/licensing/class-licenseclient.php';
 	}
 
-	public function testCheck_licenses() {
+	public function test_check_licenses() {
+		Functions\stubs(
+			array(
+				'plugins_url'    => 'https://development.local:7254/wp-content/plugins/00-e20r-utilities/',
+				'sanitize_email' => null,
+			)
+		);
+	}
+
+	public function test_load_hooks() {
 
 	}
 
-	public function testLoad_hooks() {
-
-	}
-
-	public function testGet_instance() {
+	public function test_get_instance() {
 
 	}
 }
