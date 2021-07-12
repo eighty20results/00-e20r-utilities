@@ -95,9 +95,15 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * New or old version of licensing system
 		 *
 		 * @var bool $new_version
-		 *
 		 */
-		protected $new_version = false;
+		protected $new_version;
+
+		/**
+		 * Whether to log Licensing specific (extra) debug information
+		 *
+		 * @var bool $log_debug
+		 */
+		private $log_debug = false;
 
 		/**
 		 * LicenseSettings constructor.
@@ -108,7 +114,18 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			$this->utils       = Utilities::get_instance();
 			$this->product_sku = $product_sku;
-			$this->excluded    = array( 'excluded', 'utils', 'page_handle', 'settings', 'all_settings', 'instance', 'page' );
+			$this->excluded    = array(
+				'excluded',
+				'utils',
+				'page_handle',
+				'settings',
+				'all_settings',
+				'instance',
+				'page',
+				'log_debug',
+			);
+
+			$this->log_debug = defined( 'E20R_LICENSING_DEBUG' ) && E20R_LICENSING_DEBUG;
 
 			if ( isset( $_SERVER['HTTP_HOST'] ) && 'eighty20results.com' === $_SERVER['HTTP_HOST'] ) {
 				$this->utils->log( 'Running on own server. Deactivating SSL Verification' );
@@ -116,31 +133,25 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			}
 
 			// Determine whether we're using the new or old Licensing version
-			$this->new_version = (
-				defined( 'E20R_LICENSING_VERSION' ) &&
-				version_compare( E20R_LICENSING_VERSION, '3.0', 'ge' )
-			);
+			$this->new_version = version_compare( E20R_LICENSING_VERSION, '3.0', 'ge' );
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				$this->utils->log( 'Using new or old version of licensing code..? ' . ( $this->new_version ? 'New' : 'Old' ) );
 			}
 
 			if (
 				! defined( 'E20R_LICENSE_SERVER_URL' ) ||
-				( defined( 'E20R_LICENSE_SERVER_URL' ) && ! E20R_LICENSE_SERVER_URL )
+				( defined( 'E20R_LICENSE_SERVER_URL' ) && empty( E20R_LICENSE_SERVER_URL ) ) // @phpstan-ignore-line
 			) {
 				$this->utils->log( "Error: Haven't added the 'E20R_LICENSE_SERVER_URL' constant to the wp-config file!" );
 				$this->utils->add_message(
 					__(
 						'Error: The E20R_LICENSE_SERVER_URL definition is missing! Please add it to the wp-config.php file.',
-						// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
 						'e20r-licensing'
 					),
 					'error',
 					'backend'
 				);
-
-				return null;
 			}
 		}
 
@@ -215,7 +226,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @param string $product_sku
 		 *
-		 * @return array
+		 * @return array|null
+		 *
 		 * @throws \Exception
 		 */
 		public function load_settings( $product_sku = null ) {
@@ -227,7 +239,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			}
 
 			if ( is_null( $product_sku ) ) {
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				if ( $this->log_debug ) {
 					$this->utils->log( 'No product key provided. Using default key (e20r_default_license)!' );
 				}
 				$this->product_sku = 'e20r_default_license';
@@ -255,13 +267,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$this->settings->set( $setting_key, $value );
 			}
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 				$this->utils->log( 'All settings: ' . print_r( $settings, true ) );
 			}
 
 			if ( 'e20r_default_license' === $product_sku || empty( $product_sku ) ) {
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				if ( $this->log_debug ) {
 					$this->utils->log(
 						"No product, or default product specified, so returning all settings: {$product_sku}"
 					);
@@ -270,7 +282,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				return $settings;
 			}
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				$this->utils->log( "Requested and returning settings for {$product_sku}" );
 			}
 
@@ -305,7 +317,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			$settings = array();
 
-			foreach ( $this as $key => $value ) {
+			foreach ( get_class_vars( get_class( $this ) ) as $key => $value ) {
 				if ( ! in_array( $key, $this->excluded, true ) ) {
 					$settings[ $key ] = $value;
 				}
@@ -313,6 +325,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			return $settings;
 		}
+
 		/**
 		 * Settings array for the License(s) on this system
 		 *
@@ -336,7 +349,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			global $current_user;
 
 			if ( empty( $input['new_product'] ) && empty( $input['product'] ) && empty( $input['delete'] ) ) {
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				if ( $this->log_debug ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 					$this->utils->log( 'Not being called by the E20R License settings page, so returning: ' . print_r( $input, true ) );
 				}
@@ -345,7 +358,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			}
 
 			/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				$this->utils->log( "Validation input (Add License on Purchase): " . print_r( $input, true ) );
 			}
 			*/
@@ -354,7 +367,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			// Save new license keys & activate the license
 			if ( isset( $input['new_product'] ) && true === $this->utils->array_isnt_empty( $input['new_product'] ) ) {
 
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				if ( $this->log_debug ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 					$this->utils->log( 'New product? ' . print_r( $input['new_product'], true ) );
 					$this->utils->log( 'Processing a possible license activation' );
@@ -363,7 +376,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				foreach ( $input['new_product'] as $nk => $product ) {
 
 					if ( ! empty( $input['new_license'][ $nk ] ) ) {
-						if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+						if ( $this->log_debug ) {
 							$this->utils->log( "Processing license activation for {$input['new_license'][$nk]} " );
 						}
 
@@ -380,33 +393,33 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 						if ( ! empty( $license_email ) && ! empty( $license_key ) ) {
 
-							if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+							if ( $this->log_debug ) {
 								$this->utils->log( 'Have a license key and email, so activate the new license' );
 							}
 
 							$license_settings[ $product ]['email'] = $license_email;
 							$license_settings[ $product ]['key']   = $license_key;
 
-							if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+							if ( $this->log_debug ) {
 								$this->utils->log( "Attempting remote activation for {$product} " );
 							}
 
 							$result = $licensing->activate( $product, $license_settings[ $product ] );
 
-							if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+							if ( $this->log_debug ) {
 								// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 								$this->utils->log( "Status from activation {$result['status']} vs " . Licensing::E20R_LICENSE_DOMAIN_ACTIVE . ' => ' . print_r( $result, true ) );
 							}
 
 							if ( Licensing::E20R_LICENSE_DOMAIN_ACTIVE === intval( $result['status'] ) ) {
 
-								if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+								if ( $this->log_debug ) {
 									$this->utils->log( 'This license & server combination is already active on the licensing server' );
 								}
 
 								if ( true === $licensing->deactivate( $product, $result['settings'] ) ) {
 
-									if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+									if ( $this->log_debug ) {
 										$this->utils->log( 'Was able to deactivate this license/host combination' );
 									}
 
@@ -415,7 +428,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 								}
 							}
 
-							if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+							if ( $this->log_debug ) {
 								$this->utils->log( 'Loading updated settings from server' );
 							}
 
@@ -426,32 +439,32 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 							}
 
 							if ( isset( $result['settings']['status'] ) && 'active' !== $result['settings']['status'] ) {
-								if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+								if ( $this->log_debug ) {
 									$this->utils->log( "Error: Unable to activate license for {$product}!!!" );
 								}
 							} else {
-								if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+								if ( $this->log_debug ) {
 									// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 									$this->utils->log( "Updating license for {$product} to: " . print_r( $result['settings'], true ) );
 								}
 
 								$license_settings[ $product ] = $result['settings'];
 
-								if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+								if ( $this->log_debug ) {
 									$this->utils->log( "Need to save license settings for {$product}" );
 								}
 
 								$license_settings = $this->update( $product, $license_settings[ $product ] );
 
 								if ( false === $license_settings ) {
-									if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+									if ( $this->log_debug ) {
 										$this->utils->log( "Unable to save the {$product} settings!" );
 									}
 								}
 							}
 						}
 					} else {
-						if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+						if ( $this->log_debug ) {
 							$this->utils->log( "No new license key specified for {$product}, nothing to save" );
 						}
 					}
@@ -491,7 +504,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				}
 			}
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 				$this->utils->log( 'Returning validated settings: ' . print_r( $license_settings, true ) );
 			}
@@ -499,7 +512,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			foreach ( $input as $license => $settings ) {
 
 				if ( isset( $license_settings[ $license ] ) && in_array( 'domain', array_keys( $settings ), true ) ) {
-					if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+					if ( $this->log_debug ) {
 						$this->utils->log( 'Grabbing data from input and assigning it to license' );
 					}
 
@@ -520,10 +533,10 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 */
 		public function merge( $product_sku, $new_settings ) {
 
-			$old_settings = $this->all_settings( $product_sku );
+			$old_settings = $this->all_settings();
 
 			/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				$this->utils->log( "Previously saved settings for {$product_sku}: " . print_r( $old_settings, true ) );
 				$this->utils->log( "New - requested - settings: " . print_r( $new_settings, true ) );
 			}
@@ -537,7 +550,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$old_settings[ $key ] = $value;
 			}
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 				$this->utils->log( 'Updated settings (after merge...) ' . print_r( $old_settings, true ) );
 			}
@@ -558,7 +571,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			$license_settings = $this->all_settings();
 
 			/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				$this->utils->log( "Settings before update: " . print_r( $license_settings, true ) );
 				$this->utils->log( "NEW settings for {$product_sku}: " . print_r( $new_settings, true ) );
 			}
@@ -566,7 +579,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			// Make sure the new settings make sense
 			if ( is_array( $license_settings ) && in_array( 'fieldname', array_keys( $license_settings ), true ) ) {
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				if ( $this->log_debug ) {
 					$this->utils->log( "Unexpected settings layout while processing {$product_sku}!" );
 				}
 				$license_settings                 = $this->defaults();
@@ -585,7 +598,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			) {
 
 				$license_settings[ $product_sku ] = $new_settings;
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				if ( $this->log_debug ) {
 					$this->utils->log( "Updating license settings for {$product_sku}" );
 				}
 			} elseif ( ! is_null( $product_sku ) && empty( $new_settings ) && ( ! in_array(
@@ -597,18 +610,18 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				true
 			) && ! empty( $product_sku ) )
 			) {
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				if ( $this->log_debug ) {
 					$this->utils->log( "Removing license settings for {$product_sku}" );
 				}
 				unset( $license_settings[ $product_sku ] );
 
 			} else {
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				if ( $this->log_debug ) {
 					$this->utils->log( 'Requested save of everything' );
 				}
 			}
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 				$this->utils->log( 'Saving: ' . print_r( $license_settings, true ) );
 			}
