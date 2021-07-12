@@ -710,7 +710,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			}
 			*/
 			// Get timestamp, thread ID and function calling us
-			$thread_id        = sprintf( '%08x', abs( crc32( $_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] ) ) );
+			$remote_addr      = isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
+			$req_time         = isset( $_SERVER['REQUEST_TIME'] ) ? $_SERVER['REQUEST_TIME'] : time();
+			$thread_id        = sprintf( '%08x', abs( crc32( $remote_addr . $req_time ) ) );
 			$timestamp        = gmdate( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
 			$calling_function = $this->who_called_me();
 
