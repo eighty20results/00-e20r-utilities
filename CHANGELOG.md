@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## v2.0.4 - 2021-07-12
+- BUG FIX: acceptance-test target didn't work (Thomas Sjolshagen)
+- BUG FIX: Plugin uses a custom loader file (Thomas Sjolshagen)
+- BUG FIX: Get build and docs target working (Thomas Sjolshagen)
+- BUG FIX: Use the get_plugin_version.sh script and set the correct variable info (Thomas Sjolshagen)
+- BUG FIX: Didn't update the version file version (Thomas Sjolshagen)
+- BUG FIX: Updated CHANGELOG (v2.0.4 for WP 5.7.2) (Thomas Sjolshagen)
 - BUG FIX: Fix a typo for the MAKE variable (Thomas Sjolshagen)
 - BUG FIX: Keep the inc/ directories for the Unit and WPUnit tests (Thomas Sjolshagen)
 - BUG FIX: Revert AssetThrows codeception module (Thomas Sjolshagen)
