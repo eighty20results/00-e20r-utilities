@@ -724,11 +724,11 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				// $log_fh,
 				error_log(
 					sprintf(
-							'[%s](%s) %s - %s',
-							$thread_id,
-							$timestamp,
-							$calling_function,
-							$message
+						'[%s](%s) %s - %s',
+						$thread_id,
+						$timestamp,
+						$calling_function,
+						$message
 					)
 				);
 				// phpcs:ignore
@@ -1128,6 +1128,18 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			}
 
 			return self::$instance;
+		}
+
+		/**
+		 * Backwards compatible function to support prior version of the plugin
+		 *
+		 * @param string $plugin_slug
+		 * @param string $plugin_path
+		 *
+		 * @return mixed|null
+		 */
+		public static function configureUpdateServerV4( $plugin_slug, $plugin_path ) {
+			return self::configure_update( $plugin_slug, $plugin_path );
 		}
 
 		/**
