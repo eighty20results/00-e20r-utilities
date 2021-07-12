@@ -78,7 +78,6 @@ if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 						$product_sku
 					)
 				);
-				exit();
 			}
 
 			$this->settings = new LicenseSettings( $product_sku );
@@ -94,7 +93,6 @@ if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 						$product_name
 					)
 				);
-				exit();
 			}
 
 			if ( empty( $product_sku ) ) {
@@ -108,7 +106,6 @@ if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 						$product_name
 					)
 				);
-				exit();
 			}
 
 			$this->utils->log( 'Forcing verification/check against upstream license server' );
@@ -145,11 +142,9 @@ if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 						$product_name
 					)
 				);
-				exit();
 			}
 
 			wp_send_json_success();
-			exit();
 		}
 
 	}
