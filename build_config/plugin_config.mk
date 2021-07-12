@@ -1,6 +1,6 @@
 E20R_PLUGIN_NAME ?= 00-e20r-utilities
 E20R_PLUGIN_BASE_FILE ?= class-loader.php
-WP_DEPENDENCIES ?= paid-memberships-pro
+WP_DEPENDENCIES ?= paid-memberships-pro woocommerce
 E20R_DEPENDENCIES ?=
 
 DOCKER_USER ?= eighty20results
