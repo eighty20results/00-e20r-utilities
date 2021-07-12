@@ -426,7 +426,7 @@ unit-test: wp-deps
 # Using codeception to execute the WP Unit Tests (aka WP integration tests) for this plugin
 #
 wp-unit-test: docker-deps start-stack db-import
-	@if [[ -n $(FOUND_WP_UNIT_TESTS) ]]; then \
+	@if [[ -n "${FOUND_WP_UNIT_TESTS}" ]]; then \
   		echo "Running WP Unit tests for $(PROJECT)"; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
 			DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
