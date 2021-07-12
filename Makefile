@@ -27,6 +27,7 @@ DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
 
 FOUND_WP_UNIT_TESTS ?= $(wildcard $(BASE_PATH)/tests/wpunit/testcases/*.php)
 FOUND_UNIT_TESTS ?= $(wildcard $(BASE_PATH)/tests/unit/testcases/*.php)
+FOUND_WP_ACCEPTANCE_TESTS ?= $(wildcard $(BASE_PATH)/tests/acceptance/testcases/*.php)
 
 ifneq ($(wildcard ./docker.hub.key),)
 $(info Path to key for docker hub exists)
@@ -440,11 +441,14 @@ wp-unit-test: docker-deps start-stack db-import
 # Using codeception to execute the Plugin Acceptance tests
 #
 acceptance-test: docker-deps start-stack db-import
-	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
+	@if [[ -n "${FOUND_WP_ACCEPTANCE_TESTS}" ]]; then \
+  		echo "Running Acceptance tests for $(PROJECT)"; \
+		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
 		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
 		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
-	 		exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ \
-	 		wordpress $(COMPOSER_DIR)/bin/codecept run -v acceptance
+	 		exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ wordpress \
+	 		$(COMPOSER_DIR)/bin/codecept run -v acceptance ; \
+	fi
 
 #
 # Using codeception to build the plugin
