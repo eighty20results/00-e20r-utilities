@@ -48,11 +48,59 @@ if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 		private $server = null;
 
 		/**
+		 * License Identifier (old style licenses)
+		 *
+		 * @var string $license_key
+		 */
+		private $license_key = null;
+
+		/**
+		 * License Identifier (new style licenses)
+		 *
+		 * @var string $product_sku
+		 */
+		private $product_sku = null;
+
+		/**
+		 * The name of the product (license)
+		 *
+		 * @var string $product_name
+		 */
+		private $product_name = null;
+
+		/**
+		 * License Identifier we'll use
+		 *
+		 * @var string $key_to_check
+		 */
+		private $key_to_check = null;
+
+		/**
 		 * Constructor for the AjaxHandler() class
+		 *
+		 * @throws \Exception
 		 */
 		public function __construct() {
-			$this->utils  = Utilities::get_instance();
-			$this->server = new LicenseServer();
+
+			$this->utils        = Utilities::get_instance();
+			$this->license_key  = $this->utils->get_variable( 'license_key', '' );
+			$this->product_sku  = $this->utils->get_variable( 'product_sku', '' );
+			$this->product_name = $this->utils->get_variable( 'product_name', '' );
+
+			if ( empty( $this->license_key ) && ! empty( $this->product_sku ) ) {
+				$this->key_to_check = $this->product_sku;
+			}
+
+			if ( empty( $this->product_sku ) && ! empty( $this->license_key ) ) {
+				$this->key_to_check = $this->license_key;
+			}
+
+			if ( empty( $this->key_to_check ) ) {
+				throw new \Exception( 'Error: No license key or product sku supplied!' );
+			}
+
+			$this->settings = new LicenseSettings( $this->key_to_check );
+			$this->server   = new LicenseServer( $this->settings->get( 'new_version' ), $this->settings->get( 'ssl_verify' ) );
 		}
 
 		/**
@@ -63,34 +111,28 @@ if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r, WordPress.Security.NonceVerification.Recommended
 			$this->utils->log( 'Received variables from request: ' . print_r( $_REQUEST, true ) );
 
-			$license_key  = $this->utils->get_variable( 'license_key', '' );
-			$product_sku  = $this->utils->get_variable( 'product_sku', '' );
-			$product_name = $this->utils->get_variable( 'product_name', '' );
-
 			if ( empty( $product_name ) ) {
 				wp_send_json_error(
 					sprintf(
-					// translators: The SKU value is provided from the calling function
+						// translators: %s - SKU for licensed product
 						__(
 							'No product name found for the "%s" SKU',
 							'e20r-utilities-licensing'
 						),
-						$product_sku
+						$this->key_to_check
 					)
 				);
 			}
 
-			$this->settings = new LicenseSettings( $product_sku );
-
 			if ( empty( $license_key ) ) {
 				wp_send_json_error(
 					sprintf(
-					// translators: The product name for the license is a filter provided value
+						// translators: %s - Product name for the license
 						__(
 							'Error: Invalid/non-existent key specified for the "%s" license',
 							'e20r-utilities-licensing'
 						),
-						$product_name
+						$this->product_name
 					)
 				);
 			}
@@ -98,19 +140,19 @@ if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 			if ( empty( $product_sku ) ) {
 				wp_send_json_error(
 					sprintf(
-					// translators: The product name for the license is a filter provided value
+						// translators: %s - Product name for the license
 						__(
 							'Invalid SKU given for the "%s" license',
 							'e20r-utilities-licensing'
 						),
-						$product_name
+						$this->product_name
 					)
 				);
 			}
 
 			$this->utils->log( 'Forcing verification/check against upstream license server' );
 			try {
-				$this->settings->set( 'product_sku', $product_sku );
+				$this->settings->set( 'product_sku', $this->key_to_check );
 			} catch ( Exception $e ) {
 				$this->utils->add_message(
 					__( 'Error: Unable to configure SKU for license', 'e20r-utilities-licensing' ),
@@ -119,13 +161,8 @@ if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 				);
 			}
 
-			// TODO: Use $license_key if this is for an old-style license
-			// TODO: Use $product_sku if it's for a new-style license
-			$status = $this->server->status(
-				$product_sku,
-				$this->settings->all_settings(),
-				true
-			);
+			// Check the license status upstream
+			$status = $this->server->status( $this->key_to_check, $this->settings->all_settings(), true );
 
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 			$this->utils->log( 'License status: ' . print_r( $status, true ) );
@@ -133,17 +170,16 @@ if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 			if ( empty( $status ) ) {
 				wp_send_json_error(
 					sprintf(
-					// translators: The product name for the license is a filter provided value
+						// translators: %s - Product name for the license
 						__(
 							'Error: Invalid license key for "%s". It is not an active/available license',
 							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
 							'e20r-utilities-licensing'
 						),
-						$product_name
+						$this->product_name
 					)
 				);
 			}
-
 			wp_send_json_success();
 		}
 
