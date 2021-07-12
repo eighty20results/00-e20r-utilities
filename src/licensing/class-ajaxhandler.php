@@ -96,7 +96,7 @@ if ( ! class_exists( 'E20R\Utilities\Licensing\AjaxHandler' ) ) {
 			}
 
 			if ( empty( $this->key_to_check ) ) {
-				throw new \Exception( 'Error: No license key or product sku supplied!' );
+				throw new \Exception( 'Error: Neither the license key nor product sku was received!' );
 			}
 
 			$this->settings = new LicenseSettings( $this->key_to_check );
