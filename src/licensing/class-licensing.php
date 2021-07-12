@@ -138,7 +138,12 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 			$this->settings = new LicenseSettings( $this->product_sku );
 			$this->server   = new LicenseServer( $this->settings->get( 'new_version' ), $this->settings->get( 'ssl_verify' ) );
 			$this->page     = new LicensePage();
-			$this->ajax     = new AjaxHandler();
+
+			try {
+				$this->ajax = new AjaxHandler();
+			} catch ( \Exception $e ) {
+				$this->utils->log( 'Warning: Not loading the AJAX handler. No SKU or Key found.' );
+			}
 		}
 
 		/**
@@ -182,11 +187,14 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		 */
 		public function load_hooks() {
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ), 10 );
-			add_action(
-				'wp_ajax_e20r_license_verify',
-				array( $this->ajax, 'ajax_handler_verify_license' ),
-				10
-			);
+
+			if ( ! empty( $this->ajax ) ) {
+				add_action(
+					'wp_ajax_e20r_license_verify',
+					array( $this->ajax, 'ajax_handler_verify_license' ),
+					10
+				);
+			}
 		}
 
 		/**
