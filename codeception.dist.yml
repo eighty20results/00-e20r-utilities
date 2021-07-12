@@ -23,6 +23,8 @@ settings:
   colors: true
 coverage:
   enabled: true
+  show_uncovered: true
+  show_only_summary: true
   include:
     - src/utilities/*.php
     - src/licensing/*.php

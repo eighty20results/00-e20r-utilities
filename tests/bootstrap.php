@@ -40,7 +40,7 @@ if ( ! defined( 'PLUGIN_PATH' ) ) {
 	define( 'PLUGIN_PATH', __DIR__ . '/../00-e20r-utilities/' );
 }
 
-require_once __DIR__ . '/../../inc/autoload.php';
+require_once __DIR__ . '/../inc/autoload.php';
 
 # Load fixtures for testing
 if ( file_exists( __DIR__ . '/inc/fixtures.php' ) ) {
@@ -48,4 +48,4 @@ if ( file_exists( __DIR__ . '/inc/fixtures.php' ) ) {
 }
 
 # Load the class autoloader
-require_once __DIR__ . '/../../class-loader.php';
+require_once __DIR__ . '/../class-loader.php';
