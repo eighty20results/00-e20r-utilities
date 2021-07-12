@@ -191,7 +191,6 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		public function clear_notices( $passthrough = null ) {
 
 			wc_clear_notices();
-
 			return $passthrough;
 		}
 
