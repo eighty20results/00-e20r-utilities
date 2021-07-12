@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## v2.0.4 - 2021-07-12
+- BUG FIX: Fix a typo for the MAKE variable (Thomas Sjolshagen)
+- BUG FIX: Keep the inc/ directories for the Unit and WPUnit tests (Thomas Sjolshagen)
+- BUG FIX: Revert AssetThrows codeception module (Thomas Sjolshagen)
+- BUG FIX: Add WooCommerce as a dependency (Thomas Sjolshagen)
+- BUG FIX: Whitespace nit in class-message.php (Thomas Sjolshagen)
+- BUG FIX: Fix path to unit tests (Thomas Sjolshagen)
+- BUG FIX: Clean up the load_hooks Unit Test (Thomas Sjolshagen)
+- BUG FIX: Adding basic Unit test stubs (Thomas Sjolshagen)
+- BUG FIX: Handle exception thrown if no License Key or Product SKU is specified in the REQUEST on load. (Thomas Sjolshagen)
+- BUG FIX: Configure test bootstrap.php file and add coverage config (Thomas Sjolshagen)
+- BUG FIX: Improved error message in class-ajaxhandler.php constructor (Thomas Sjolshagen)
+- BUG FIX: Re-activated the git commit for the CHANGELOG.md file (Thomas Sjolshagen)
+- BUG FIX: Updated CHANGELOG (v2.0.4 for WP 5.7.2) (Thomas Sjolshagen)
 - BUG FIX: Bumped version number (Thomas Sjolshagen)
 - BUG FIX: Various fixes to have class-utilities.php pass PHPStan testing (Thomas Sjolshagen)
 - BUG FIX: Adding errors to ignore to the phpstan.dist.neon config file, listing dynamic constants and making sure we have the right directories to scan (Thomas Sjolshagen)
