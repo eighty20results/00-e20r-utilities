@@ -465,7 +465,7 @@ test: clean wp-deps code-standard-test phpstan-test unit-test db-import wp-unit-
 # Generate a GIT commit log in build_readmes/current.txt
 #
 git-log:
-	@./bin/create_log.sh "loader"
+	@./bin/create_log.sh
 
 #
 # Generate (and update) the custom WP Plugin Updater metadata.json file
