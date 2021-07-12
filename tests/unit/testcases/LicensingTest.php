@@ -21,6 +21,7 @@
 
 namespace E20R\Test\Unit;
 
+use Codeception\AssertThrows;
 use E20R\Utilities\Licensing\AjaxHandler;
 use E20R\Utilities\Licensing\LicensePage;
 use E20R\Utilities\Licensing\Licensing;
@@ -35,6 +36,8 @@ use function Brain\Monkey\setUp;
 use function Brain\Monkey\tearDown;
 
 class LicensingTest extends Unit {
+
+	use AssertThrows;
 
 	/**
 	 * The setup function for this Unit Test suite
@@ -101,7 +104,8 @@ class LicensingTest extends Unit {
 	 * Load source files for the Unit Test to execute
 	 */
 	public function loadFiles() {
-		require_once __DIR__ . '/../../../inc/autoload.php';
+//		require_once __DIR__ . '/../../../inc/autoload.php';
+//		require_once __DIR__ . '/../../../class-loader.php';
 		require_once __DIR__ . '/../../../src/licensing/class-licensing.php';
 		require_once __DIR__ . '/../../../src/licensing/class-licensepage.php';
 		require_once __DIR__ . '/../../../src/licensing/class-ajaxhandler.php';
@@ -116,52 +120,31 @@ class LicensingTest extends Unit {
 	/**
 	 * Tests the load_hooks() function
 	 *
+	 * @param string $key_name
+	 * @param string $sku_value
+	 *
 	 * @test
+	 * @covers \E20R\Utilities\Licensing\Licensing::load_hooks
 	 */
 	public function test_load_hooks() {
-
-		$lp_mock = $this->getMockBuilder( LicensePage::class )
-			->getMock();
-
-		$ajax_mock = $this->getMockBuilder( AjaxHandler::class )
-			->onlyMethods( array( 'ajax_handler_verify_license' ) )
-			->getMock();
-
-		$ajax_mock->method( 'ajax_handler_verify_license' )
-			->willReturn( false );
-
-		$license_mock = $this->getMockBuilder( Licensing::class )
-			->onlyMethods( array( 'enqueue' ) )
-			->getMock();
-
-		$license_mock->method( 'enqueue' )
-			->willReturn( null );
-
-		$class = new Licensing();
-		$ajax  = new AjaxHandler();
-
+		$licensing = new Licensing();
 		try {
 			Actions\expectAdded( 'admin_enqueue_scripts' )
-				->with( array( $class, 'enqueue' ), 10 );
+				->with( array( $licensing, 'enqueue' ), 10 );
 		} catch ( \Exception $e ) {
-			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
+			error_log( 'Error: ' . $e->getMessage() ); // phpcs:ignore
 		}
-
-		try {
-			Actions\expectAdded( 'wp_ajax_e20r_license_verify' )
-				->with( array( $ajax, 'ajax_handler_verify_license' ), 10 );
-		} catch ( \Exception $e ) {
-			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
-		}
-
-		$class->load_hooks();
+		$licensing->load_hooks();
 	}
 
 	/**
+	 * Unit test of the load_settings() method in the Licensing() class
+	 *
 	 * @param $sku
 	 * @param $expected_settings
 	 *
 	 * @dataProvider fixture_settings
+	 * @covers \E20R\Utilities\Licensing\Licensing::load_settings
 	 */
 	public function test_load_settings( $sku, $use_new, $expected_settings ) {
 
@@ -352,9 +335,10 @@ class LicensingTest extends Unit {
 	/**
 	 * Test that the get_instance() function returns the correct class type
 	 *
-	 * @test
+	 * @covers \E20R\Utilities\Licensing\Licensing()
+	 * @dataProvider fixture_skus
 	 */
-	public function test_get_instance() {
+	public function test_get_instance( $test_sku ) {
 
 		Filters\expectApplied( 'e20r_licensing_text_domain' )
 			->with( '00-e20r-utilities' );
@@ -376,9 +360,20 @@ class LicensingTest extends Unit {
 		$utilities_mock->method( 'is_local_server' )
 			->willReturn( true );
 
-		self::assertInstanceOf( '\\E20R\\Utilities\\Licensing\\Licensing', new Licensing() );
+		self::assertInstanceOf( '\\E20R\\Utilities\\Licensing\\Licensing', new Licensing( $test_sku ) );
 	}
 
+	/**
+	 * Fixture for the test_get_instance() tests
+	 *
+	 * @return \string[][]
+	 */
+	public function fixture_skus() {
+		return array(
+			array( 'E20R_LICENSING' ),
+			array( 'E20RMC' ),
+		);
+	}
 	public function test_get_text_domain() {
 
 	}
