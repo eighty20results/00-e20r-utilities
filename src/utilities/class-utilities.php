@@ -90,7 +90,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		public function __construct() {
 
-			self::$library_url  = plugins_url( null, __FILE__ );
+			self::$library_url  = plugins_url( '', __FILE__ );
 			self::$library_path = plugin_dir_path( __FILE__ );
 			$this->plugin_slug  = apply_filters( 'e20r_licensing_text_domain', '00-e20r-utilities' );
 
@@ -251,11 +251,12 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				return;
 			}
 
-			$locale = apply_filters( 'plugin_locale', get_locale(), '00-e20r-utilities' );
+			$locale  = apply_filters( 'plugin_locale', get_locale(), '00-e20r-utilities' );
+			$fs_base = new \WP_Filesystem_Base();
 
 			$mofile        = "00-e20r-utilities-{$locale}.mo";
 			$mofile_local  = plugin_dir_path( __FILE__ ) . 'languages/' . $mofile;
-			$mofile_global = WP_LANG_DIR . '/00-e20r-utilities/' . $mofile;
+			$mofile_global = $fs_base->wp_lang_dir() . '/00-e20r-utilities/' . $mofile;
 
 			load_textdomain( '00-e20r-utilities', $mofile_local );
 
@@ -374,7 +375,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Return all delay values for a membership payment start
 		 *
-		 * @param $level
+		 * @param \stdClass|array $level
 		 *
 		 * @return array|bool|mixed|null
 		 */
@@ -429,10 +430,11 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 						self::$instance->log( "Processing Subscription Delay values for {$level->id}" );
 
 						//Get the default delay value (days)
-						$date_or_num = pmprosd_getDelay( $level->id, null );
+						$date_or_num = pmprosd_getDelay( $level->id, null ); // @phpstan-ignore-line
 						self::$instance->log( "Received default delay value: {$date_or_num}" );
 
 						if ( ! empty( $date_or_num ) ) {
+							// @phpstan-ignore-next-line
 							$val = ( is_numeric( $date_or_num ) ? $date_or_num : pmprosd_daysUntilDate( $date_or_num ) );
 
 							if ( ! empty( $val ) ) {
@@ -451,11 +453,12 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 							foreach ( $active_codes as $code ) {
 
 								// Get the delay value from the Subscription Delays plugin
-								$d = pmprosd_getDelay( $level->id, $code->id );
+								$d = pmprosd_getDelay( $level->id, $code->id ); // @phpstan-ignore-line
 
 								if ( ! empty( $d ) ) {
 
 									self::$instance->log( "Processing {$d}" );
+									// @phpstan-ignore-next-line
 									$val = ( is_numeric( $d ) ? $d : pmprosd_daysUntilDate( $d ) );
 
 									if ( ! empty( $val ) ) {
@@ -596,7 +599,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 					$trial_duration = $user_level->cycle_number * $user_level->trial_limit;
 					$start_date     = date_i18n( 'Y-m-d H:i:s', $start_ts );
-					$trial_ends_ts  = strtotime( "{$start_date} + {$trial_duration} {$user_level->cycle_period}" );
+					$trial_ends_ts  = strtotime(
+						sprintf( '%1$s +%2$s %3$s', $start_date, $trial_duration, $user_level->cycle_period ) // @phpstan-ignore-line
+					);
 
 					if ( false !== $trial_ends_ts && $trial_ends_ts >= $now ) {
 						$this->log( "User {$user_id} is in their current trial period for level {$level_id}: It ends at {$trial_ends_ts} which is >= {$now} " );
@@ -724,7 +729,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				// $log_fh = fopen( $log_name, 'a+' );
 				// phpcs:ignore
 				// $log_fh,
-				error_log(
+				error_log( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					sprintf(
 						'[%s](%s) %s - %s',
 						$thread_id,
@@ -785,14 +790,12 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			if ( ! is_numeric( $field ) ) {
 
 				if ( is_array( $field ) ) {
-
 					foreach ( $field as $key => $val ) {
 						$field[ $key ] = $this->sanitize( $val );
 					}
 				}
 
 				if ( is_object( $field ) ) {
-
 					foreach ( (array) $field as $key => $val ) {
 						$field->{$key} = $this->sanitize( $val );
 					}
@@ -809,7 +812,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 						$field = true;
 					} elseif ( strtolower( $field ) === 'no' ) {
 						$field = false;
-					} elseif ( ! $this->is_html( $field ) ) {
+					} elseif ( ! self::is_html( $field ) ) {
 						$field = sanitize_text_field( $field );
 					} else {
 						$field = wp_kses_post( $field );
@@ -829,7 +832,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 					$field = intval( $field );
 				}
 
-				if ( is_bool( $field ) ) {
+				if ( self::is_bool( $field ) ) {
 					$field = (bool) $field;
 				}
 			}
@@ -838,9 +841,23 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		}
 
 		/**
+		 * More consistent boolean tester
+		 *
+		 * @param mixed $variable
+		 *
+		 * @return false|mixed
+		 */
+		private static function is_bool( $variable ) {
+			if ( ! isset( $variable ) ) {
+				return false;
+			}
+			return filter_var( $variable, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
+		}
+
+		/**
 		 * Test whether string contains HTML
 		 *
-		 * @param $string
+		 * @param string $string
 		 *
 		 * @return bool
 		 */
@@ -851,16 +868,16 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Test whether the value is an integer
 		 *
-		 * @param string $val
+		 * @param mixed $val
 		 *
 		 * @return bool|int
 		 */
 		final public static function is_integer( $val ) {
-			if ( ! is_scalar( $val ) || is_bool( $val ) ) {
+			if ( ! is_scalar( $val ) || self::is_bool( $val ) ) {
 				return false;
 			}
 
-			if ( is_float( $val + 0 ) && ( $val + 0 ) > PHP_INT_MAX ) {
+			if ( is_float( (float) $val + 0 ) && ( (int) $val + 0 ) > PHP_INT_MAX ) {
 				return false;
 			}
 
@@ -938,8 +955,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Return or print checked field for HTML Checkbox INPUT
 		 *
-		 * @param array|object $needle
-		 * @param array|object $haystack
+		 * @param mixed $needle
+		 * @param mixed $haystack
 		 * @param bool  $echo
 		 *
 		 * @return null|string
@@ -1016,7 +1033,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * @param int    $length   Size of the string to generate
 		 * @param string $keyspace The characters to use to generate the string.
 		 *
-		 * @return string   True random string of $keyspace characters
+		 * @return string|false   True random string of $keyspace characters
 		 *
 		 * Credit:
 		 * @url http://stackoverflow.com/questions/4356289/php-random-string-generator/31107425#31107425
@@ -1032,7 +1049,6 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				}
 			} catch ( Exception $e ) {
 				$this->log( 'Error generating random string: ' . $e->getMessage() );
-
 				return false;
 			}
 
@@ -1102,7 +1118,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			// Intentionally deactivate debug output to display/client
 			// phpcs:ignore WordPress.PHP.IniSet.display_errors_Blacklisted
-			ini_set( 'display_errors', 0 );
+			ini_set( 'display_errors', '0' );
 			ob_start();
 			$messages = ob_get_clean();
 			$this->log( $messages );
@@ -1148,20 +1164,20 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * Configure and load the plugin_update_checker
 		 *
 		 * @param string      $plugin_slug
-		 * @param null|string $plugin_path
+		 * @param string|null $plugin_path
 		 *
 		 * @return mixed
 		 */
-		public static function configure_update( $plugin_slug, $plugin_path = null ) {
+		public static function configure_update( $plugin_slug, $plugin_path ) {
 
 			$plugin_updates = null;
 			$plugin         = self::get_instance();
 
 			if ( is_null( $plugin_path ) ) {
-				$plugin_path = plugin_dir_path( $plugin_path ) . '../' . $plugin_slug . '.php';
+				$plugin_path = sprintf( '%1$s/%2$s/%2$s.php', WP_PLUGIN_DIR, $plugin_slug );
 			}
 
-			if ( ! file_exists( plugin_dir_path( __FILE__ ) . '../../inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php' ) ) {
+			if ( ! file_exists( E20R_UTILITIES_BASE_FILE . '/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php' ) ) {
 				$plugin->add_message( 'File not found: Unable to load the plugin update checker!', 'warning' );
 				return $plugin_updates;
 			}
@@ -1170,7 +1186,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			 * One-click update handler & checker
 			 */
 			if ( ! class_exists( '\\Puc_v4_Factory' ) ) {
-				require_once plugin_dir_path( E20R_UTILITIES_BASE_FILE ) . 'inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
+				require_once plugin_dir_path( E20R_UTILITIES_BASE_FILE ) . '/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
 			}
 
 			$plugin_updates = Puc_v4_Factory::buildUpdateChecker(
