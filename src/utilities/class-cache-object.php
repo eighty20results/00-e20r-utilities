@@ -49,13 +49,13 @@ if ( ! class_exists( '\E20R\Utilities\Cache_Object' ) ) {
 
 		/**
 		 * The Cache Key
-		 * @var string
+		 * @var string $key
 		 */
 		private $key = null;
 
 		/**
 		 * The Cached value
-		 * @var mixed
+		 * @var mixed $value
 		 */
 		private $value = null;
 
@@ -77,7 +77,7 @@ if ( ! class_exists( '\E20R\Utilities\Cache_Object' ) ) {
 		 * @param string $name
 		 * @param mixed  $value
 		 */
-		public function __set( $name, $value ) {
+		public function set( $name, $value ) {
 
 			switch ( $name ) {
 				case 'key':
@@ -94,7 +94,7 @@ if ( ! class_exists( '\E20R\Utilities\Cache_Object' ) ) {
 		 *
 		 * @return mixed|null - Property value (for Key or Value property)
 		 */
-		public function __get( $name ) {
+		public function get( string $name ) {
 
 			$result = null;
 

@@ -37,20 +37,18 @@ if ( ! class_exists( '\E20R\Utilities\Cache' ) ) {
 		/**
 		 * Fetch entry from cache
 		 *
-		 * @param  mixed $key
+		 * @param string $key
 		 * @param string $group
 		 *
 		 * @return bool|mixed|null
 		 */
 		public static function get( $key, $group = self::CACHE_GROUP ) {
-
-			$found = null;
 			$value = get_transient( "{$group}_{$key}" );
 
 			if ( false === $value || false === ( $value instanceof Cache_Object ) ) {
 				$value = null;
 			} else {
-				$value = $value->value;
+				$value = $value->get( 'value' );
 			}
 
 			return $value;
@@ -67,9 +65,7 @@ if ( ! class_exists( '\E20R\Utilities\Cache' ) ) {
 		 * @return bool
 		 */
 		public static function set( $key, $value, $expires = 3600, $group = self::CACHE_GROUP ) {
-
 			$data = new Cache_Object( $key, $value );
-
 			return set_transient( "{$group}_{$key}", $data, $expires );
 		}
 
@@ -82,7 +78,6 @@ if ( ! class_exists( '\E20R\Utilities\Cache' ) ) {
 		 * @return bool - True if successful, false otherwise
 		 */
 		public static function delete( $key, $group = self::CACHE_GROUP ) {
-
 			return delete_transient( "{$group}_{$key}" );
 		}
 	}
