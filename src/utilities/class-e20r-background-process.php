@@ -39,7 +39,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 	 * Abstract E20R_Background_Process class.
 	 *
 	 * @abstract
-	 * @extends E20R_Async_Request
+	 * @uses \E20R\Utilities\E20R_Async_Request
 	 */
 	abstract class E20R_Background_Process extends E20R_Async_Request {
 		/**
@@ -634,7 +634,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 			$current_timeout = intval( get_cfg_var( 'max_execution_time' ) );
 
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			$default_time_limit = apply_filters( 'e20r-background-processing-time-limit', 20 );
+			$default_time_limit = apply_filters( 'e20r_background_processing_time_limit', 20 );
 			$return             = false;
 
 			if ( ! empty( $current_timeout ) ) {
@@ -695,20 +695,17 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 			$current_timeout = intval( get_cfg_var( 'max_execution_time' ) );
 
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			$default_time_limit = apply_filters( 'e20r-background-processing-time-limit', 20 );
+			$default_time_limit = apply_filters( 'e20r_background_processing_time_limit', 20 );
+			$time_limit         = intval( floor( $current_timeout * 0.80 ) );
 
+			// Shouldn't be less than 20 seconds (change web host provider if this is necessary!)
 			if ( ! empty( $current_timeout ) ) {
-
-				$time_limit = intval( floor( $current_timeout * 0.80 ) );
-
-				// Shouldn't be less than 20 seconds (change web host provider if this is necessary!)
 				if ( $time_limit < $default_time_limit ) {
 					$time_limit = 18;
 				}
 			}
 
 			if ( $time_limit >= 60 ) {
-
 				$lock_duration = $time_limit;
 			}
 
