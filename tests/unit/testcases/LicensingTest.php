@@ -21,13 +21,11 @@
 
 namespace E20R\Test\Unit;
 
-use Codeception\AssertThrows;
 use E20R\Utilities\Licensing\AjaxHandler;
 use E20R\Utilities\Licensing\LicensePage;
 use E20R\Utilities\Licensing\Licensing;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
-use PHPUnit\Framework\TestCase;
 use Codeception\Test\Unit;
 use Brain\Monkey\Functions;
 use Brain\Monkey\Actions;
@@ -36,8 +34,6 @@ use function Brain\Monkey\setUp;
 use function Brain\Monkey\tearDown;
 
 class LicensingTest extends Unit {
-
-	use AssertThrows;
 
 	/**
 	 * The setup function for this Unit Test suite
