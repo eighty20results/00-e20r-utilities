@@ -3,7 +3,7 @@ short_name="${E20R_PLUGIN_NAME}"
 server="eighty20results.com"
 sed="$(which sed)"
 wordpress_version=$(wget -q -O - http://api.wordpress.org/core/stable-check/1.0/  | grep latest | awk '{ print $1 }' | sed -e 's/"//g')
-version=$(grep -E "^Version:" ./class-loader.php | sed 's/[[:alpha:]|(|[:space:]|\:]//g' | awk -F- '{printf "%s", $1}')
+version=$(./get_plugin_version.sh "loader")
 today=$(date +%Y-%m-%d)
 url_info="https:\/\/${server}\/protected-content\/${short_name}\/${short_name}"
 url_with_version="${url_info}-${version}\.zip"
@@ -11,7 +11,7 @@ metadata_template=$(cat <<- __EOF__
 {
   "name": "Eighty/20 Results Utilities Module",
   "slug": "00-e20r-utilities",
-  "download_url": "https://${server}/protected-content/${short_name}/${short_name}-${version}.zip",
+  "download_url": "${url_with_version}",
   "version": "1.0",
   "tested": "1.0",
   "requires": "5.0",
