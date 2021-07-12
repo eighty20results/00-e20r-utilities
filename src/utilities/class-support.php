@@ -27,7 +27,7 @@ if ( ! class_exists( '\E20R\Utilities\Support' ) ) {
 	 */
 	class Support {
 		public function __construct() {
-			return $this;
+			// TODO: Implement support functionality
 		}
 	}
 }
