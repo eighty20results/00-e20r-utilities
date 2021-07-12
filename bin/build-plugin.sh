@@ -4,7 +4,7 @@
 #
 # Copyright 2014 - 2021 (c) Eighty / 20 Results by Wicked Strong Chicks, LLC
 #
-short_name="00-e20r-utilities"
+short_name="${1}"
 remote_server="eighty20results.com"
 declare -a include=( \
 	"docs" \
@@ -36,7 +36,7 @@ declare -a exclude=( \
 	)
 declare -a build=()
 plugin_path="${short_name}"
-version=$(./bin/get_plugin_version.sh loader)
+version=$(./bin/get_plugin_version.sh "loader")
 metadata="../metadata.json"
 src_path="$(pwd)/"
 dst_path="./build/${plugin_path}"

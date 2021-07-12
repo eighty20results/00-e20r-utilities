@@ -3,7 +3,7 @@ sed="$(which sed)"
 readme_path="./build_readmes/"
 wordpress_version=$(wget -q -O - http://api.wordpress.org/core/stable-check/1.0/  | grep latest | awk '{ print $1 }' | sed -e 's/"//g')
 # stripped_log=$(mktemp /tmp/old-info-XXXXXX)
-version=$(grep -E "^Version:" ./class-loader.php | sed 's/[[:alpha:]|(|[:space:]|\:]//g' | awk -F- '{printf "%s", $1}')
+version=$(./bin/get_plugin_version.sh "loader")
 
 ###########
 #

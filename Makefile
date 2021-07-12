@@ -465,25 +465,25 @@ test: clean wp-deps code-standard-test phpstan-test unit-test db-import wp-unit-
 # Generate a GIT commit log in build_readmes/current.txt
 #
 git-log:
-	@./bin/create_log.sh
+	@./bin/create_log.sh "loader"
 
 #
 # Generate (and update) the custom WP Plugin Updater metadata.json file
 #
 metadata:
-	@./bin/metadata.sh
+	@./bin/metadata.sh "loader"
 
 #
 # Generate the CHANGELOG.md file for the plugin based on the git commit log
 #
 changelog: build_readmes/current.txt
-	@./bin/changelog.sh
+	@./bin/changelog.sh "loader"
 
 #
 # Generate and update the README.txt plus README.md files for the plugin
 #
 readme: changelog # metadata
-	@./bin/readme.sh
+	@./bin/readme.sh "loader"
 
 #
 # Build the plugin .zip archive (and upload to the eighty20results.com server if applicable
@@ -491,11 +491,11 @@ readme: changelog # metadata
 #
 $(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
 	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
-  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh ; \
+  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "loader"; \
 	else \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \
-		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_NAME)) \
+		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh "loader") \
 		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip --worktree-attributes main ; \
 	fi
 
