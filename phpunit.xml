@@ -41,7 +41,7 @@
 		verbose="false">
 	<testsuites>
 		<testsuite name="E20R Utilities Test Suite">
-			<directory suffix="Test.php">./tests/wpunit/testcases/</directory>
+			<directory suffix="Test.php">./tests/units/testcases/</directory>
 		</testsuite>
 	</testsuites>
 	<filter>
