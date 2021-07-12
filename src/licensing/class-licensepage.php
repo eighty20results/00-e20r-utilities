@@ -42,15 +42,23 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 		/**
 		 * Handle to page (license settings)
 		 *
-		 * @var null|Page Handle for WP admin page
+		 * @var string|false Handle for WP admin page
 		 */
 		private $page_handle = null;
+
+		/**
+		 * Whether to add Licensing specific debug logging
+		 *
+		 * @var bool $log_debug
+		 */
+		private $log_debug = false;
 
 		/**
 		 * LicensePage constructor.
 		 */
 		public function __construct() {
-			$this->utils = Utilities::get_instance();
+			$this->utils     = Utilities::get_instance();
+			$this->log_debug = defined( 'E20R_LICENSING_DEBUG' ) && E20R_LICENSING_DEBUG;
 		}
 
 		/**
@@ -75,7 +83,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 		public function is_page_loaded( $handle, $sub = false ) {
 
 			if ( ! is_admin() || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				if ( $this->log_debug ) {
 					$this->utils->log( 'AJAX request or not in wp-admin' );
 				}
 
@@ -88,7 +96,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 			$check_menu = $sub ? $submenu : $menu;
 
 			if ( empty( $check_menu ) ) {
-				if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+				if ( $this->log_debug ) {
 					$this->utils->log( "No menu object found for {$handle}??" );
 				}
 
@@ -102,7 +110,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 				foreach ( $item as $subm ) {
 
 					if ( $subm[2] === $handle ) {
-						if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+						if ( $this->log_debug ) {
 							$this->utils->log( 'Settings submenu already loaded: ' . urldecode( $subm[2] ) );
 						}
 
@@ -112,7 +120,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 			} else {
 
 				if ( $item[2] === $handle ) {
-					if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+					if ( $this->log_debug ) {
 						$this->utils->log( 'Menu already loaded: ' . urldecode( $item[2] ) );
 					}
 
@@ -120,7 +128,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 				}
 			}
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				$this->utils->log( 'Loading licensing page...' );
 			}
 
@@ -132,7 +140,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 		 */
 		public function load_page() {
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				$this->utils->log( 'Attempting to add options page for E20R Licenses' );
 			}
 
@@ -150,7 +158,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 		 */
 		public function show_section() {
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				$this->utils->log( 'Loading section HTML for License Settings' );
 			}
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
@@ -218,7 +226,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 		/**
 		 * Show input row for License page
 		 *
-		 * @param $args
+		 * @param array $args
 		 *
 		 * @since 1.6 - BUG FIX: Used incorrect product label for new licenses
 		 */
@@ -226,7 +234,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 
 			global $current_user;
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 				$this->utils->log( 'Loading input HTML for: ' . print_r( $args, true ) );
 			}
@@ -418,7 +426,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 		 */
 		public function page() {
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				$this->utils->log( 'Testing access for Licensing page' );
 			}
 
@@ -485,7 +493,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 				)
 			);
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) && true === E20R_LICENSING_DEBUG ) {
+			if ( $this->log_debug ) {
 				$this->utils->log( 'Have ' . count( $settings ) . ' new license(s) to add info for' );
 			}
 
