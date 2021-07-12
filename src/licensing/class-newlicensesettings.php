@@ -118,7 +118,6 @@ class NewLicenseSettings extends LicenseSettings {
 			$this->load_settings( $product_sku );
 		} catch ( \Exception $e ) {
 			echo 'Error: ' . $e->getMessage(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			return false;
 		}
 	}
 }
