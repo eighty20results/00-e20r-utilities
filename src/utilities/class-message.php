@@ -138,14 +138,14 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Return the correct Destination constant value
 		 *
-		 * @param string $destination
+		 * @param string|int $destination
 		 *
 		 * @return int
 		 */
 		public function convert_destination( $destination ) {
 
 			if ( is_numeric( $destination ) ) {
-				return $destination;
+				return (int) $destination;
 			}
 
 			switch ( trim( strtolower( $destination ) ) ) {
@@ -198,7 +198,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Display the error/warning/notice messages in the appropriate destination
 		 *
-		 * @param string|null $destination
+		 * @param string|null|int $destination
 		 */
 		public function display( $destination = null ) {
 
@@ -313,8 +313,8 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Display on the front-end of the site (if using WooCommerce or PMPro)
 		 *
-		 * @param string $msg
-		 * @param int    $type
+		 * @param string $message
+		 * @param string $type
 		 */
 		private function display_frontend( $message, $type ) {
 
@@ -374,6 +374,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 				return $arg1;
 			}
 
+			// @phpstan-ignore-next-line
 			$utils->log( "Loading error messages for account/billing page: {$post->ID}" );
 			$this->display( self::FRONTEND_LOCATION );
 
@@ -444,7 +445,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Return all messages of a specific type
 		 *
-		 * @param $type
+		 * @param string $type
 		 *
 		 * @return string[]
 		 */
