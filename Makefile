@@ -495,7 +495,7 @@ readme: changelog # metadata
 #
 $(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
 	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
-  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "loader"; \
+  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "$(E20R_PLUGIN_NAME)"; \
 	else \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \
