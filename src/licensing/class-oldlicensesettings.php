@@ -21,6 +21,8 @@
 
 namespace E20R\Utilities\Licensing;
 
+use E20R\Utilities\Utilities;
+
 /**
  * Class OldLicenseSettings
  * @package E20R\Utilities\Licensing
@@ -59,7 +61,7 @@ class OldLicenseSettings extends LicenseSettings {
 
 
 	/**
-	 * @var null|\DateTime Date and time of expiration for the license
+	 * @var null|string Date and time of expiration for the license
 	 */
 	private $expires = null;
 
@@ -128,9 +130,13 @@ class OldLicenseSettings extends LicenseSettings {
 		// Add the product_sku member variable since we use 'product'
 		$this->excluded[] = 'product_sku';
 
-		$this->domain    = $_SERVER['domain'];
+		$this->domain    = $_SERVER['HTTP_HOST'];
 		$this->timestamp = time();
 
-		$this->load_settings();
+		try {
+			$this->load_settings();
+		} catch ( \Exception $e ) {
+			Utilities::get_instance()->log( "Error: " . $e->getMessage() ); // phpcs:ignore
+		}
 	}
 }
