@@ -61,7 +61,6 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 *
 		 * @param string $class_name Name of the class to auto-load
 		 *
-		 * @return bool
 		 * @since  1.0
 		 * @access public static
 		 */
@@ -99,7 +98,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 				);
 			} catch ( \Exception $e ) {
 				print 'Error: ' . $e->getMessage(); // phpcs:ignore
-				return;
+				return false;
 			}
 
 			try {
@@ -124,7 +123,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 				);
 			} catch ( \Exception $e ) {
 				echo 'Autoloader error: ' . $e->getMessage(); // phpcs:ignore
-				return;
+				return false;
 			}
 
 			try {
@@ -171,7 +170,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 }
 
 try {
-	spl_autoload_register( 'E20R\Utilities\Loader::auto_load' );
+	spl_autoload_register( '\\E20R\\Utilities\\Loader::auto_load' );
 } catch ( \Exception $exception ) {
 	// phpcs:ignore
 	error_log( 'Unable to register autoloader: ' . $exception->getMessage(), E_USER_ERROR );
