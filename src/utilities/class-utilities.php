@@ -1156,6 +1156,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 *
 		 * @return mixed|null
 		 */
+		// phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
 		public static function configureUpdateServerV4( $plugin_slug, $plugin_path ) {
 			return self::configure_update( $plugin_slug, $plugin_path );
 		}
@@ -1177,16 +1178,16 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				$plugin_path = sprintf( '%1$s/%2$s/%2$s.php', WP_PLUGIN_DIR, $plugin_slug );
 			}
 
-			if ( ! file_exists( E20R_UTILITIES_BASE_FILE . '/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php' ) ) {
+			if ( ! file_exists( dirname( E20R_UTILITIES_BASE_FILE ) . '/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php' ) ) {
 				$plugin->add_message( 'File not found: Unable to load the plugin update checker!', 'warning' );
-				return $plugin_updates;
+				return null;
 			}
 
 			/**
 			 * One-click update handler & checker
 			 */
 			if ( ! class_exists( '\\Puc_v4_Factory' ) ) {
-				require_once plugin_dir_path( E20R_UTILITIES_BASE_FILE ) . '/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
+				require_once sprintf( '%1$s/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php', dirname( E20R_UTILITIES_BASE_FILE ) );
 			}
 
 			$plugin_updates = Puc_v4_Factory::buildUpdateChecker(

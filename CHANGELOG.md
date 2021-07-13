@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v2.0.5 - 2021-07-13
+- BUG FIX: Wrong path for plugin updater (Thomas Sjolshagen)
+
 ## v2.0.4 - 2021-07-12
 - BUG FIX: acceptance-test target didn't work (Thomas Sjolshagen)
 - BUG FIX: Plugin uses a custom loader file (Thomas Sjolshagen)

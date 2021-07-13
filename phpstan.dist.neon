@@ -21,4 +21,3 @@ parameters:
         - class-loader.php
     excludePaths:
         - tests/
-

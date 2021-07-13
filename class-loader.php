@@ -3,7 +3,7 @@
 Plugin Name: E20R Utilities Module
 Plugin URI: https://eighty20results.com/
 Description: Provides functionality required by some of the Eighty/20 Results developed plugins
-Version: 2.0.4
+Version: 2.0.5
 Requires PHP: 7.3
 Author: Thomas Sjolshagen <thomas@eighty20results.com>
 Author URI: https://eighty20results.com/thomas-sjolshagen/
@@ -179,6 +179,6 @@ try {
 
 \add_action( 'plugins_loaded', 'E20R\\Utilities\\Loader::utilities_loaded', -1 );
 
-if ( class_exists( '\\E20R\\Utilities\\Utilities' ) ) {
+if ( class_exists( 'Utilities' ) ) {
 	Utilities::configure_update( '00-e20r-utilities', __FILE__ );
 }
