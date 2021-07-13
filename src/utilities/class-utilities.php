@@ -1177,9 +1177,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				$plugin_path = sprintf( '%1$s/%2$s/%2$s.php', WP_PLUGIN_DIR, $plugin_slug );
 			}
 
-			if ( ! file_exists( E20R_UTILITIES_BASE_FILE . '/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php' ) ) {
+			if ( ! file_exists( dirname( E20R_UTILITIES_BASE_FILE ) . '/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php' ) ) {
 				$plugin->add_message( 'File not found: Unable to load the plugin update checker!', 'warning' );
-				return $plugin_updates;
+				return null;
 			}
 
 			/**
