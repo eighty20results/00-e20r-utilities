@@ -5,14 +5,15 @@
 # Copyright 2014 - 2021 (c) Eighty / 20 Results by Wicked Strong Chicks, LLC
 #
 short_name="${1}"
-remote_server="eighty20results.com"
+remote_server="${2}"
 declare -a include=( \
 	"docs" \
 	"inc" \
 	"src" \
 	"class-loader.php" \
 	"README.txt" \
-	"CHANGELOG.md"
+	"README.md" \
+	"CHANGELOG.md" \
 	)
 declare -a exclude=( \
 	".git" \
@@ -27,6 +28,7 @@ declare -a exclude=( \
 	".circleci" \
 	"docker-compose.yml" \
 	"build_readmes" \
+	"build_config" \
 	"build" \
 	".idea" \
 	"*.yml" \
