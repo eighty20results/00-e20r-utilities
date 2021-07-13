@@ -247,7 +247,7 @@ e20r-deps:
 	@DOWNLOAD_MODULE=${DOWNLOAD_MODULE} ; \
 	for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
 		echo "Checking for presence of $${e20r_plugin}..." ; \
-		if [[ ! -f "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}/*.php" ]]; then \
+		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" ]]; then \
 			echo "Download or build $${e20r_plugin}.zip dependency?" && \
 			if [[ "0" -eq "$${DOWNLOAD_MODULE}" && "00-e20r-utilities" -eq "$${e20r_plugin}" ]]; then \
 				echo "Build $${e20r_plugin} archive and save to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
