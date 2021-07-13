@@ -259,7 +259,7 @@ e20r-deps:
 				cd $(BASE_PATH) ; \
 			else \
 				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
+				$(CURL) --silent -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
 			fi ; \
 			mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 			echo "Installing the $${e20r_plugin}.zip plugin" && \
@@ -294,7 +294,7 @@ wp-deps: clean composer-dev e20r-deps
   		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" ]]; then \
   		  echo "Download and install $${dep_plugin} to $(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" && \
   		  mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" && \
-  		  $(CURL) -L "$(WP_PLUGIN_URL)/$${dep_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" && \
+  		  $(CURL) --silent -L "$(WP_PLUGIN_URL)/$${dep_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" && \
   		  $(UNZIP) -o "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" -d $(COMPOSER_DIR)/wp_plugins/ 2>&1 > /dev/null && \
   		  rm -f "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" ; \
   		fi ; \
