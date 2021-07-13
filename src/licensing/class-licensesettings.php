@@ -34,6 +34,10 @@ if ( ! defined( 'E20R_MISSING_SETTING' ) ) {
 	define( 'E20R_MISSING_SETTING', 1024 );
 }
 
+if ( ! defined( 'E20R_LICENSING_VERSION' ) ) {
+	define( 'E20R_LICENSING_VERSION', '3.1' );
+}
+
 if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 	class LicenseSettings {
 
