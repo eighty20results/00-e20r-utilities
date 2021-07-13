@@ -8,3 +8,5 @@ until docker container exec "mariadb-wp-${E20R_PLUGIN_NAME}" mysqladmin ping -P 
   echo "MySQL is unavailable - waiting for it... 😴"
   sleep 2
 done
+echo "Standby while making sure DB settles down..."
+sleep 5
