@@ -179,6 +179,6 @@ try {
 
 \add_action( 'plugins_loaded', 'E20R\\Utilities\\Loader::utilities_loaded', -1 );
 
-if ( class_exists( '\\E20R\\Utilities\\Utilities' ) ) {
+if ( class_exists( 'Utilities' ) ) {
 	Utilities::configure_update( '00-e20r-utilities', __FILE__ );
 }
