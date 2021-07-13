@@ -25,5 +25,6 @@ jobs:
         run: make build
         env:
 #          USE_LOCAL_BUILD: 1
+          E20R_DEPLOYMENT_SERVER: ${{ secrets.SSH_HOST }}
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
