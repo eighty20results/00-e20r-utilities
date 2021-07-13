@@ -389,7 +389,7 @@ db-backup:
 # Using the local environment to execute the PHPStan tests (code analysis)
 #
 phpstan-test: composer-dev
-	@echo "Loading the PHP-Stan tests for $(PROJECT)"
+	@echo "Running the PHP-Stan tests for $(PROJECT)"
 	@inc/bin/phpstan analyze \
 		--ansi \
 		--debug \
