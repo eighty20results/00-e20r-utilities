@@ -495,7 +495,8 @@ readme: changelog # metadata
 #
 $(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
 	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
-  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "$(E20R_PLUGIN_NAME)"; \
+  		echo "Deploying kit to $(E20R_DEPLOYMENT_SERVER)" && \
+  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "$(E20R_PLUGIN_NAME)" "$(E20R_DEPLOYMENT_SERVER)"; \
 	else \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \

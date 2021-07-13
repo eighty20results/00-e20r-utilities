@@ -1,5 +1,6 @@
 E20R_PLUGIN_NAME ?= 00-e20r-utilities
 E20R_PLUGIN_BASE_FILE ?= class-loader.php
+E20R_DEPLOYMENT_SERVER ?= eighty20results.com
 WP_DEPENDENCIES ?= paid-memberships-pro woocommerce
 E20R_DEPENDENCIES ?=
 
