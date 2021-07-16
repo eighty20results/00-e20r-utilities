@@ -3,7 +3,7 @@
 `Tags: e20r` <br />-utilities, module, licensing, tools
 `Requires at least: 5.0` <br />
 `Tested up to: 5.7.2` <br />
-`Stable tag: 2.0.5` <br />
+`Stable tag: 2.0.6` <br />
 
 Adds various utility functions and license capabilities needed by some Eighty/20 Results developed plugins
 
