@@ -4,7 +4,7 @@
 #
 # Used by the custom plugin framework to build installable plugin archives
 #
-source build_conf/helper_config "${@}"
+source build_config/helper_config "${@}"
 
 src_path="$(pwd)"
 plugin_path="${short_name}"
