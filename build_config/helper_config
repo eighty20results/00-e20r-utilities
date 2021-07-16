@@ -34,7 +34,7 @@ version="$(./bin/get_plugin_version.sh "${1}")"
 github_url="https://github.com/eighty20results/${short_name}/"
 
 # Plugin specific files to include/exclude and move if necessary during build
-declare -x -a declare -a include=( \
+declare -x -a include=( \
 	"docs" \
 	"inc" \
 	"src" \
