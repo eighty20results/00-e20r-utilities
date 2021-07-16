@@ -45,5 +45,9 @@ if ! git ls-files --error-unmatch ./metadata.json; then
 fi
 
 # Commit the updated file to the repository
-git commit -m "BUG FIX: Updated metdata.json for v${version} and WP ${wordpress_version}" metadata.json
+if ! git commit -m "BUG FIX: Updated metdata.json for v${version} and WP ${wordpress_version}" metadata.json; then
+  echo "No need to commit metadata.json (no changes recorded)"
+  exit 0
+fi
+
 
