@@ -7,20 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## v2.0.6 - 2021-07-16
+- BUG FIX: Typo in git message - metadata.sh
 - BUG FIX: Wrong path to helper_config file in build-plugin.sh (Thomas Sjolshagen)
-- BUG FIX: Updated metdata.json for v2.0.6 and WP 5.7.2 (Thomas Sjolshagen)
 - BUG FIX: Poor git error handling when files haven't changed (Thomas Sjolshagen)
 - BUG FIX: Using custom plugin short_name variable (not extracted from the supplied base file for the plugin) (Thomas Sjolshagen)
-- BUG FIX: Updated metdata.json for v2.0.6 and WP 5.7.2 (Thomas Sjolshagen)
 - BUG FIX: Invalid JSON string for changelog links in metadata.sh template (Thomas Sjolshagen)
-- BUG FIX: Updated metdata.json for v2.0.6 and WP 5.7.2 (Thomas Sjolshagen)
+- BUG FIX: Updated metadata.json for v2.0.6 and WP 5.7.2 (Thomas Sjolshagen)
 - BUG FIX: Updated README info (v2.0.6 for WP 5.7.2) (Thomas Sjolshagen)
 - BUG FIX: Updated CHANGELOG (v2.0.6 for WP 5.7.2) (Thomas Sjolshagen)
 - BUG FIX: Consume WP_DEPENDENCIES variable as an environment var in wp-deps target (Thomas Sjolshagen)
 - BUG FIX: Typo in declaration for $include variable (Thomas Sjolshagen)
-- BUG FIX: Updated metdata.json for v2.0.5 and WP 5.7.2 (Thomas Sjolshagen)
-- BUG FIX: Updated README info (v2.0.5 for WP 5.7.2) (Thomas Sjolshagen)
-- BUG FIX: Updated CHANGELOG (v2.0.5 for WP 5.7.2) (Thomas Sjolshagen)
 - BUG FIX: Use new make target helpers with separate config (helper_config) (Thomas Sjolshagen)
 - BUG FIX: Don't re-build or download the E20R plugin dependency if it's present (Thomas Sjolshagen)
 - BUG FIX: Various path related fixes to the build-plugin.sh script (Thomas Sjolshagen)
