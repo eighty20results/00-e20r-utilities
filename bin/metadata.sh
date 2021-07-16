@@ -25,7 +25,7 @@ metadata_template=$(cat <<- __EOF__
   "homepage": "${plugin_homepage}",
   "sections": {
     "description": "${plugin_description_text}",
-    "changelog": "See the linked <a href="CHANGELOG.md" target="_blank">Change Log</a> for details",
+    "changelog": "See the linked <a href='CHANGELOG.md' target='_blank'>Change Log</a> for details",
     "faq": "<h3>I found a bug in the plugin.</h3><p>Please report your issue to us by using the <a href='${github_url}/issues' target='_blank'>Github Issues page</a>, and we'll try to respond within 1 business day.</p>"
     }
 }
