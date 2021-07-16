@@ -1,45 +1,13 @@
 #!/usr/bin/env bash
+# Build script: Copyright 2016 - 2021 Eighty/20 Results by Wicked Strong Chicks, LLC
+
 #
-# Build script for Eighty/20 Results WordPress plugins
+# Used by the custom plugin framework to build installable plugin archives
 #
-# Copyright 2014 - 2021 (c) Eighty / 20 Results by Wicked Strong Chicks, LLC
-#
-short_name="${1}"
-remote_server="${2}"
-declare -a include=( \
-	"docs" \
-	"inc" \
-	"src" \
-	"class-loader.php" \
-	"README.txt" \
-	"README.md" \
-	"CHANGELOG.md" \
-	)
-declare -a exclude=( \
-	".git" \
-	"docker" \
-	"bin" \
-	"Dockerfile" \
-	"tests" \
-	"Makefile" \
-	"metadata.json" \
-	"package.json" \
-	".github" \
-	".circleci" \
-	"docker-compose.yml" \
-	"build_readmes" \
-	"build_config" \
-	"build" \
-	".idea" \
-	"*.yml" \
-	"*.phar" \
-	"composer.*" \
-	"vendor" \
-	)
-declare -a build=()
+source build_conf/helper_config "${@}"
+
 src_path="$(pwd)"
 plugin_path="${short_name}"
-version=$(./bin/get_plugin_version.sh "loader")
 dst_path="${src_path}/build/${plugin_path}"
 kit_path="${src_path}/build/kits"
 kit_name="${kit_path}/${short_name}-${version}.zip"

@@ -246,7 +246,7 @@ e20r-deps:
 	@mkdir -p $(COMPOSER_DIR)/wp_plugins
 	@DOWNLOAD_MODULE=${DOWNLOAD_MODULE} ; \
 	for e20r_plugin in $(E20R_DEPENDENCIES) ; do \
-		echo "Checking for presence of $${e20r_plugin}..." ; \
+		echo "Checking for presence of $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}..." ; \
 		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" ]]; then \
 			echo "Download or build $${e20r_plugin}.zip dependency?" && \
 			if [[ "0" -eq "$${DOWNLOAD_MODULE}" && "00-e20r-utilities" -eq "$${e20r_plugin}" ]]; then \
@@ -259,7 +259,7 @@ e20r-deps:
 				cd $(BASE_PATH) ; \
 			else \
 				echo "Download $${e20r_plugin} to $(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
-				$(CURL) --silent -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
+				$(CURL) -L "$(E20R_PLUGIN_URL)/$${e20r_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}.zip" ; \
 			fi ; \
 			mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${e20r_plugin}" && \
 			echo "Installing the $${e20r_plugin}.zip plugin" && \
@@ -294,7 +294,7 @@ wp-deps: clean composer-dev e20r-deps
   		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" ]]; then \
   		  echo "Download and install $${dep_plugin} to $(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" && \
   		  mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" && \
-  		  $(CURL) --silent -L "$(WP_PLUGIN_URL)/$${dep_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" && \
+  		  $(CURL) -L "$(WP_PLUGIN_URL)/$${dep_plugin}.zip" -o "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" && \
   		  $(UNZIP) -o "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" -d $(COMPOSER_DIR)/wp_plugins/ 2>&1 > /dev/null && \
   		  rm -f "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}.zip" ; \
   		fi ; \
@@ -388,8 +388,8 @@ db-backup:
 #
 # Using the local environment to execute the PHPStan tests (code analysis)
 #
-phpstan-test: composer-dev
-	@echo "Running the PHP-Stan tests for $(PROJECT)"
+phpstan-test: composer-dev wp-deps
+	@echo "Loading the PHP-Stan tests for $(PROJECT)"
 	@inc/bin/phpstan analyze \
 		--ansi \
 		--debug \
@@ -427,7 +427,7 @@ unit-test: wp-deps
 # Using codeception to execute the WP Unit Tests (aka WP integration tests) for this plugin
 #
 wp-unit-test: docker-deps start-stack db-import
-	@if [[ -n "${FOUND_WP_UNIT_TESTS}" ]]; then \
+	@if [[ -n "$(FOUND_WP_UNIT_TESTS)" ]]; then \
   		echo "Running WP Unit tests for $(PROJECT)"; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
 			DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
@@ -441,15 +441,14 @@ wp-unit-test: docker-deps start-stack db-import
 # Using codeception to execute the Plugin Acceptance tests
 #
 acceptance-test: docker-deps start-stack db-import
-	@if [[ -n "${FOUND_WP_ACCEPTANCE_TESTS}" ]]; then \
-  		echo "Running Acceptance tests for $(PROJECT)"; \
+	@if [[ -n "$(FOUND_WP_ACCEPTANCE_TESTS)" ]]; then \
+  		echo "Running WP Acceptance tests for $(PROJECT)"; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
 		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
 		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
 	 		exec -T -w /var/www/html/wp-content/plugins/${PROJECT}/ wordpress \
 	 		$(COMPOSER_DIR)/bin/codecept run -v acceptance ; \
 	fi
-
 #
 # Using codeception to build the plugin
 #
@@ -475,32 +474,32 @@ git-log:
 # Generate (and update) the custom WP Plugin Updater metadata.json file
 #
 metadata:
-	@./bin/metadata.sh "loader"
+	@./bin/metadata.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"
 
 #
 # Generate the CHANGELOG.md file for the plugin based on the git commit log
 #
 changelog: build_readmes/current.txt
-	@./bin/changelog.sh "loader"
+	@./bin/changelog.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"
 
 #
 # Generate and update the README.txt plus README.md files for the plugin
 #
-readme: changelog # metadata
-	@./bin/readme.sh "loader"
+readme:
+	@./bin/readme.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"
 
 #
 # Build the plugin .zip archive (and upload to the eighty20results.com server if applicable
 # Saves the built plugin .zip archive to build/kits
 #
-$(E20R_PLUGIN_BASE_FILE): test stop-stack clean-inc composer-prod
+$(E20R_PLUGIN_BASE_FILE): changelog readme metadata test stop-stack clean-inc composer-prod
 	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
   		echo "Deploying kit to $(E20R_DEPLOYMENT_SERVER)" && \
-  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "$(E20R_PLUGIN_NAME)" "$(E20R_DEPLOYMENT_SERVER)"; \
+  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"; \
 	else \
 		rm -rf $(COMPOSER_DIR)/wp_plugins && \
 		mkdir -p build/kits/ && \
-		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh "loader") \
+		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh "$(E20R_PLUGIN_BASE_FILE)") \
 		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip --worktree-attributes main ; \
 	fi
 
