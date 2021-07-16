@@ -27,7 +27,6 @@ short_description="Eighty/20 Results Utilities Module"
 plugin_description_text="Adds various utility functions and license capabilities needed by some Eighty/20 Results developed plugins"
 remote_server="${2}"
 
-sed="$(which sed)"
 short_name="00-e20r-utilities"
 plugin_homepage="https://${remote_server}/plugins/${short_name}/"
 version="$(./bin/get_plugin_version.sh "${1}")"
