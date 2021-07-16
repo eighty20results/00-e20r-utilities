@@ -290,7 +290,7 @@ docker-deps: is-docker-running docker-compose wp-deps
 #
 wp-deps: clean composer-dev e20r-deps
 	@echo "Loading WordPress plugin dependencies"
-	@for dep_plugin in $(WP_DEPENDENCIES) ; do \
+	@for dep_plugin in ${WP_DEPENDENCIES} ; do \
   		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" ]]; then \
   		  echo "Download and install $${dep_plugin} to $(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" && \
   		  mkdir -p "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" && \
