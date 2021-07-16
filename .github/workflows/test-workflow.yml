@@ -29,7 +29,10 @@ jobs:
           CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
           USE_LOCAL_BUILD: true
       - name: Deploy plugin to download server
-        run: make deploy
+        run: |
+          E20R_PLUGIN_NAME=${E20R_PLUGIN_NAME} \
+          DEPLOYMENT_SERVER=${E20R_SSH_SERVER}@${E20R_SSH_SERVER}:${E20R_SSH_PORT} \
+          make deploy
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}

@@ -511,7 +511,8 @@ build: $(E20R_PLUGIN_BASE_FILE)
 	@echo "Built kit for $(E20R_PLUGIN_NAME)"
 
 deploy:
-	@./bin/deploy.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"
+	@echo "Deploy ${E20R_PLUGIN_NAME}.zip to ${E20R_DEPLOYMENT_SERVER}"
+	@./bin/deploy.sh "$(E20R_PLUGIN_BASE_FILE)" "${E20R_DEPLOYMENT_SERVER}"
 
 #new-release: test composer-prod
 #	@./build_env/get_version.sh && \
