@@ -510,7 +510,7 @@ $(E20R_PLUGIN_BASE_FILE): changelog readme metadata test stop-stack clean-inc co
 build: $(E20R_PLUGIN_BASE_FILE)
 	@echo "Built kit for $(E20R_PLUGIN_NAME)"
 
-deploy: build
+deploy:
 	@./bin/deploy.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"
 
 #new-release: test composer-prod
