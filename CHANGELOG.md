@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v2.0.6 - 2021-07-16
+- BUG FIX: Consume WP_DEPENDENCIES variable as an environment var in wp-deps target (Thomas Sjolshagen)
+- BUG FIX: Typo in declaration for $include variable (Thomas Sjolshagen)
+- BUG FIX: Use new make target helpers with separate config (helper_config) (Thomas Sjolshagen)
+- BUG FIX: Don't re-build or download the E20R plugin dependency if it's present (Thomas Sjolshagen)
+- BUG FIX: Various path related fixes to the build-plugin.sh script (Thomas Sjolshagen)
+- BUG FIX: Padding the wait time for the DB start-up (Thomas Sjolshagen)
+- BUG FIX: Annoying typo (Thomas Sjolshagen)
+- BUG FIX: Make curl downloads silent again (Thomas Sjolshagen)
+- BUG FIX: Fetch the deployment target server from commandline args (Thomas Sjolshagen)
+- BUG FIX: Adding support for developer defined deployment target(s) (Thomas Sjolshagen)
+- BUG FIX: Let developer define the deployment target (Thomas Sjolshagen)
+- BUG FIX: Make sure E20R_LICENSING_VERSION is configured (Thomas Sjolshagen)
+- BUG FIX: Typo in config for ssh-key-action (Thomas Sjolshagen)
+- BUG FIX: Wrong step definitions and didn't deactivate SSH push in the test workflow (Thomas Sjolshagen)
+
 ## v2.0.5 - 2021-07-16
 - BUG FIX: Wrong path for plugin updater (Thomas Sjolshagen)
 
