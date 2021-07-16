@@ -1,17 +1,17 @@
 {
   "name": "Eighty/20 Results Utilities Module",
-  "slug": "00-e20r-utilities",
-  "download_url": "https://eighty20results.com/protected-content/00-e20r-utilities/00-e20r-utilities-2.0.5.zip",
+  "slug": "loader",
+  "download_url": "https://eighty20results.com/protected-content/loader/loader-2.0.5.zip",
   "version": "2.0.5",
   "tested": "5.7.2",
   "requires": "5.0",
   "author": "Thomas Sjolshagen <thomas@eighty20results.com>",
   "author_homepage": "https://eighty20results.com/thomas-sjolshagen",
-  "last_updated": "2021-07-13 17:35:00 CET",
-  "homepage": "https://eighty20results.com/paid-memberships-pro/do-it-for-me/",
+  "last_updated": "2021-07-16 11:31:22 CET",
+  "homepage": "https://eighty20results.com/plugins//",
   "sections": {
     "description": "Adds various utility functions and license capabilities needed by some Eighty/20 Results developed plugins",
-    "changelog": "See the linked <a href=\"CHANGELOG.md\" target=\"_blank\">Change Log</a> for detail",
-    "faq": "<h3>I found a bug in the plugin.</h3>Please report your issue to us by using the <a href='https://github.com/eighty20results/Utilities/issues' target='_blank'>GitHub Issues page</a> and we'll try to respond as quickly as possible to your inquiry."
+    "changelog": "See the linked <a href="CHANGELOG.md" target="_blank">Change Log</a> for details",
+    "faq": "<h3>I found a bug in the plugin.</h3><p>Please report your issue to us by using the <a href='https://github.com/eighty20results/loader//issues' target='_blank'>Github Issues page</a>, and we'll try to respond within 1 business day.</p>"
     }
 }
