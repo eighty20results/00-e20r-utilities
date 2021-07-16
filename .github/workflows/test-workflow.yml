@@ -13,7 +13,7 @@ jobs:
     name: Push plugin to eighty20results.com
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@test_workflow
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
         with:
@@ -40,4 +40,4 @@ jobs:
           E20R_SSH_SERVER: ${{ secrets.SSH_HOST }}
           E20R_SSH_USER: ${{ secrets.SSH_USER }}
           E20R_SSH_PORT: ${{ secrets.SSH_PORT }}
-          USE_GITHUB_BUILD: true
+          USE_LOCAL_BUILD: true
