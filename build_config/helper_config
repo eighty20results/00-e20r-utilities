@@ -26,10 +26,10 @@ declare -x wordpress_version
 short_description="Eighty/20 Results Utilities Module"
 plugin_description_text="Adds various utility functions and license capabilities needed by some Eighty/20 Results developed plugins"
 remote_server="${2}"
-plugin_homepage="https://${remote_server}/plugins/${short_name}/"
 
 sed="$(which sed)"
-short_name="$(${sed} -e 's/\.php//g' -e 's/class[\.-]//g' <<< "${1}")"
+short_name="00-e20r-utilities"
+plugin_homepage="https://${remote_server}/plugins/${short_name}/"
 version="$(./bin/get_plugin_version.sh "${1}")"
 github_url="https://github.com/eighty20results/${short_name}/"
 
