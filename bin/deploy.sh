@@ -12,7 +12,6 @@ function main() {
 	declare plugin_path
 	declare kit_path
 	declare kit_name
-	declare remote_server
 	declare target_server
 	declare ssh_port
 	declare ssh_user
@@ -34,8 +33,8 @@ function main() {
 		ssh_user="${E20R_SSH_USER}"
 	fi
 
-	if [ -n "${E20R_SSH_HOST}" ]; then
-		ssh_host="${E20R_SSH_HOST}"
+	if [ -n "${E20R_SSH_SERVER}" ]; then
+		ssh_host="${E20R_SSH_SERVER}"
 	fi
 
 	if [ -n "${E20R_SSH_PORT}" ]; then
