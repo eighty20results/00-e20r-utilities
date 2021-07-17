@@ -133,10 +133,10 @@ clean-inc:
 #
 repo-login:
 	@if [[ -f ./docker.hub.key ]]; then \
-  		echo "Logging in to repo using file based access token" && \
+  		echo "Logging in to Docker Hub using file based access token" && \
 		docker login --username $(DOCKER_USER) --password-stdin <<< $(CONTAINER_ACCESS_TOKEN) ; \
 	else \
-		echo "Logging in to repo using environment variable access token" && \
+		echo "Logging in to Docker Hub using environment variable access token" && \
   		echo "$${CONTAINER_ACCESS_TOKEN}" | docker login --username $(DOCKER_USER) --password-stdin ; \
 	fi ;
 
