@@ -32,11 +32,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
           CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
       - name: Deploy plugin to download server
-        run: make deploy
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.PORT }}
+          source: "~/build/00-e20r-utilities/00-e20r-utilities-*.zip"
+          target: ${{ secrets.DEPLOY_TO_DIR }}
+          rm: true
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
           CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
-          E20R_SSH_SERVER: ${{ secrets.SSH_HOST }}
-          E20R_SSH_USER: ${{ secrets.SSH_USER }}
-          E20R_SSH_PORT: ${{ secrets.SSH_PORT }}
