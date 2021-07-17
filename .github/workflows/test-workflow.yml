@@ -24,7 +24,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
       - name: Adding Known Hosts
-        run: ssh-keyscan -H -p 18765 ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+        run: ssh-keyscan -H -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
       - name: Build and test plugin
         run: make build
         env:
@@ -32,16 +32,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
           CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
       - name: Deploy plugin to download server
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.PORT }}
-          source: "~/build/00-e20r-utilities/00-e20r-utilities-*.zip"
-          target: ${{ secrets.DEPLOY_TO_DIR }}
-          rm: true
+        run: make deploy
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
           CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+          E20R_SSH_SERVER: ${{ secrets.SSH_HOST }}
+          E20R_SSH_USER: ${{ secrets.SSH_USER }}
+          E20R_SSH_PORT: ${{ secrets.SSH_PORT }}
