@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## v2.0.6 - 2021-07-16
+- BUG FIX: Update CHANGELOG.md and Makefile to save the changelog source file
+- BUG FIX: Wrong variable name used for ssh host to deploy to
 - BUG FIX: Correctly use environment variables (if they exist) and ssh/scp commands (Thomas Sjolshagen)
 - BUG FIX: Revert to makefile based deployment of plugin to download server (Thomas Sjolshagen)
 - BUG FIX: Use scp-action (GitHub action) to deploy to remote server (Thomas Sjolshagen)
