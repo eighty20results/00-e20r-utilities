@@ -30,14 +30,17 @@ function main() {
 	kit_name="${kit_path}/${short_name}-${version}.zip"
 
 	if [ -n "${E20R_SSH_USER}" ]; then
+		echo "Using environment variable to set SSH target server user"
 		ssh_user="${E20R_SSH_USER}"
 	fi
 
 	if [ -n "${E20R_SSH_SERVER}" ]; then
+		echo "Using environment variable to set SSH target server"
 		ssh_host="${E20R_SSH_SERVER}"
 	fi
 
 	if [ -n "${E20R_SSH_PORT}" ]; then
+		echo "Using environment variable to set SSH target server port"
 		ssh_port="${E20R_SSH_PORT}"
 	fi
 
