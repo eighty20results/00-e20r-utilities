@@ -52,19 +52,19 @@ function main() {
 	# shellcheck disable=SC2029
 	if ! ssh -o StrictHostKeyChecking=no -p "${ssh_port}" "${target_server}" "cd ${remote_path}; mkdir -p \"${short_name}\""; then
 		echo "Error: Cannot create ${short_name} directory in ${remote_path}"
-		die 1
+		exit 1
 	fi
 
 	echo "Copying ${kit_name} to ${remote_server}:${remote_path}/${short_name}/"
 	if ! scp -r -o StrictHostKeyChecking=no -P "${ssh_port}" "${kit_name}" "${target_server}:${remote_path}/${short_name}/"; then
 		echo "Error: Cannot copy ${kit_name} to ${remote_server}:${remote_path}/${short_name}/!"
-		die 1
+		exit 1
 	fi
 
 	echo "Copying ${metadata} to ${remote_server}:${remote_path}/${short_name}/"
 	if ! scp -r -o StrictHostKeyChecking=no -P "${ssh_port}" "${metadata}" "${target_server}:${remote_path}/${short_name}/"; then
 		echo "Error: Unable to copy ${metadata} to ${remote_server}:${remote_path}/${short_name}/"
-		die 1
+		exit 1
 	fi
 
 	echo "Linking ${short_name}/${short_name}-${version}.zip to ${short_name}.zip on remote server"
@@ -74,14 +74,14 @@ function main() {
 	if ! ssh -o StrictHostKeyChecking=no -p "${ssh_port}" "${target_server}" \
 		"cd ${remote_path}/ ; ln -sf \"${short_name}\"/\"${short_name}\"-\"${version}\".zip \"${short_name}\".zip" ; then
 		echo "Error: Unable to link ${short_name}/${short_name}-${version}.zip to ${short_name}.zip"
-		die 1
+		exit 1
 	fi
 
 	# Return to the root directory
-	cd "${src_path}" || die 1
+	cd "${src_path}" || exit 1
 
 	# And clean up
-	rm -rf "${dst_path}" || echo "Error: Unable to clean up ${dst_path}" && die 1
+	rm -rf "${dst_path}" || exit 1
 }
 
 main "$@"
