@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## v2.0.6 - 2021-07-16
+- BUG FIX: Correctly use environment variables (if they exist) and ssh/scp commands (Thomas Sjolshagen)
+- BUG FIX: Revert to makefile based deployment of plugin to download server (Thomas Sjolshagen)
+- BUG FIX: Use scp-action (GitHub action) to deploy to remote server (Thomas Sjolshagen)
+- BUG FIX: Stop using the git archive build (Thomas Sjølshagen)
 - BUG FIX: Typo in git message - metadata.sh
 - BUG FIX: Wrong path to helper_config file in build-plugin.sh (Thomas Sjolshagen)
 - BUG FIX: Poor git error handling when files haven't changed (Thomas Sjolshagen)
