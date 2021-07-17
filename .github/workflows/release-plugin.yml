@@ -1,4 +1,4 @@
-name: Release to Eighty20Results.com
+name: Release plugin to WooCommerce store
 
 on:
   # Deploy when a new release is created
@@ -7,9 +7,9 @@ on:
     types: [edited, published]
 
 jobs:
-  # To push the release (sources) to the Eighty20Results.com plugin store
-  wordpress:
-    name: Push plugin to eighty20results.com
+  # To push the release to the plugin store
+  release:
+    name: Deploy plugin package to WooCommerce download server
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -17,25 +17,25 @@ jobs:
         with:
           repository: eighty20results/Utilities
           ref: main
+
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
+
       - name: Adding Known Hosts
-        run: ssh-keyscan -H -p 18765 ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+        run: ssh-keyscan -H -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
       - name: Build and test plugin
         run: make build
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
           CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
-          USE_LOCAL_BUILD: true
+
       - name: Deploy plugin to download server
-        run: |
-          E20R_PLUGIN_NAME=${E20R_PLUGIN_NAME} \
-          DEPLOYMENT_SERVER=${E20R_SSH_SERVER}@${E20R_SSH_SERVER}:${E20R_SSH_PORT} \
-          make deploy
+        run: make deploy
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
@@ -43,4 +43,3 @@ jobs:
           E20R_SSH_SERVER: ${{ secrets.SSH_HOST }}
           E20R_SSH_USER: ${{ secrets.SSH_USER }}
           E20R_SSH_PORT: ${{ secrets.SSH_PORT }}
-          USE_LOCAL_BUILD: true
