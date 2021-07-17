@@ -6,7 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## v2.0.6 - 2021-07-16
+## v2.0.6 - 2021-07-17
+- BUG FIX: Shell scripting boo-boo
+- BUG FIX: Better handling of access tokens for docker hub login
+- BUG FIX: Incorrect handling of container access token as a github secret
+- BUG FIX: Revert -t ecdsa option from ssh-keyscan command
+- BUG FIX: Try to remove warning message about SSH key
+- BUG FIX: Could not log in to docker repository
+- BUG FIX: Reference loop for variable
+- BUG FIX: Clean up in tests/ directory
+- BUG FIX: Server name not shown in output and cannot rely on the die command being present
+- BUG FIX: Release workflow pushes the plugin to the WooCommerce download location
 - BUG FIX: Disabled verbose SSH mode and added better error checking/handling for operations
 - BUG FIX: Inform the user that we're using an environment variable to set SSH user/host/port settings
 - BUG FIX: Reduce the number of retries during stack startup for the test containers
