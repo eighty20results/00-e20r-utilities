@@ -132,7 +132,7 @@ clean-inc:
 # Log in to your Docker HUB account before performing pull/push operations
 #
 repo-login:
-	if [[ -f ./docker.hub.key ]]; then \
+	@if [[ -f ./docker.hub.key ]]; then \
   		echo "Logging in to repo using file based access token" && \
 		docker login --username $(DOCKER_USER) --password-stdin <<< $(CONTAINER_ACCESS_TOKEN) ; \
 	else \
