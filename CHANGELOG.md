@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## v2.0.6 - 2021-07-16
+- BUG FIX: Inform the user that we're using an environment variable to set SSH user/host/port settings
+- BUG FIX: Reduce the number of retries during stack startup for the test containers
 - BUG FIX: Update CHANGELOG.md and Makefile to save the changelog source file
 - BUG FIX: Wrong variable name used for ssh host to deploy to
 - BUG FIX: Correctly use environment variables (if they exist) and ssh/scp commands (Thomas Sjolshagen)
