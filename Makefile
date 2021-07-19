@@ -133,11 +133,12 @@ clean-inc:
 # Log in to your Docker HUB account before performing pull/push operations
 #
 docker-hub-login:
-	@if [ -f ./docker.hub.key ]; then \
-		echo "Logging in to Docker Hub using file based access token" && \
+	@echo "Logging on to Docker Hub"
+	@if [[ -f ./docker.hub.key ]]; then
+		echo "Using file based access token" ; \
 		docker login --username ${DOCKER_USER} --password-stdin <./docker.hub.key ; \
 	else \
-		echo "Logging in to Docker Hub using environment variable access token" && \
+		echo "Using environment variable access token" ; \
 		echo ${CONTAINER_ACCESS_TOKEN} | docker login --username ${DOCKER_USER} --password-stdin ; \
 	fi
 
