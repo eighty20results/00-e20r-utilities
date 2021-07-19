@@ -135,11 +135,11 @@ clean-inc:
 docker-hub-login:
 	@if [ -f ./docker.hub.key ]; then \
 		echo "Logging in to Docker Hub using file based access token" && \
-		docker login --username $(DOCKER_USER) --password-stdin < ./docker.hub.key ; \
+		docker login --username ${DOCKER_USER} --password-stdin <./docker.hub.key ; \
 	else \
 		echo "Logging in to Docker Hub using environment variable access token" && \
-		echo ${CONTAINER_ACCESS_TOKEN} | docker login --username $(DOCKER_USER) --password-stdin ; \
-	fi ;
+		echo ${CONTAINER_ACCESS_TOKEN} | docker login --username ${DOCKER_USER} --password-stdin ; \
+	fi
 
 #
 # (re)Build the Docker images for this development/test environment
