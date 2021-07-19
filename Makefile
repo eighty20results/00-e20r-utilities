@@ -134,7 +134,7 @@ clean-inc:
 #
 docker-hub-login:
 	@echo "Logging on to Docker Hub"
-	@if [[ -f ./docker.hub.key ]]; then
+	@if [[ -f ./docker.hub.key ]]; then \
 		echo "Using file based access token" ; \
 		docker login --username ${DOCKER_USER} --password-stdin <./docker.hub.key ; \
 	else \
