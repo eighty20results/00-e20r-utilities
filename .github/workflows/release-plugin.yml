@@ -24,17 +24,17 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
 
-      - name: Adding Known Hosts
+      - name: Adding deployment target to known_hosts file
         run: ssh-keyscan -H -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Build and test plugin
+      - name: Build and test plugin before deployment
         run: make build
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
           CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
 
-      - name: Deploy plugin to download server
+      - name: Deploy plugin to WooCommerce store
         run: make deploy
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
