@@ -40,8 +40,6 @@ DOCKER_IS_RUNNING := $(shell ps -ef | grep Docker.app | wc -l | xargs)
 ifeq ($(CONTAINER_ACCESS_TOKEN),)
 $(info Setting CONTAINER_ACCESS_TOKEN from environment variable)
 CONTAINER_ACCESS_TOKEN := $(shell echo "$${CONTAINER_ACCESS_TOKEN}" )
-else
-$(info CONTAINER_ACCESS_TOKEN = $(CONTAINER_ACCESS_TOKEN))
 endif
 
 DOWNLOAD_MODULE := 1
@@ -135,12 +133,12 @@ clean-inc:
 # Log in to your Docker HUB account before performing pull/push operations
 #
 repo-login:
-	if [ -f ./docker.hub.key ]; then \
-  		echo "Logging in to Docker Hub using file based access token" && \
+	@if [ -f ./docker.hub.key ]; then \
+		echo "Logging in to Docker Hub using file based access token" && \
 		docker login --username $(DOCKER_USER) --password-stdin < ./docker.hub.key ; \
 	else \
 		echo "Logging in to Docker Hub using environment variable access token" && \
-  		echo "$${CONTAINER_ACCESS_TOKEN}" | docker login --username $(DOCKER_USER) --password-stdin ; \
+		echo "${CONTAINER_ACCESS_TOKEN}" | docker login --username $(DOCKER_USER) --password-stdin ; \
 	fi ;
 
 #
