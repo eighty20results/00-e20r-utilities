@@ -109,7 +109,7 @@ $(info Number of running docker images:$(STACK_RUNNING))
 	image-pull \
 	image-push \
 	image-scan \
-	repo-login
+	docker-hub-login
 
 #
 # Clean up Codeception and GitHub action artifacts
@@ -132,13 +132,13 @@ clean-inc:
 #
 # Log in to your Docker HUB account before performing pull/push operations
 #
-repo-login:
+docker-hub-login:
 	@if [ -f ./docker.hub.key ]; then \
 		echo "Logging in to Docker Hub using file based access token" && \
 		docker login --username $(DOCKER_USER) --password-stdin < ./docker.hub.key ; \
 	else \
 		echo "Logging in to Docker Hub using environment variable access token" && \
-		echo "${CONTAINER_ACCESS_TOKEN}" | docker login --username $(DOCKER_USER) --password-stdin ; \
+		echo ${CONTAINER_ACCESS_TOKEN} | docker login --username $(DOCKER_USER) --password-stdin ; \
 	fi ;
 
 #
@@ -153,7 +153,7 @@ image-build: docker-deps
 #
 # Trigger the security scan of the docker image(s)
 #
-image-scan: repo-login
+image-scan: docker-hub-login
 	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
   		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
     	docker scan --accept-license $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION)
@@ -162,7 +162,7 @@ image-scan: repo-login
 # Push the custom Docker images for this plugin to the Docker HUB (security scan if possible)
 # FIXME: Enable the image-scan target (if we can get the issues fixed)
 #
-image-push: repo-login # image-scan
+image-push: docker-hub-login # image-scan
 	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
 		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
 		docker tag $(PROJECT)_wordpress $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION)
@@ -173,7 +173,7 @@ image-push: repo-login # image-scan
 #
 # Attempt to pull (download) the plugin specific Docker images for the test/development environment
 #
-image-pull: repo-login
+image-pull: docker-hub-login
 	@echo "Pulling image from Docker repo"
 	@if docker manifest inspect $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION) > /dev/null; then \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
