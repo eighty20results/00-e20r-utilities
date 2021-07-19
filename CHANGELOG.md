@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## v2.0.6 - 2021-07-17
+## v2.0.6 - 2021-07-19
+- BUG FIX: Updated release workflow for deployment support
+- BUG FIX: Simplify docker hub login
+- BUG FIX: Use secret to set username (if defined)
 - BUG FIX: Shell scripting boo-boo
 - BUG FIX: Better handling of access tokens for docker hub login
 - BUG FIX: Incorrect handling of container access token as a github secret
