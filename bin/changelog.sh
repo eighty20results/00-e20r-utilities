@@ -1,13 +1,22 @@
 #!/usr/bin/env bash
+#
+# Import the configuration information for this plugin
+#
+source build_config/helper_config "${@}"
+
+declare sed
 sed="$(which sed)"
+
+if [[ -z "${sed}" ]]; then
+    echo "Error: The sed utility is not installed. Exiting!"
+    exit 1;
+fi
+
 readme_path="./build_readmes/"
 changelog_source=${readme_path}current.txt
 changelog_out_new="CHANGELOG.new.md"
 changelog_out="CHANGELOG.md"
-wordpress_version=$(wget -q -O - http://api.wordpress.org/core/stable-check/1.0/  | grep latest | awk '{ print $1 }' | sed -e 's/"//g')
 tmp_changelog=$(mktemp /tmp/chlog-XXXXXX)
-# stripped_log=$(mktemp /tmp/old-info-XXXXXX)
-version=$(./bin/get_plugin_version.sh "loader")
 today=$(date +%Y-%m-%d)
 changelog_new_version="## v${version} - ${today}"
 changelog_header=$(cat <<- __EOF__
@@ -57,4 +66,12 @@ if ! grep "${changelog_new_version}" "${changelog_out}"; then
 	rm -f "${tmp_changelog}" "${changelog_out_new}"
 fi
 
-git commit -m "BUG FIX: Updated CHANGELOG (v${version} for WP ${wordpress_version})" ./CHANGELOG.md
+# Add the file to the git repo if it doesn't already exist
+if ! git ls-files --error-unmatch ./CHANGELOG.md; then
+  git add CHANGELOG.md
+fi
+
+if ! git commit -m "BUG FIX: Updated CHANGELOG (v${version} for WP ${wordpress_version})" CHANGELOG.md; then
+  echo "No need to commit CHANGELOG.md (no changes recorded)"
+  exit 0
+fi

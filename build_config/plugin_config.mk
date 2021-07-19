@@ -1,9 +1,14 @@
 E20R_PLUGIN_NAME ?= 00-e20r-utilities
 E20R_PLUGIN_BASE_FILE ?= class-loader.php
+
+ifeq (${E20R_DEPLOYMENT_SERVER},"")
+E20R_DEPLOYMENT_SERVER ?= eighty20results.com
+endif
+
 WP_DEPENDENCIES ?= paid-memberships-pro woocommerce
 E20R_DEPENDENCIES ?=
 
-DOCKER_USER ?= eighty20results
+DOCKER_HUB_USER ?= eighty20results
 DOCKER_ENV ?= Docker.app
 DOCKER_IS_RUNNING := $(shell ps -ef | grep $(DOCKER_ENV) | wc -l | xargs)
 

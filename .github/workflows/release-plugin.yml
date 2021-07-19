@@ -1,4 +1,4 @@
-name: Release to wordpress.org
+name: Release plugin to WooCommerce store
 
 on:
   # Deploy when a new release is created
@@ -7,20 +7,40 @@ on:
     types: [edited, published]
 
 jobs:
-  # To push the release (sources) to the WordPress.org SVN instance for this plugin
-  wordpress:
-    name: Push plugin to wordpress.org
+  # To push the release to the plugin store
+  release:
+    name: Deploy plugin package to WooCommerce download server
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
-      - name: WordPress Plugin Deploy
-        #with:
-        #  repository: git@github.com:eighty20results/Utilities.git
-        #  token: ${{ secrets.UTILITIES_ACCESS }}
-        #  path: class/utilities
-        uses: eighty20results/Utilities@main
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: eighty20results/Utilities
+          ref: main
+
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
+
+      - name: Adding deployment target to known_hosts file
+        run: ssh-keyscan -H -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Build and test plugin before deployment
+        run: make build
         env:
-          SLUG: 00-e20r-utilities
-          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
-          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
+          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
+      - name: Deploy plugin to WooCommerce store
+        run: make deploy
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
+          GITHUB_TOKEN: ${{ secrets.GITHUB }}
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+          E20R_SSH_SERVER: ${{ secrets.SSH_HOST }}
+          E20R_SSH_USER: ${{ secrets.SSH_USER }}
+          E20R_SSH_PORT: ${{ secrets.SSH_PORT }}

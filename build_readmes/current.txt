@@ -1,2 +1,4 @@
-Updated version number (v2.0.5) (Thomas Sjolshagen)
-BUG FIX: Wrong path for plugin updater (Thomas Sjolshagen)
+BUG FIX: Correctly use environment variables (if they exist) and ssh/scp commands (Thomas Sjolshagen)
+BUG FIX: Revert to makefile based deployment of plugin to download server (Thomas Sjolshagen)
+BUG FIX: Use scp-action (GitHub action) to deploy to remote server (Thomas Sjolshagen)
+BUG FIX: Stop using the git archive build (Thomas Sjølshagen)

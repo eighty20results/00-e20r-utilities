@@ -6,6 +6,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v2.0.6 - 2021-07-19
+- BUG FIX: Updated release workflow for deployment support
+- BUG FIX: Simplify docker hub login
+- BUG FIX: Use secret to set username (if defined)
+- BUG FIX: Shell scripting boo-boo
+- BUG FIX: Better handling of access tokens for docker hub login
+- BUG FIX: Incorrect handling of container access token as a github secret
+- BUG FIX: Revert -t ecdsa option from ssh-keyscan command
+- BUG FIX: Try to remove warning message about SSH key
+- BUG FIX: Could not log in to docker repository
+- BUG FIX: Reference loop for variable
+- BUG FIX: Clean up in tests/ directory
+- BUG FIX: Server name not shown in output and cannot rely on the die command being present
+- BUG FIX: Release workflow pushes the plugin to the WooCommerce download location
+- BUG FIX: Disabled verbose SSH mode and added better error checking/handling for operations
+- BUG FIX: Inform the user that we're using an environment variable to set SSH user/host/port settings
+- BUG FIX: Reduce the number of retries during stack startup for the test containers
+- BUG FIX: Update CHANGELOG.md and Makefile to save the changelog source file
+- BUG FIX: Wrong variable name used for ssh host to deploy to
+- BUG FIX: Correctly use environment variables (if they exist) and ssh/scp commands (Thomas Sjolshagen)
+- BUG FIX: Revert to makefile based deployment of plugin to download server (Thomas Sjolshagen)
+- BUG FIX: Use scp-action (GitHub action) to deploy to remote server (Thomas Sjolshagen)
+- BUG FIX: Stop using the git archive build (Thomas Sjølshagen)
+- BUG FIX: Typo in git message - metadata.sh
+- BUG FIX: Wrong path to helper_config file in build-plugin.sh (Thomas Sjolshagen)
+- BUG FIX: Poor git error handling when files haven't changed (Thomas Sjolshagen)
+- BUG FIX: Using custom plugin short_name variable (not extracted from the supplied base file for the plugin) (Thomas Sjolshagen)
+- BUG FIX: Invalid JSON string for changelog links in metadata.sh template (Thomas Sjolshagen)
+- BUG FIX: Updated metadata.json for v2.0.6 and WP 5.7.2 (Thomas Sjolshagen)
+- BUG FIX: Updated README info (v2.0.6 for WP 5.7.2) (Thomas Sjolshagen)
+- BUG FIX: Updated CHANGELOG (v2.0.6 for WP 5.7.2) (Thomas Sjolshagen)
+- BUG FIX: Consume WP_DEPENDENCIES variable as an environment var in wp-deps target (Thomas Sjolshagen)
+- BUG FIX: Typo in declaration for $include variable (Thomas Sjolshagen)
+- BUG FIX: Use new make target helpers with separate config (helper_config) (Thomas Sjolshagen)
+- BUG FIX: Don't re-build or download the E20R plugin dependency if it's present (Thomas Sjolshagen)
+- BUG FIX: Various path related fixes to the build-plugin.sh script (Thomas Sjolshagen)
+- BUG FIX: Padding the wait time for the DB start-up (Thomas Sjolshagen)
+- BUG FIX: Annoying typo (Thomas Sjolshagen)
+- BUG FIX: Make curl downloads silent again (Thomas Sjolshagen)
+- BUG FIX: Fetch the deployment target server from commandline args (Thomas Sjolshagen)
+- BUG FIX: Adding support for developer defined deployment target(s) (Thomas Sjolshagen)
+- BUG FIX: Let developer define the deployment target (Thomas Sjolshagen)
+- BUG FIX: Make sure E20R_LICENSING_VERSION is configured (Thomas Sjolshagen)
+- BUG FIX: Typo in config for ssh-key-action (Thomas Sjolshagen)
+- BUG FIX: Wrong step definitions and didn't deactivate SSH push in the test workflow (Thomas Sjolshagen)
+
+## v2.0.5 - 2021-07-16
+- BUG FIX: Wrong path for plugin updater (Thomas Sjolshagen)
+
 ## v2.0.5 - 2021-07-13
 - BUG FIX: Wrong path for plugin updater (Thomas Sjolshagen)
 
