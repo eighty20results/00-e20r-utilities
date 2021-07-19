@@ -8,7 +8,7 @@ endif
 WP_DEPENDENCIES ?= paid-memberships-pro woocommerce
 E20R_DEPENDENCIES ?=
 
-DOCKER_USER ?= eighty20results
+DOCKER_HUB_USER ?= eighty20results
 DOCKER_ENV ?= Docker.app
 DOCKER_IS_RUNNING := $(shell ps -ef | grep $(DOCKER_ENV) | wc -l | xargs)
 

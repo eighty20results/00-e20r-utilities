@@ -34,6 +34,11 @@ $(info Path to key for docker hub exists)
 CONTAINER_ACCESS_TOKEN := $(shell cat ./docker.hub.key)
 endif
 
+ifeq ($(DOCKER_USER),)
+$(info Using Makefile variable to set the docker hub username)
+DOCKER_USER ?= $(DOCKER_HUB_USER)
+endif
+
 CONTAINER_REPO ?= 'docker.io/$(DOCKER_USER)'
 DOCKER_IS_RUNNING := $(shell ps -ef | grep Docker.app | wc -l | xargs)
 
@@ -133,8 +138,8 @@ clean-inc:
 # Log in to your Docker HUB account before performing pull/push operations
 #
 docker-hub-login:
-	@echo "Logging on to Docker Hub"
-	@echo "${CONTAINER_ACCESS_TOKEN}" | docker login --username "${DOCKER_USER}" --password-stdin
+	echo "Logging on to Docker Hub"
+	echo ${CONTAINER_ACCESS_TOKEN} | docker login --username ${DOCKER_USER} --password-stdin
 
 #
 # (re)Build the Docker images for this development/test environment
