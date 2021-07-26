@@ -113,13 +113,11 @@ class Defaults_Exceptions_Test extends Unit {
 
 		// NOTE: Only trigger this as part of the second to thing (fixture) to execute
 		if ( true === $const_for_debug_logging && ! defined( 'E20R_LICENSING_DEBUG' ) ) {
-			error_log( "Using value in E20R_LICENSING_DEBUG constant\n" );
 			define( 'E20R_LICENSING_DEBUG', $const_for_debug_logging );
 		}
 
 		// NOTE: Only trigger this as part of the last thing (fixture) to execute
 		if ( ! empty( $const_server_url ) && ! defined( 'E20R_LICENSE_SERVER_URL' ) ) {
-			error_log( "Setting E20R_LICENSE_SERVER_URL constant to {$const_server_url}" );
 			define( 'E20R_LICENSE_SERVER_URL', $const_server_url );
 		}
 
@@ -142,16 +140,9 @@ class Defaults_Exceptions_Test extends Unit {
 		$this->assertDoesNotThrow(
 			\Exception::class,
 			function() use ( $settings, $server_url ) {
-				try {
-					$settings->set( 'server_url', $server_url );
-				} catch ( \Exception $e ) {
-					error_log( "Error setting server_url: " . $e->getMessage() );
-					throw $e;
-				}
+				$settings->set( 'server_url', $server_url );
 			}
 		);
-
-		error_log( "server_url is now {$settings->get( 'server_url' )}");
 
 		self::assertSame( $expected['use_rest'], $settings->get( 'use_rest' ), 'Could not select expected REST API or AJAX mode: ' . $use_rest );
 		self::assertSame( $expected['debug_logging'], $settings->get( 'debug_logging' ), "Error: Changed debug_logging to {$var_debug}|{$const_for_debug_logging}" );
