@@ -107,47 +107,34 @@ class Defaults_Test extends Unit {
 
 		// NOTE: Only trigger this as part of the second to thing (fixture) to execute
 		if ( true === $const_for_debug_logging && ! defined( 'E20R_LICENSING_DEBUG' ) ) {
-			error_log( 'Setting E20R_LICENSING_DEBUG constant' );
 			define( 'E20R_LICENSING_DEBUG', $const_for_debug_logging );
 		}
 
 		// NOTE: Only trigger this as part of the last thing (fixture) to execute
 		if ( ! empty( $const_server_url ) && ! defined( 'E20R_LICENSE_SERVER_URL' ) ) {
-			error_log( 'Setting E20R_LICENSE_SERVER_URL constant' );
 			define( 'E20R_LICENSE_SERVER_URL', $const_server_url );
 		}
 
 		// NOTE: Only trigger this as the third last thing (fixture) to execute
 		if ( ! defined( 'PLUGIN_PHPUNIT' ) ) {
-			error_log( 'Setting PLUGIN_PHPUNIT constant' );
 			define( 'PLUGIN_PHPUNIT', true );
 		}
 
 		$settings = new Defaults( $use_rest );
 
-		if ( ! defined( 'PLUGIN_PHPUNIT' ) || ( defined( 'PLUGIN_PHPUNIT' ) && ! PLUGIN_PHPUNIT ) ) {
-			// phpcs:ignore
-			error_log( 'The PLUGIN_PHPUNIT constant was NOT defined (or false) so we throw an exception when we try to set variables (except for the server_url parameter)' );
+		$this->assertDoesNotThrow(
+			\Exception::class,
+			function() use ( $settings, $var_debug ) {
+				$settings->set( 'debug_logging', $var_debug );
+			}
+		);
 
-			$this->assertThrows(
-				\Exception::class,
-				function() use ( $settings, $var_debug, $version ) {
-					$settings->set( 'debug_logging', $var_debug );
-					$settings->set( 'version', $version );
-				}
-			);
-
-		} else {
-			$this->assertDoesNotThrow(
-				\Exception::class,
-				function() use ( $settings, $var_debug, $version ) {
-					// phpcs:ignore
-					error_log("No PHPUNIT constant configured so setting all variables to expected values");
-					$settings->set( 'debug_logging', $var_debug );
-					$settings->set( 'version', $version );
-				}
-			);
-		}
+		$this->assertDoesNotThrow(
+			\Exception::class,
+			function() use ( $settings, $version ) {
+				$settings->set( 'version', $version );
+			}
+		);
 
 		$this->assertDoesNotThrow(
 			\Exception::class,
