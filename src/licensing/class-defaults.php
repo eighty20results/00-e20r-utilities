@@ -113,8 +113,8 @@ class Defaults {
 	 */
 	public function set( $name, $value ) {
 
-		if ( ! defined( 'PLUGIN_PHPUNIT' ) && 'server_url' !== $name ) {
-			throw new Exception( esc_attr__( 'Error: Cannot change default plugin settings', '00-e20r-utilities' ) );
+		if ( ! defined( 'PLUGIN_PHPUNIT' ) && ! PLUGIN_PHPUNIT && 'server_url' !== $name ) {
+			throw new Exception( esc_attr__( 'Error: Cannot change the default plugin settings', '00-e20r-utilities' ) );
 		}
 
 		try {
