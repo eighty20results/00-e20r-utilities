@@ -43,19 +43,23 @@
         "codeception/module-cli": "^1.1.0",
         "codeception/util-universalframework": "^1.0.0",
         "codeception/aspect-mock": "<4.0",
+        "codeception/assert-throws": "^1.1.0",
         "spatie/phpunit-snapshot-assertions": "^4.2.5",
         "lucatume/wp-browser": "^3.0",
         "brain/monkey": ">=2.3.0",
         "szepeviktor/phpstan-wordpress": "^v0.7",
         "mikey179/vfsstream": "~1",
-        "phpstan/extension-installer": "^1.1"
+        "phpstan/extension-installer": "^1.1",
+        "codeception/module-rest": "^1.3"
     },
     "autoload": {
         "psr-4": {
             "E20R\\": "",
-            "E20R\\Utilities\\": "src/",
+            "E20R\\Utilities\\": "src/utilities",
+            "E20R\\Utilities\\Licensing\\": "src/licensing",
             "E20R\\Test\\Unit\\": "tests/unit/testcases",
-            "E20R\\Test\\WPUnit\\": "tests/wpunit/testcases"
+            "E20R\\Test\\WPUnit\\": "tests/wpunit/testcases",
+            "E20R\\Test\\API\\": "tests/api/testcases"
         }
     },
     "scripts": {
