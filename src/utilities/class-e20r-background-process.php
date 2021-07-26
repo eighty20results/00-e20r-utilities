@@ -734,11 +734,11 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 
 			global $wpdb;
 
-			$table  = $wpdb->options;
+			$table  = esc_sql( $wpdb->options );
 			$column = 'option_name';
 
 			if ( is_multisite() ) {
-				$table  = $wpdb->sitemeta;
+				$table  = esc_sql( $wpdb->sitemeta );
 				$column = 'meta_key';
 			}
 
