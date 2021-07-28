@@ -97,8 +97,8 @@ class Defaults {
 		if ( ! $this->use_rest ) {
 			$default_path = $this->ajax_url;
 		}
-		$new_connection_uri   = sprintf( '%1$s%2$s', $this->server_url, $default_path );
-		$this->connection_uri = $new_connection_uri;
+
+		$this->connection_uri = sprintf( '%1$s%2$s', $this->server_url, $default_path );
 	}
 
 	/**
