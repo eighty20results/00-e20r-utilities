@@ -152,6 +152,7 @@ class Defaults {
 		}
 
 		$this->build_connection_uri();
+		return true;
 	}
 
 	/**
