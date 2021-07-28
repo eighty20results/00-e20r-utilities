@@ -32,7 +32,7 @@ use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
-class LicenseSettings_Happy_Path extends Unit {
+class LicenseSettings_Happy_Path_Test extends Unit {
 
 	use MockeryPHPUnitIntegration;
 	use AssertThrows;
@@ -234,6 +234,7 @@ class LicenseSettings_Happy_Path extends Unit {
 		self::assertSame( $expected['product_sku'], $settings->get( 'product_sku' ), "Error: The product_sku variable should have been set to {$expected['product_sku']}" );
 		self::assertSame( $expected['new_version'], $settings->get( 'new_version' ), "Error: The new_version variable should have been set to {$expected['new_version']}" );
 		self::assertSame( $expected['license_version'], $settings->get( 'plugin_defaults' )->get( 'version' ), "Error: The license_version variable should have been set to {$expected['license_version']}" );
+		self::assertSame( $expected['store_code'], $settings->get( 'plugin_defaults' )->get( 'store_code' ), "Error: The store code variable should have been {$expected['store_code']}!" );
 	}
 
 	/**
@@ -251,6 +252,7 @@ class LicenseSettings_Happy_Path extends Unit {
 				'3.1',
 				array(
 					'product_sku'     => 'E20R_TEST_LICENSE',
+					'store_code'      => 'L4EGy6Y91a15ozt',
 					'ssl_verify'      => true,
 					'to_debug'        => false,
 					'license_version' => '3.1',
@@ -264,6 +266,7 @@ class LicenseSettings_Happy_Path extends Unit {
 				'2.0',
 				array(
 					'product_sku'     => 'e20r_default_license',
+					'store_code'      => 'L4EGy6Y91a15ozt',
 					'ssl_verify'      => false,
 					'to_debug'        => true,
 					'license_version' => '2.0',
