@@ -37,13 +37,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 	if ( ! defined( 'E20R_LICENSING_DEBUG' ) ) {
 		define( 'E20R_LICENSING_DEBUG', false );
 	}
-	if ( ! defined( 'E20R_LICENSING_VERSION' ) ) {
-		define( 'E20R_LICENSING_VERSION', '3.1' );
-	}
-
-	if ( ! defined( 'E20R_LICENSE_SERVER_URL' ) ) {
-		define( 'E20R_LICENSE_SERVER_URL', 'https://eighty20results.com/' );
-	}
 
 	/**
 	 * Class Licensing
@@ -54,8 +47,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		/**
 		 * License cache keys
 		 */
-		const CACHE_KEY   = 'active_licenses';
-		const CACHE_GROUP = 'e20r_licensing';
+		const CACHE_KEY              = 'active_licenses';
+		const CACHE_GROUP            = 'e20r_licensing';
 
 		/**
 		 * License status constants
@@ -122,22 +115,28 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		/**
 		 * Configure the Licensing class (actions and settings)
 		 * Licensing constructor.
+		 * @throws Exceptions\InvalidSettingKeyException
 		 */
 		public function __construct( $product_sku = null ) {
 
 			$this->utils       = Utilities::get_instance();
 			$this->product_sku = $product_sku;
-			$this->log_debug   = defined( 'E20R_LICENSING_DEBUG' ) && E20R_LICENSING_DEBUG;
+
+			$this->text_domain = apply_filters( 'e20r_licensing_text_domain', $this->text_domain );
+
+			try {
+				$this->settings = new LicenseSettings( $this->product_sku );
+			} catch ( Exceptions\InvalidSettingKeyException $e ) {
+				$this->utils->log( 'Error: Invalid setting key used when instantiating the LicenseSettings() class: ' . esc_attr( $e->getMessage() ) );
+				throw $e;
+			}
+			$this->server    = new LicenseServer( $this->settings->get( 'new_version' ), $this->settings->get( 'ssl_verify' ) );
+			$this->page      = new LicensePage();
+			$this->log_debug = $this->settings->get( 'plugin_defaults' )->get( 'debug_logging' );
 
 			if ( $this->log_debug ) {
 				$this->utils->log( 'Loading the Licensing class...' );
 			}
-
-			$this->text_domain = apply_filters( 'e20r_licensing_text_domain', $this->text_domain );
-
-			$this->settings = new LicenseSettings( $this->product_sku );
-			$this->server   = new LicenseServer( $this->settings->get( 'new_version' ), $this->settings->get( 'ssl_verify' ) );
-			$this->page     = new LicensePage();
 
 			try {
 				$this->ajax = new AjaxHandler();
@@ -497,92 +496,46 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		 * Activate the license key on the remote server
 		 *
 		 * @param string $product_sku
-		 * @param array  $settings
 		 *
-		 * @return array
+		 * @return array|bool
 		 *
 		 * @since 1.8.4 - BUG FIX: Didn't save the license settings
 		 */
-		public function activate( $product_sku, $settings ) : array {
+		public function activate( $product_sku ) : array {
 
-			$state = null;
-			// phpcs:ignore
-			// $product_sku = strtolower( $product_sku );
+			$state       = null;
+			$product_sku = strtolower( $product_sku );
+
+			if ( ! $this->is_new_version() ) {
+				$this->utils->add_message(
+					esc_attr__( 'Error: Unable to connect to license server. Please upgrade the Utilities plugin!', '00-e20r-utilities' ),
+					'error',
+					'backend'
+				);
+
+				return false;
+			}
 
 			if ( $this->log_debug ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-				$this->utils->log( "Attempting to activate {$product_sku} on remote server using: " . print_r( $settings, true ) );
+				$this->utils->log( "Attempting to activate {$product_sku} on remote server using: " . print_r( $this->settings->all_settings(), true ) );
 			}
 
 			if ( ( $this->log_debug ) && $this->is_new_version() ) {
 				$this->utils->log( 'Using new license server plugin for activation...' );
 			}
 
-			if ( empty( $settings ) ) {
-				$settings        = $this->settings->defaults( $product_sku );
-				$settings['key'] = $product_sku;
+			if ( empty( $this->settings ) ) {
+				$settings = $this->settings->all_settings( $product_sku );
 			}
 
-			if ( ! $this->is_new_version() ) {
-				$api_params = array(
-					'slm_action'        => 'slm_activate',
-					'license_key'       => $settings['key'],
-					'secret_key'        => LicenseServer::E20R_LICENSE_SECRET_KEY,
-					'registered_domain' => isset( $_SERVER['SERVER_NAME'] ) ? $_SERVER['SERVER_NAME'] : 'Unknown',
-					'item_reference'    => rawurlencode( $product_sku ),
-					'first_name'        => $settings['first_name'],
-					'last_name'         => $settings['last_name'],
-					'email'             => $settings['email'],
-				);
-			} else {
-
-				try {
-					$client = new Client();
-
-					$response = Api::activate(
-						$client,
-						function () use ( $settings ) {
-							return LicenseRequest::create(
-								E20R_LICENSE_SERVER_URL . '',
-								'fake007',
-								$settings['product_sku'],
-								$settings['key'],
-								LicenseRequest::DAILY_FREQUENCY
-							);
-						},
-						function ( $license ) use ( &$settings ) {
-							$settings['key'] = $license;
-							// phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
-							$settings['timestamp'] = current_time( 'timestamp' );
-						}
-					);
-
-					$settings['status'] = 'active';
-
-					// phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
-					$settings['timestamp'] = current_time( 'timestamp' );
-					$state                 = ( false === $response->error );
-					return array( $state, $settings );
-				} catch ( \Exception $e ) {
-
-					$settings           = $this->settings->defaults( $product_sku );
-					$settings['status'] = 'inactive';
-					$state              = false;
-					$this->utils->log( 'Error: ' . $e->getMessage() );
-					$this->utils->log( $e->getTraceAsString() );
-					return array( $state, $settings );
-				}
-
-				/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-				$api_params = array(
-					'action'      => 'license_key_activate',
-					'store_code'  => LicenseServer::E20R_LICENSE_STORE_CODE,
-					'sku'         => $settings['product_sku'],
-					'license_key' => $settings['key'],
-					'domain'      => isset( $_SERVER['SERVER_NAME'] ) ? $_SERVER['SERVER_NAME'] : 'Unknown',
-				);
-				*/
-			}
+			$api_params = array(
+				'action'      => 'license_key_activate',
+				'store_code'  => $this->settings->get( 'plugin_defaults' )->get( 'store_code' ),
+				'sku'         => $this->settings->get( 'product_sku' ),
+				'domain'      => isset( $_SERVER['SERVER_NAME'] ) ? $_SERVER['SERVER_NAME'] : 'localhost',
+				'license_key' => $this->settings->get( 'license_key' ),
+			);
 
 			// Send query to the license manager server
 			$decoded = $this->server->send( $api_params );
@@ -599,84 +552,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				return array(
 					'status'   => 'blocked',
 					'settings' => null,
-				);
-			}
-
-			if ( ! $this->is_new_version() ) {
-
-				$this->utils->log( 'Using old licensing infrastructure' );
-
-				if ( isset( $decoded->result ) ) {
-
-					if ( $this->log_debug ) {
-						$this->utils->log( "Decoded JSON and received a status... ({$decoded->result})" );
-					}
-
-					switch ( $decoded->result ) {
-
-						case 'success':
-							$settings['status'] = 'active';
-
-							if ( $this->log_debug ) {
-								$this->utils->log( "Added {$product_sku} to license list" );
-								$this->utils->log( "Activated {$product_sku} on the remote server." );
-							}
-
-							$state = true;
-							break;
-
-						case 'error':
-							$msg = $decoded->message;
-
-							if ( false !== stripos( $msg, 'maximum' ) ) {
-								$state = self::E20R_LICENSE_MAX_DOMAINS;
-							} else {
-								$state = self::E20R_LICENSE_ERROR;
-							}
-
-							$settings['status'] = 'blocked';
-
-							if ( isset( $decoded->error_code ) ) {
-								switch ( intval( $decoded->error_code ) ) {
-
-									case 40:
-										// Key/domain combo is already an active license
-										if ( $this->log_debug ) {
-											$this->utils->log( "Flagging {$settings['key']} as already active for this server" );
-										}
-										$state              = self::E20R_LICENSE_DOMAIN_ACTIVE;
-										$settings['status'] = 'active';
-										break;
-								}
-							}
-
-							$this->utils->add_message(
-								sprintf(
-									// translators: The values are added from the request error object
-									__(
-										'For %1$s: %2$s',
-										// phpcs:ignore
-										'e20r-utilities-licensing'
-									),
-									$settings['key'],
-									$decoded->message
-								),
-								$decoded->result,
-								'backend'
-							);
-							if ( $this->log_debug ) {
-								$this->utils->log( "{$decoded->message}" );
-							}
-
-							break;
-					}
-					 // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
-					$settings['timestamp'] = current_time( 'timestamp' );
-				}
-
-				return array(
-					'status'   => $state,
-					'settings' => $settings,
 				);
 			}
 
@@ -729,7 +604,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 
 			return array(
 				'status'   => $state,
-				'settings' => $settings,
+				'settings' => $this->settings->all_settings(),
 			);
 		}
 
@@ -788,11 +663,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 
 				$api_params = array(
 					'action'        => 'license_key_deactivate',
-					'store_code'    => LicenseServer::E20R_LICENSE_STORE_CODE,
-					'sku'           => $settings['product_sku'],
-					'license_key'   => $settings['key'],
-					'domain'        => isset( $_SERVER['SERVER_NAME'] ) ? $_SERVER['SERVER_NAME'] : 'Unknown',
-					'activation_id' => $settings['activation_id'],
+					'store_code'    => $this->settings->get( 'plugin_defaults' )->get( 'store_code' ),
+					'sku'           => $this->settings->get( 'product_sku' ),
+					'license_key'   => $this->settings->get( 'license_key' ),
+					'domain'        => isset( $_SERVER['SERVER_NAME'] ) ? $_SERVER['SERVER_NAME'] : 'localhost',
+					'activation_id' => $this->settings->get( 'activation_id' ),
 				);
 			}
 
@@ -923,7 +798,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 
 			add_settings_section(
 				'e20r_licensing_section',
-				__( 'Configure Licenses', 'e20r-licensing-utility' ),
+				__( 'Configure Licenses', '00-e20r-utilities' ),
 				'E20R\Utilities\Licensing\LicensePage::show_section',
 				'e20r-licensing'
 			);
@@ -1068,12 +943,12 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 							'index'            => $license_counter,
 							'label_for'        => isset( $license['key'] ) ?
 								$license['key'] :
-								__( 'Unknown', 'e20r-licensing-utility' ),
+								__( 'Unknown', '00-e20r-utilities' ),
 							'product'          => $product_sku,
 							'option_name'      => 'e20r_license_settings',
 							'fulltext_name'    => isset( $license['fulltext_name'] ) ?
 								$license['fulltext_name'] :
-								__( 'Unknown', 'e20r-licensing-utility' ),
+								__( 'Unknown', '00-e20r-utilities' ),
 							'name'             => 'license_key',
 							'input_type'       => 'password',
 							'is_active'        => $is_active,
@@ -1085,7 +960,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 								$license['product_sku'] :
 								null,
 							'email_value'      => isset( $license['email'] ) ? $license['email'] : null,
-							'placeholder'      => esc_attr__( 'Paste the purchased key here', 'e20r-licensing-utility' ),
+							'placeholder'      => esc_attr__( 'Paste the purchased key here', '00-e20r-utilities' ),
 						)
 					);
 
@@ -1126,7 +1001,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 						"e20r_license_new_{$new_product_sku}",
 						sprintf(
 						// translators: The settings from the plugin being licensed will contain its name
-							__( 'Add %s license', 'e20r-licensing-utility' ),
+							__( 'Add %s license', '00-e20r-utilities' ),
 							$new['fulltext_name']
 						),
 						'E20R\Utilities\Licensing\LicensePage::show_input',
