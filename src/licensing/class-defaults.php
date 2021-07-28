@@ -22,6 +22,8 @@
 namespace E20R\Utilities\Licensing\Settings;
 
 use E20R\Utilities\Licensing\Exceptions\InvalidSettingKeyException;
+use E20R\Utilities\Licensing\Exceptions\ConfigFileNotFound;
+use E20R\Utilities\Utilities;
 use Exception;
 
 class Defaults {
@@ -63,6 +65,13 @@ class Defaults {
 	protected bool $debug_logging = false;
 
 	/**
+	 * The WooCommerce store code to use
+	 *
+	 * @var string|null
+	 */
+	protected ?string $store_code = null;
+
+	/**
 	 * The connection URI for the license client
 	 * @var string|null $connection_uri
 	 */
@@ -75,6 +84,14 @@ class Defaults {
 	 */
 	public function __construct( bool $use_rest = true ) {
 
+		try {
+			if ( false === $this->read_config() ) {
+				throw new \Exception( esc_attr__( 'Cannot read the configuration', '00-e20r-utilities' ) );
+			}
+		} catch ( \ConfigFileNotFound $e ) {
+			Utilities::get_instance()->log( 'Error: ' . $e->getMessage() );
+		}
+
 		$this->use_rest = $use_rest;
 
 		if ( defined( 'E20R_LICENSING_DEBUG' ) ) {
@@ -86,6 +103,36 @@ class Defaults {
 		}
 
 		$this->build_connection_uri();
+	}
+
+	/**
+	 * Loads the configuration from the current directory.
+	 */
+	protected function read_config() {
+		$config_file = dirname( __FILE__ ) . '/.info.yml';
+
+		if ( ! file_exists( $config_file ) ) {
+			throw new ConfigFileNotFound(
+				esc_attr__( 'Error: Could not find the plugin configuration file!', '00-e20r-utilities' )
+			);
+		}
+
+		$read_settings = array();
+		$file          = new \WP_Filesystem_Base();
+		$content       = $file->get_contents_array( $config_file );
+
+		foreach ( $content as $c_line ) {
+			$settings = array_map( 'trim', explode( ':', $c_line ) );
+
+			try {
+				$this->set( $settings[0], $settings[1] );
+			} catch ( \Exception $e ) {
+				Utilities::get_instance()->log( 'Error: ' . esc_attr( $e->getMessage() ) );
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -161,7 +208,7 @@ class Defaults {
 	 *
 	 * @return string|bool|null
 	 */
-	private function get_default( string $name ) {
+	protected function get_default( string $name ) {
 		$default = array(
 			'version'        => '3.2',
 			'server_url'     => 'https://eighty20results.com',
@@ -199,7 +246,7 @@ class Defaults {
 	 *
 	 * @throws InvalidSettingKeyException
 	 */
-	private function param_exists( $name ) {
+	protected function param_exists( $name ) {
 		$reflection = new \ReflectionClass( self::class );
 		$params     = array_keys( $reflection->getDefaultProperties() );
 
