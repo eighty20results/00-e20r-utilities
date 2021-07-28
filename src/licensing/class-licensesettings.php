@@ -115,12 +115,16 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 */
 		public function __construct( $product_sku = 'e20r_default_license' ) {
 
+			if ( empty( $product_sku ) ) {
+				$product_sku = 'e20r_default_license';
+			}
+
+			$this->product_sku     = $product_sku;
 			$this->utils           = Utilities::get_instance();
 			$this->plugin_defaults = new Defaults();
 			$this->update_plugin_defaults();
 
-			$this->product_sku = $product_sku;
-			$this->excluded    = array(
+			$this->excluded = array(
 				'excluded',
 				'utils',
 				'page_handle',
@@ -134,11 +138,14 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			$server_url = $this->plugin_defaults->get( 'server_url' );
 
-			if ( empty( $server_url ) ) {
-				$this->utils->log( "Error: Haven't configured the Eighty/20 Results server URL! Can be configured in the wp-config.php file." );
+			if (
+				empty( $server_url ) ||
+				1 !== preg_match( '/^https?:\/\/([0-9a-zA-Z].*)\.([0-9a-zA-Z].*)\/?/', $server_url )
+			) {
+				$this->utils->log( "Error: Haven't configured the Eighty/20 Results server URL, or the URL is malformed. Can be configured in the wp-config.php file." );
 				$this->utils->add_message(
 					__(
-						'Error: The E20R_LICENSE_SERVER_URL definition is missing! Please add it to the wp-config.php file.',
+						"Error: The license server URL is unknown, or the URL is malformed! Place a correct URL in your wp-config.php file. Example: define( 'E20R_LICENSE_SERVER_URL', 'https://eighty20results.com/' )",
 						'00-e20r-utilities'
 					),
 					'error',
@@ -161,7 +168,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			}
 
 			if ( isset( $_SERVER['HTTP_HOST'] ) && 'eighty20results.com' === $_SERVER['HTTP_HOST'] ) {
-				$this->utils->log( 'Running on own server. Deactivating SSL Verification' );
+				$this->utils->log( 'Running on Licensing server. Deactivating SSL Verification for loop-back connections' );
 				$this->ssl_verify = false;
 			}
 
@@ -273,6 +280,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			if ( 'plugin_defaults' === $key && defined( 'PLUGIN_PHPUNIT' ) && PLUGIN_PHPUNIT ) {
 				$this->utils->log( 'Warning: Intentionally overriding the plugin default settings' );
 				$this->plugin_defaults = $value;
+				$this->update_plugin_defaults();
 				return true;
 			}
 
@@ -339,6 +347,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		public function get( $key ) {
 
 			if ( ! isset( $this->{$key} ) ) {
+				$this->utils->log( "{$key} does not exist. Returning null!" );
 				return null;
 			}
 
