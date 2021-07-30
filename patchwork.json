@@ -1,6 +1,7 @@
 {
   "redefinable-internals": [
 	"function_exists",
-	"file_exists"
+	"file_exists",
+	"dirname"
   ]
 }
