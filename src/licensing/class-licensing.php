@@ -114,46 +114,58 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		private $log_debug = false;
 
 		/**
-		 * Configure the Licensing class (actions and settings)
-		 * Licensing constructor.
-		 * @throws Exceptions\InvalidSettingKeyException|MissingServerURL
+		 * Configure the Licensing class (load settings, etc)
+		 *
+		 * @param null                 $product_sku
+		 * @param LicenseSettings|null $settings
+		 * @param LicenseServer|null   $server
+		 * @param LicensePage|null     $page
+		 * @param Utilities|null       $utils
+		 *
+		 * @throws Exceptions\InvalidSettingKeyException
+		 * @throws MissingServerURL
 		 */
-		public function __construct( $product_sku = null, ?LicenseSettings $license_settings = null, ?LicenseServer $license_server = null, ?LicensePage $license_page = null ) {
+		public function __construct( $product_sku = null, ?LicenseSettings $settings = null, ?LicenseServer $server = null, ?LicensePage $page = null, Utilities $utils = null ) {
 
-			$this->utils       = Utilities::get_instance();
+			// Set the Utilities class
+			if ( empty( $utils ) ) {
+				$utils = Utilities::get_instance();
+			}
+
+			$this->utils       = $utils;
 			$this->product_sku = $product_sku;
 			$this->text_domain = apply_filters( 'e20r_licensing_text_domain', $this->text_domain );
 
-			if ( empty( $license_settings ) ) {
+			if ( empty( $settings ) ) {
 				try {
-					$license_settings = new LicenseSettings( $this->product_sku );
+					$settings = new LicenseSettings( $this->product_sku );
 				} catch ( Exceptions\InvalidSettingKeyException | MissingServerURL $e ) {
 					$this->utils->log( 'Error: Invalid setting key used when instantiating the LicenseSettings() class: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
 			}
 
-			if ( empty( $license_server ) ) {
+			if ( empty( $server ) ) {
 				try {
-					$license_server = new LicenseServer( $this->settings->get( 'new_version' ), $this->settings->get( 'ssl_verify' ) );
+					$server = new LicenseServer( $this->settings->get( 'new_version' ), $this->settings->get( 'ssl_verify' ) );
 				} catch ( \Exception $e ) {
 					$this->utils->log( 'License Server configuration: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
 			}
 
-			if ( empty( $license_page ) ) {
+			if ( empty( $page ) ) {
 				try {
-					$license_server = new LicensePage();
+					$page = new LicensePage();
 				} catch ( \Exception $e ) {
 					$this->utils->log( 'License Page: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
 			}
 
-			$this->settings  = $license_settings;
-			$this->server    = $license_server;
-			$this->page      = $license_page;
+			$this->settings  = $settings;
+			$this->server    = $server;
+			$this->page      = $page;
 			$this->log_debug = $this->settings->get( 'plugin_defaults' )->get( 'debug_logging' );
 
 			if ( $this->log_debug ) {
