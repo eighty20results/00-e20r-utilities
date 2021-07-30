@@ -26,8 +26,8 @@ use Codeception\Test\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use E20R\Utilities\Cache;
+use E20R\Utilities\Licensing\Exceptions\MissingServerURL;
 use E20R\Utilities\Licensing\LicenseSettings;
-use E20R\Utilities\Licensing\Settings\Defaults;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
@@ -145,7 +145,10 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../../../inc/autoload.php';
+//		require_once __DIR__ . '/../inc/class-wp-filesystem-direct.php';
 		require_once __DIR__ . '/../../../src/licensing/exceptions/class-invalidsettingkeyexception.php';
+		require_once __DIR__ . '/../../../src/licensing/exceptions/class-configfilenotfound.php';
+		require_once __DIR__ . '/../../../src/licensing/exceptions/class-missingserverurl.php';
 		require_once __DIR__ . '/../../../src/licensing/class-defaults.php';
 		require_once __DIR__ . '/../../../src/licensing/class-licensesettings.php';
 		require_once __DIR__ . '/../../../src/utilities/class-utilities.php';
@@ -167,15 +170,32 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	 */
 	public function test_instantiate_class( $sku, $domain, $with_debug, $version, $expected ) {
 
-		$util_mock = $this->getMockBuilder( Utilities::class )
-						->onlyMethods( array( 'add_message', 'log', 'get_util_cache_key', 'get_instance' ) )
-						->getMock();
-		$util_mock->method( 'log' )
+		try {
+			$this->makeEmpty( Utilities::class )
+				->method( 'add_message' )
+				->willReturn( null );
+		} catch ( \ Exception $exception ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Utilities::add_message() error: ' . $exception->getMessage() );
+		}
+
+		try {
+			$this->makeEmpty( Utilities::class )
+					->method( 'log' )
 					->willReturn( null );
-		$util_mock->method( 'add_message' )
-					->willReturn( null );
-		$util_mock->method( 'get_util_cache_key' )
-					->willReturn( 'e20r_pw_utils_0' );
+		} catch ( \ Exception $exception ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Utilities::log() error: ' . $exception->getMessage() );
+		}
+
+		try {
+			$this->makeEmpty( Utilities::class )
+				->method( 'get_util_cache_key' )
+				->willReturn( 'e20r_pw_utils_0' );
+		} catch ( \ Exception $exception ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Utilities::get_util_cache_key() error: ' . $exception->getMessage() );
+		}
 
 		$message_mock = $this->getMockBuilder( Message::class )
 							->onlyMethods( array( 'convert_destination' ) )
@@ -190,40 +210,76 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 		$cache_mock->method( 'get' )
 			->willReturn( '' );
 
+		Functions\expect( 'dirname' )
+			->zeroOrMoreTimes()
+			->with( \Mockery::contains( '/.info.json' ) )
+			->andReturn( '/var/www/html/wp-content/plugins/00-e20r-utilities/src/licensing/.info.json' );
+
 		Functions\when( 'get_transient' )
 			->justReturn( '' );
 
 		Functions\when( 'set_transient' )
 			->justReturn( true );
 
-		$plugin_defaults = new Defaults();
-		try {
-			$plugin_defaults->set( 'version', $version );
-		} catch ( \Exception $e ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( "Error: Unable to update version to {$version}" . $e->getMessage() );
-		}
+		$config = $this->fixture_config_file( $sku );
 
 		try {
-			$plugin_defaults->set( 'debug_logging', $with_debug );
+			$mocked_plugin_defaults = $this->makeEmpty(
+				'\E20R\Utilities\Licensing\Settings\Defaults',
+				array(
+					'read_config' => true,
+					'set'         => true,
+					'get'         => function ( $param_name ) use ( $with_debug, $version, $config ) {
+
+						$retval = null;
+						switch ( $param_name ) {
+							case 'debug_logging':
+								$retval = $with_debug;
+								break;
+							case 'version':
+								$retval = $version;
+								break;
+							case 'store_code':
+								$retval = $config['store_code'];
+								break;
+							case 'server_url':
+								$retval = $config['server_url'];
+								break;
+						}
+						return $retval;
+					},
+				),
+			);
 		} catch ( \Exception $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( "Error: Unable to update debug_logging to {$with_debug}" . $e->getMessage() );
+			error_log( $e->getMessage() );
+			return false;
 		}
 
 		$_SERVER['HTTP_HOST'] = $_SERVER['HTTP_HOST'] ?? $domain;
 
-		try {
-			$settings = new LicenseSettings( $sku );
-		} catch ( \Exception $e ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( 'Error: Unable to instantiate the LicenseSettings class: ' . $e->getMessage() );
-			throw $e;
+		if ( empty( $config['server_url'] ) ) {
+			$this->assertThrowsWithMessage(
+				MissingServerURL::class,
+				"Error: Haven't configured the Eighty/20 Results server URL, or the URL is malformed. Can be configured in the wp-config.php file.",
+				function() use ( $sku, $mocked_plugin_defaults ) {
+					$settings = new LicenseSettings( $sku, $mocked_plugin_defaults );
+				}
+			);
+			return;
+		} else {
+			try {
+				$settings = new LicenseSettings( $sku, $mocked_plugin_defaults );
+			} catch ( \Exception $e ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( 'Error: Unable to instantiate the LicenseSettings class: ' . $e->getMessage() );
+				throw $e;
+			}
 		}
 
 		// For testing purposes, we override the default plugin settings
 		try {
-			$settings->set( 'plugin_defaults', $plugin_defaults );
+			$settings->set( 'plugin_defaults', $mocked_plugin_defaults );
 		} catch ( \Exception $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( 'Error: Unable to set new plugin_defaults: ' . $e->getMessage() );
@@ -235,6 +291,35 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 		self::assertSame( $expected['new_version'], $settings->get( 'new_version' ), "Error: The new_version variable should have been set to {$expected['new_version']}" );
 		self::assertSame( $expected['license_version'], $settings->get( 'plugin_defaults' )->get( 'version' ), "Error: The license_version variable should have been set to {$expected['license_version']}" );
 		self::assertSame( $expected['store_code'], $settings->get( 'plugin_defaults' )->get( 'store_code' ), "Error: The store code variable should have been {$expected['store_code']}!" );
+	}
+
+	/**
+	 * The mocked contents for the fake `.info.json` file
+	 *
+	 * @param string $sku
+	 *
+	 * @return string[]
+	 */
+	public function fixture_config_file( ?string $sku ): array {
+		if ( empty( $sku ) ) {
+			$sku = 'e20r_default_license';
+		}
+		$config_content = array(
+			'E20R_TEST_LICENSE'    => array(
+				'store_code' => 'dummy_store_code_1',
+				'server_url' => 'https://eighty20results.com',
+			),
+			'e20r_default_license' => array(
+				'store_code' => 'dummy_store_code_2',
+				'server_url' => 'https://eighty20results.com/',
+			),
+			'e20r_no_server_url' => array(
+				'store_code' => 'dummy_store_code_4',
+				'server_url' => null,
+			),
+		);
+
+		return $config_content[ $sku ];
 	}
 
 	/**
@@ -252,7 +337,7 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 				'3.1',
 				array(
 					'product_sku'     => 'E20R_TEST_LICENSE',
-					'store_code'      => 'L4EGy6Y91a15ozt',
+					'store_code'      => $this->fixture_config_file( 'E20R_TEST_LICENSE' )['store_code'],
 					'ssl_verify'      => true,
 					'to_debug'        => false,
 					'license_version' => '3.1',
@@ -266,11 +351,25 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 				'2.0',
 				array(
 					'product_sku'     => 'e20r_default_license',
-					'store_code'      => 'L4EGy6Y91a15ozt',
+					'store_code'      => $this->fixture_config_file( 'e20r_default_license' )['store_code'],
 					'ssl_verify'      => false,
 					'to_debug'        => true,
 					'license_version' => '2.0',
 					'new_version'     => false,
+				),
+			),
+			array(
+				'e20r_no_server_url',
+				'example.net',
+				false, // to_debug
+				'3.1',
+				array(
+					'product_sku'     => 'E20R_TEST_LICENSE',
+					'store_code'      => $this->fixture_config_file( 'e20r_no_server_url' )['store_code'],
+					'ssl_verify'      => true,
+					'to_debug'        => false,
+					'license_version' => '3.1',
+					'new_version'     => true,
 				),
 			),
 		);
