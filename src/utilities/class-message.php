@@ -362,8 +362,8 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 			global $post;
 
 			$page_list = array(
-				$pmpro_pages['billing'],
-				$pmpro_pages['account'],
+				( $pmpro_pages['billing'] ?? null ),
+				( $pmpro_pages['account'] ?? null ),
 			);
 
 			if ( ! isset( $post->post_content ) || ( isset( $post->post_content ) && ! is_page( $page_list ) ) ) {
