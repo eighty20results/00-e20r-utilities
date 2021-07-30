@@ -114,7 +114,7 @@ class Defaults {
 	/**
 	 * Loads the configuration from the current directory.
 	 */
-	protected function read_config() {
+	public function read_config() {
 		global $wp_filesystem;
 
 		// Init the global if it's currently empty
@@ -151,8 +151,7 @@ class Defaults {
 			try {
 				$this->set( $key, $value );
 			} catch ( \Exception $e ) {
-				// Utilities::get_instance()->log( 'Error: ' . esc_attr( $e->getMessage() ) );
-				error_log( $e->getMessage() );
+				Utilities::get_instance()->log( 'Error: ' . esc_attr( $e->getMessage() ) );
 				return false;
 			}
 		}
