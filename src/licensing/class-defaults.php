@@ -119,7 +119,7 @@ class Defaults {
 
 		// Init the global if it's currently empty
 		if ( empty( $wp_filesystem ) ) {
-			WP_Filesystem();
+			\WP_Filesystem();
 		}
 
 		// Get the path to the
