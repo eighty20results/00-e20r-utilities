@@ -145,7 +145,6 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../../../inc/autoload.php';
-//		require_once __DIR__ . '/../inc/class-wp-filesystem-direct.php';
 		require_once __DIR__ . '/../../../src/licensing/exceptions/class-invalidsettingkeyexception.php';
 		require_once __DIR__ . '/../../../src/licensing/exceptions/class-configfilenotfound.php';
 		require_once __DIR__ . '/../../../src/licensing/exceptions/class-missingserverurl.php';
