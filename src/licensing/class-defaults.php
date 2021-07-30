@@ -26,6 +26,8 @@ use E20R\Utilities\Licensing\Exceptions\ConfigFileNotFound;
 use E20R\Utilities\Utilities;
 use Exception;
 
+use WP_Filesystem_Base;
+
 class Defaults {
 
 	/**
@@ -81,15 +83,19 @@ class Defaults {
 	 * Defaults constructor.
 	 *
 	 * @param bool $use_rest
+	 *
+	 * @throws Exception
 	 */
 	public function __construct( bool $use_rest = true ) {
 
+		// Load the config settings from the locally installed config file
 		try {
 			if ( false === $this->read_config() ) {
 				throw new \Exception( esc_attr__( 'Cannot read the configuration', '00-e20r-utilities' ) );
 			}
-		} catch ( \ConfigFileNotFound $e ) {
-			Utilities::get_instance()->log( 'Error: ' . $e->getMessage() );
+		} catch ( ConfigFileNotFound $exp ) {
+			error_log( 'Error: ' . $exp->getMessage() );
+			throw $exp;
 		}
 
 		$this->use_rest = $use_rest;
@@ -109,7 +115,15 @@ class Defaults {
 	 * Loads the configuration from the current directory.
 	 */
 	protected function read_config() {
-		$config_file = dirname( __FILE__ ) . '/.info.yml';
+		global $wp_filesystem;
+
+		// Init the global if it's currently empty
+		if ( empty( $wp_filesystem ) ) {
+			WP_Filesystem();
+		}
+
+		// Get the path to the
+		$config_file = plugin_dir_path( __FILE__ ) . '/.info.json';
 
 		if ( ! file_exists( $config_file ) ) {
 			throw new ConfigFileNotFound(
@@ -117,17 +131,28 @@ class Defaults {
 			);
 		}
 
-		$read_settings = array();
-		$file          = new \WP_Filesystem_Base();
-		$content       = $file->get_contents_array( $config_file );
+		if ( empty( $wp_filesystem ) ) {
+			return false;
+		}
 
-		foreach ( $content as $c_line ) {
-			$settings = array_map( 'trim', explode( ':', $c_line ) );
+		$json_blob = $wp_filesystem->get_contents( $config_file );
+		$settings  = json_decode( $json_blob, true );
 
+		if ( null === $settings ) {
+			throw new \Exception( esc_attr__( 'Unable to decode the configuration file', '00-e20r-utilities' ) );
+		}
+
+		if ( ! is_array( $settings ) ) {
+			throw new \Exception( esc_attr__( 'Invalid configuration file format', '00-e20r-utilities' ) );
+		}
+
+		$settings = array_map( 'trim', $settings );
+		foreach ( $settings as $key => $value ) {
 			try {
-				$this->set( $settings[0], $settings[1] );
+				$this->set( $key, $value );
 			} catch ( \Exception $e ) {
-				Utilities::get_instance()->log( 'Error: ' . esc_attr( $e->getMessage() ) );
+				// Utilities::get_instance()->log( 'Error: ' . esc_attr( $e->getMessage() ) );
+				error_log( $e->getMessage() );
 				return false;
 			}
 		}
@@ -217,7 +242,9 @@ class Defaults {
 			'use_rest'       => true,
 			'debug_logging'  => false,
 			'connection_uri' => null,
+			'store_code'     => null,
 		);
+
 		return $default[ $name ];
 	}
 
