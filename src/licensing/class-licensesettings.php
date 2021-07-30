@@ -22,6 +22,7 @@
 namespace E20R\Utilities\Licensing;
 
 use E20R\Utilities\Licensing\Exceptions\InvalidSettingKeyException;
+use E20R\Utilities\Licensing\Exceptions\MissingServerURL;
 use E20R\Utilities\Licensing\Exceptions\NoLicenseKeyFoundException;
 use E20R\Utilities\Licensing\Settings\Defaults;
 use E20R\Utilities\Utilities;
@@ -111,17 +112,21 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @param string|null $product_sku
 		 *
-		 * @throws InvalidSettingKeyException
+		 * @throws InvalidSettingKeyException|MissingServerURL
 		 */
-		public function __construct( $product_sku = 'e20r_default_license' ) {
+		public function __construct( $product_sku = 'e20r_default_license', $plugin_defaults = null ) {
 
 			if ( empty( $product_sku ) ) {
 				$product_sku = 'e20r_default_license';
 			}
 
+			if ( empty( $plugin_defaults ) ) {
+				$plugin_defaults = new Defaults();
+			}
+
 			$this->product_sku     = $product_sku;
 			$this->utils           = Utilities::get_instance();
-			$this->plugin_defaults = new Defaults();
+			$this->plugin_defaults = $plugin_defaults;
 			$this->update_plugin_defaults();
 
 			$this->excluded = array(
@@ -142,15 +147,17 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				empty( $server_url ) ||
 				1 !== preg_match( '/^https?:\/\/([0-9a-zA-Z].*)\.([0-9a-zA-Z].*)\/?/', $server_url )
 			) {
-				$this->utils->log( "Error: Haven't configured the Eighty/20 Results server URL, or the URL is malformed. Can be configured in the wp-config.php file." );
+				$msg = "Error: Haven't configured the Eighty/20 Results server URL, or the URL is malformed. Can be configured in the wp-config.php file.";
+				$this->utils->log( $msg );
 				$this->utils->add_message(
-					__(
+					esc_html__(
 						"Error: The license server URL is unknown, or the URL is malformed! Place a correct URL in your wp-config.php file. Example: define( 'E20R_LICENSE_SERVER_URL', 'https://eighty20results.com/' )",
 						'00-e20r-utilities'
 					),
 					'error',
 					'backend'
 				);
+				throw new MissingServerURL( $msg );
 			}
 		}
 
