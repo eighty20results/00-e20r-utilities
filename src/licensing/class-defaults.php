@@ -80,13 +80,25 @@ class Defaults {
 	protected ?string $connection_uri = null;
 
 	/**
+	 * The Utilities class instance
+	 * @var Utilities|null $utils
+	 */
+	private ?Utilities $utils = null;
+	/**
 	 * Defaults constructor.
 	 *
-	 * @param bool $use_rest
+	 * @param bool           $use_rest
+	 * @param Utilities|null $utils
 	 *
-	 * @throws Exception
+	 * @throws ConfigFileNotFound
 	 */
-	public function __construct( bool $use_rest = true ) {
+	public function __construct( bool $use_rest = true, Utilities $utils = null ) {
+
+		if ( empty( $utils ) ) {
+			$utils = Utilities::get_instance();
+		}
+
+		$this->utils = $utils;
 
 		// Load the config settings from the locally installed config file
 		try {
@@ -94,7 +106,7 @@ class Defaults {
 				throw new \Exception( esc_attr__( 'Cannot read the configuration', '00-e20r-utilities' ) );
 			}
 		} catch ( ConfigFileNotFound $exp ) {
-			error_log( 'Error: ' . $exp->getMessage() );
+			$this->utils->log( 'Error: ' . $exp->getMessage() );
 			throw $exp;
 		}
 
@@ -151,7 +163,7 @@ class Defaults {
 			try {
 				$this->set( $key, $value );
 			} catch ( \Exception $e ) {
-				Utilities::get_instance()->log( 'Error: ' . esc_attr( $e->getMessage() ) );
+				$this->utils->log( 'Error: ' . esc_attr( $e->getMessage() ) );
 				return false;
 			}
 		}
@@ -184,7 +196,7 @@ class Defaults {
 	 */
 	public function set( $name, $value ) {
 
-		if ( ! defined( 'PLUGIN_PHPUNIT' ) && ! PLUGIN_PHPUNIT && 'server_url' !== $name ) {
+		if ( 'server_url' !== $name && ! defined( 'PLUGIN_PHPUNIT' ) || ( defined( 'PLUGIN_PHPUNIT' ) && ! PLUGIN_PHPUNIT ) ) {
 			throw new Exception( esc_attr__( 'Error: Cannot change the default plugin settings', '00-e20r-utilities' ) );
 		}
 
