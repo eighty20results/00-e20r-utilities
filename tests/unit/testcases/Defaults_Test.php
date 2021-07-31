@@ -28,6 +28,7 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use E20R\Utilities\Licensing\Exceptions\InvalidSettingKeyException;
 use E20R\Utilities\Licensing\Settings\Defaults;
+use E20R\Utilities\Utilities;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Throwable;
@@ -36,6 +37,11 @@ class Defaults_Test extends Unit {
 
 	use MockeryPHPUnitIntegration;
 	use AssertThrows;
+
+	/**
+	 * @var Utilities|null $mock_utils
+	 */
+	private ?Utilities $mock_utils = null;
 
 	/**
 	 * The setup function for this Unit Test suite
@@ -52,7 +58,7 @@ class Defaults_Test extends Unit {
 		Monkey\setUp();
 
 		$this->loadFiles();
-		$this->loadMockedFunctions();
+		$this->loadStubbedFunctions();
 	}
 
 	/**
@@ -65,7 +71,10 @@ class Defaults_Test extends Unit {
 		parent::tearDown();
 	}
 
-	public function loadMockedFunctions() {
+	/**
+	 * Create function stubs for testing purposes
+	 */
+	public function loadStubbedFunctions() {
 		if ( ! defined( 'DAY_IN_SECONDS' ) ) {
 			define( 'DAY_IN_SECONDS', 60 * 60 * 24 );
 		}
@@ -81,6 +90,34 @@ class Defaults_Test extends Unit {
 				'_e'                  => null,
 			)
 		);
+
+		Functions\expect( 'dirname' )
+			->with( Mockery::contains( 'src/licensing/class-defaults.php' ) )
+			->zeroOrMoreTimes()
+			->andReturn( '/var/www/html/wp-content/plugins/00-e20r-utilities/src/licensing/' );
+
+		Functions\expect( 'get_filesystem_method' )
+			->zeroOrMoreTimes()
+			->andReturn( 'direct' );
+
+		Functions\expect( 'plugin_dir_path' )
+			->zeroOrMoreTimes()
+			->with( Mockery::contains( 'src/licensing/class-defaults.php' ) )
+			->andReturn(
+				function() {
+					return '../../../src/licensing/';
+				}
+			);
+
+		$this->mock_utils = $this->makeEmpty(
+			Utilities::class,
+			array(
+				'log' => function( $text ) {
+					error_log( $text );
+					return null;
+				},
+			)
+		);
 	}
 
 	/**
@@ -93,6 +130,7 @@ class Defaults_Test extends Unit {
 		require_once __DIR__ . '/../../../src/licensing/exceptions/class-invalidsettingkeyexception.php';
 		require_once __DIR__ . '/../../../src/licensing/exceptions/class-configfilenotfound.php';
 		require_once __DIR__ . '/../../../src/licensing/class-defaults.php';
+		require_once __DIR__ . '/../../../src/utilities/class-utilities.php';
 	}
 
 	/**
@@ -113,7 +151,6 @@ class Defaults_Test extends Unit {
 	 * @throws InvalidSettingKeyException|Throwable
 	 */
 	public function test_instantiate_class( $use_rest, $var_debug, $version, $server_url, $const_for_debug_logging, $const_server_url, $use_phpunit_constant, $config, $expected ) {
-		global $wp_filesystem;
 
 		// NOTE: Only trigger this as part of the second to thing (fixture) to execute
 		if ( true === $const_for_debug_logging && ! defined( 'E20R_LICENSING_DEBUG' ) ) {
@@ -129,24 +166,6 @@ class Defaults_Test extends Unit {
 		if ( ! defined( 'PLUGIN_PHPUNIT' ) ) {
 			define( 'PLUGIN_PHPUNIT', true );
 		}
-
-		Functions\expect( 'dirname' )
-			->with( Mockery::contains( 'src/licensing/class-defaults.php' ) )
-			->zeroOrMoreTimes()
-			->andReturn( '/var/www/html/wp-content/plugins/00-e20r-utilities/src/licensing/' );
-
-		Functions\expect( 'get_filesystem_method' )
-			->zeroOrMoreTimes()
-			->andReturn( 'direct' );
-
-		Functions\expect( 'plugin_dir_path' )
-			->zeroOrMoreTimes()
-			->with( Mockery::contains( 'src/licensing/class-defaults.php' ) )
-			->andReturn(
-				function() {
-					return '../../../src/licensing/';
-				}
-			);
 
 		global $wp_filesystem;
 
@@ -177,12 +196,12 @@ class Defaults_Test extends Unit {
 				\Exception::class,
 				'Unable to decode the configuration file',
 				function() use ( $use_rest ) {
-					$settings = new Defaults( $use_rest );
+					$settings = new Defaults( $use_rest, $this->mock_utils );
 				}
 			);
 			return;
 		} else {
-			$settings = new Defaults( $use_rest );
+			$settings = new Defaults( $use_rest, $this->mock_utils );
 		}
 
 		$this->assertDoesNotThrow(
