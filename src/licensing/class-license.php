@@ -33,17 +33,17 @@ if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 	wp_die( 'Cannot access file directly' );
 }
 
-if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
+if ( ! class_exists( '\E20R\Utilities\Licensing\License' ) ) {
 
 	if ( ! defined( 'E20R_LICENSING_DEBUG' ) ) {
 		define( 'E20R_LICENSING_DEBUG', false );
 	}
 
 	/**
-	 * Class Licensing
+	 * Class License
 	 * @package E20R\Utilities\Licensing
 	 */
-	class Licensing {
+	class License {
 
 		/**
 		 * License cache keys
@@ -107,14 +107,14 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		private $product_sku = null;
 
 		/**
-		 * Whether to log Licensing specific (extra) debug information
+		 * Whether to log License specific (extra) debug information
 		 *
 		 * @var bool $log_debug
 		 */
 		private $log_debug = false;
 
 		/**
-		 * Configure the Licensing class (load settings, etc)
+		 * Configure the License class (load settings, etc)
 		 *
 		 * @param null                 $product_sku
 		 * @param LicenseSettings|null $settings
@@ -169,7 +169,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 			$this->log_debug = $this->settings->get( 'plugin_defaults' )->get( 'debug_logging' );
 
 			if ( $this->log_debug ) {
-				$this->utils->log( 'Loading the Licensing class...' );
+				$this->utils->log( 'Loading the License class...' );
 			}
 
 			try {
@@ -180,11 +180,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		}
 
 		/**
-		 * Return the Licensing class requested
+		 * Return the License class requested
 		 *
 		 * @param string $class_name
 		 *
-		 * @return LicenseSettings|LicenseServer|LicensePage|Licensing|null
+		 * @return LicenseSettings|LicenseServer|LicensePage|License|null
 		 */
 		public function get_class( $class_name = 'licensing' ) {
 
@@ -216,7 +216,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		}
 
 		/**
-		 * Load action hooks for the E20R Licensing utilities module
+		 * Load action hooks for the E20R License utilities module
 		 */
 		public function load_hooks() {
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ), 10 );
@@ -381,12 +381,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		 * Check if a licensed product has an active license
 		 *
 		 * @param string $product_sku
-		 * @param array  $license_settings
 		 * @param bool   $is_licensed
 		 *
 		 * @return bool
 		 */
-		public function is_active( $product_sku, $license_settings, $is_licensed = false ) : bool {
+		public function is_active( $product_sku, $is_licensed = false ) : bool {
 
 			$is_active = false;
 
@@ -399,19 +398,14 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				$this->utils->log( 'New or old licensing plugin? ' . ( $this->is_new_version() ? 'New' : 'Old' ) );
 			}
 
-			if ( empty( $license_settings ) ) {
-				if ( $this->log_debug ) {
-					$this->utils->log( "Didn't get settings from caller so have to load them" );
-				}
-				$license_settings = $this->settings->all_settings();
-			}
+			$license_settings = $this->settings->all_settings();
 
 			if ( isset( $license_settings[ $product_sku ] ) ) {
 				$this->utils->log( 'SKU specific settings only!' );
-				$l_settings = $license_settings[ $product_sku ];
+				$settings = $license_settings[ $product_sku ];
 			} else {
 				$this->utils->log( "Have to load the settings for {$product_sku} directly..." );
-				$l_settings = $license_settings;
+				$settings = $license_settings;
 			}
 
 			if ( true === $this->is_new_version() ) {
@@ -421,9 +415,9 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				}
 
 				$is_active = (
-					! empty( $l_settings['the_key'] ) &&
-					! empty( $l_settings['status'] ) &&
-					'active' === $l_settings['status'] &&
+					! empty( $settings['the_key'] ) &&
+					! empty( $settings['status'] ) &&
+					'active' === $settings['status'] &&
 					true === $is_licensed
 				);
 			} elseif ( false === $this->is_new_version() ) {
@@ -433,10 +427,10 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 				}
 
 				$is_active = (
-					! empty( $l_settings['key'] ) &&
-					! empty( $l_settings['status'] ) &&
-					'active' === $l_settings['status'] &&
-					$l_settings['domain'] === $_SERVER['SERVER_NAME'] &&
+					! empty( $settings['key'] ) &&
+					! empty( $settings['status'] ) &&
+					'active' === $settings['status'] &&
+					$settings['domain'] === $_SERVER['SERVER_NAME'] &&
 					true === $is_licensed
 				);
 			} else {
@@ -814,7 +808,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 		}
 
 		/**
-		 * Register all Licensing settings
+		 * Register all License settings
 		 *
 		 * @since 1.5 - BUG FIX: Incorrect namespace used in register_setting(), add_settings_section() and
 		 *        add_settings_field() functions
@@ -827,13 +821,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 			register_setting(
 				'e20r_license_settings', // group, used for settings_fields()
 				'e20r_license_settings',  // option name, used as key in database
-				array( 'E20R\Utilities\Licensing\LicenseSettings::validate' )
+				array( 'E20R\Utilities\License\LicenseSettings::validate' )
 			);
 
 			add_settings_section(
 				'e20r_licensing_section',
 				__( 'Configure Licenses', '00-e20r-utilities' ),
-				'E20R\Utilities\Licensing\LicensePage::show_section',
+				'E20R\Utilities\License\LicensePage::show_section',
 				'e20r-licensing'
 			);
 
@@ -970,7 +964,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 					add_settings_field(
 						"{$license['key']}",
 						$license_name,
-						'E20R\Utilities\Licensing\LicensePage::show_input',
+						'E20R\Utilities\License\LicensePage::show_input',
 						'e20r-licensing',
 						'e20r_licensing_section',
 						array(
@@ -1038,7 +1032,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\Licensing' ) ) {
 							__( 'Add %s license', '00-e20r-utilities' ),
 							$new['fulltext_name']
 						),
-						'E20R\Utilities\Licensing\LicensePage::show_input',
+						'E20R\Utilities\License\LicensePage::show_input',
 						'e20r-licensing',
 						'e20r_licensing_section',
 						array(
