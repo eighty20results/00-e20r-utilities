@@ -116,7 +116,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License' ) ) {
 		/**
 		 * Configure the License class (load settings, etc)
 		 *
-		 * @param null                 $product_sku
+		 * @param null|string          $product_sku
 		 * @param LicenseSettings|null $settings
 		 * @param LicenseServer|null   $server
 		 * @param LicensePage|null     $page
@@ -125,7 +125,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License' ) ) {
 		 * @throws Exceptions\InvalidSettingKeyException
 		 * @throws MissingServerURL
 		 */
-		public function __construct( $product_sku = null, ?LicenseSettings $settings = null, ?LicenseServer $server = null, ?LicensePage $page = null, Utilities $utils = null ) {
+		public function __construct( ?string $product_sku = null, ?LicenseSettings $settings = null, ?LicenseServer $server = null, ?LicensePage $page = null, Utilities $utils = null ) {
 
 			// Set the Utilities class
 			if ( empty( $utils ) ) {
@@ -168,14 +168,14 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License' ) ) {
 			$this->page      = $page;
 			$this->log_debug = $this->settings->get( 'plugin_defaults' )->get( 'debug_logging' );
 
-			if ( $this->log_debug ) {
-				$this->utils->log( 'Loading the License class...' );
-			}
-
 			try {
-				$this->ajax = new AjaxHandler();
+				$this->ajax = new AjaxHandler( $product_sku, $this->settings, $this->server, $this->utils );
 			} catch ( \Exception $e ) {
 				$this->utils->log( 'Warning: Not loading the AJAX handler. No SKU or Key found.' );
+			}
+
+			if ( $this->log_debug ) {
+				$this->utils->log( 'Loaded the License class...' );
 			}
 		}
 
@@ -186,13 +186,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\License' ) ) {
 		 *
 		 * @return LicenseSettings|LicenseServer|LicensePage|License|null
 		 */
-		public function get_class( $class_name = 'licensing' ) {
+		public function get_class( $class_name = 'license' ) {
 
 			// Return error if the license class (name) isn't found
 			if (
 				! in_array(
 					$class_name,
-					array( 'licensing', 'settings', 'server', 'page', 'ajax' ),
+					array( 'license', 'settings', 'server', 'page', 'ajax' ),
 					true
 				)
 			) {
