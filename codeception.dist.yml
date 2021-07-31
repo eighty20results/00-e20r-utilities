@@ -30,6 +30,7 @@ coverage:
     - src/licensing/*.php
     - ./class-loader.php
   exclude:
+    - src/licensing/compatibility/*.php
     - inc/*
     - languages/*
     - tests/*
