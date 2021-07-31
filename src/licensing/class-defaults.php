@@ -105,7 +105,7 @@ class Defaults {
 			if ( false === $this->read_config() ) {
 				throw new \Exception( esc_attr__( 'Cannot read the configuration', '00-e20r-utilities' ) );
 			}
-		} catch ( ConfigFileNotFound $exp ) {
+		} catch ( ConfigFileNotFound | Exception $exp ) {
 			$this->utils->log( 'Error: ' . $exp->getMessage() );
 			throw $exp;
 		}
@@ -201,7 +201,7 @@ class Defaults {
 		}
 
 		try {
-			$this->param_exists( $name );
+			$this->exists( $name );
 		} catch ( InvalidSettingKeyException $e ) {
 			throw $e;
 		}
@@ -269,7 +269,7 @@ class Defaults {
 	 */
 	public function get( $name ) {
 		try {
-			$this->param_exists( $name );
+			$this->exists( $name );
 		} catch ( InvalidSettingKeyException $e ) {
 			throw $e;
 		}
@@ -280,20 +280,20 @@ class Defaults {
 	/**
 	 * Make sure the parameter exists.
 	 *
-	 * @param string $name
+	 * @param string $param_name
 	 *
 	 * @throws InvalidSettingKeyException
 	 */
-	protected function param_exists( $name ) {
+	protected function exists( string $param_name ) : bool {
 		$reflection = new \ReflectionClass( self::class );
 		$params     = array_keys( $reflection->getDefaultProperties() );
 
-		if ( ! in_array( $name, $params, true ) ) {
+		if ( ! in_array( $param_name, $params, true ) ) {
 			throw new InvalidSettingKeyException(
 				sprintf(
 					// translators: %s - The parameter given by the calling function
 					esc_attr__( 'Error: %s is not a valid parameter', '00-e20r-utilities' ),
-					$name
+					$param_name
 				)
 			);
 		}
