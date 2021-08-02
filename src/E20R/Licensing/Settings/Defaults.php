@@ -156,11 +156,10 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		 *
 		 * @param string|null $json_blob
 		 *
-		 * @retun bool
 		 * @throws ConfigDataNotFound
 		 * @throws InvalidSettingsKey
 		 */
-		public function read_config( ?string $json_blob = null ): bool {
+		public function read_config( ?string $json_blob = null ) {
 
 			if ( empty( $json_blob ) ) {
 				$json_blob = self::E20R_STORE_CONFIG;
@@ -189,14 +188,12 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 			$settings = array_map( 'trim', $settings );
 			foreach ( $settings as $key => $value ) {
 				try {
-					$this->set( $key, $value );
+					$status = $this->set( $key, $value );
 				} catch ( InvalidSettingsKey | \Exception $e ) {
 					$this->utils->log( 'Error: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
 			}
-
-			return true;
 		}
 
 		/**
