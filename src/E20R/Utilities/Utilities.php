@@ -1,6 +1,6 @@
 <?php
-/**
- * Copyright (c) 2016-2021 - Eighty / 20 Results by Wicked Strong Chicks.
+/*
+ * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,14 +15,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * @version 3.0 - GDPR opt-in, erasure and data access framework
  */
 
 namespace E20R\Utilities;
 
 // Disallow direct access to the class definition
 
+use E20R\Licensing\Settings\Defaults;
 use Exception;
 use Puc_v4_Factory;
 use function apply_filters;
@@ -38,6 +37,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 	/**
 	 * Class Utilities
 	 * @package E20R\Utilities
+	 *
+	 * @version 3.0 - GDPR opt-in, erasure and data access framework
 	 */
 	class Utilities {
 
@@ -88,20 +89,38 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Utilities constructor.
 		 */
-		public function __construct() {
+		public function __construct( $messages = null ) {
 
-			self::$library_url  = plugins_url( '', __FILE__ );
-			self::$library_path = plugin_dir_path( __FILE__ );
-			$this->plugin_slug  = apply_filters( 'e20r_licensing_text_domain', '00-e20r-utilities' );
+			self::$library_url  = function_exists( 'plugins_url' ) ? plugins_url( '', __FILE__ ) : '';
+			self::$library_path = function_exists( 'plugin_dir_path' ) ? plugin_dir_path( __FILE__ ) : __DIR__;
+			$this->plugin_slug  = function_exists( 'apply_filters' ) ? apply_filters( 'e20r_licensing_text_domain', '00-e20r-utilities' ) : '00-e20r-utilities';
 
 			$this->log( 'Plugin Slug: ' . $this->plugin_slug );
 
-			$this->blog_id = get_current_blog_id();
+			$this->blog_id = function_exists( 'get_current_blog_id' ) ? get_current_blog_id() : 1;
 
 			self::$cache_key = "e20r_pw_utils_{$this->blog_id}";
-			$messages        = new Message();
+
+			if ( empty( $messages ) ) {
+				$messages = new Message();
+			}
 
 			$this->log( 'Front or backend???' );
+
+			if ( ! function_exists( 'add_action' ) ) {
+				$this->log( 'Error: add_action() is undefined!' );
+				return;
+			}
+
+			if ( ! function_exists( 'add_filter' ) ) {
+				$this->log( 'Error: add_filter() is undefined!' );
+				return;
+			}
+
+			if ( ! function_exists( 'has_action' ) ) {
+				$this->log( 'Error: has_action() is undefined!' );
+				return;
+			}
 
 			if ( self::is_admin() ) {
 
@@ -1200,19 +1219,22 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		}
 
 		/**
-		 * Is the specified server is the same as the licensing server
+		 * Is the specified server is the same as the Licensing server
 		 *
-		 * @param string|null $url - The URL to check the LICENSE_SERVER_URL against
+		 * @param string|null $url - The URL to check the license server name against
 		 *
 		 * @return bool
 		 */
-		public static function is_local_server( $url = null ) {
+		public static function is_license_server( ?string $url = null ): bool {
 
-			if ( is_null( $url ) ) {
+			if ( empty( $url ) ) {
 				$url = home_url();
 			}
 
-			return defined( 'E20R_LICENSE_SERVER_URL' ) && strpos( $url, E20R_LICENSE_SERVER_URL ) === 0;
+			return (
+				false !== stripos( $url, Defaults::E20R_LICENSE_SERVER ) ||
+				( defined( 'E20R_LICENSE_SERVER_URL' ) && false !== stripos( $url, E20R_LICENSE_SERVER_URL ) )
+			);
 		}
 
 		/**
@@ -1227,7 +1249,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		public function set_ssl_validation_for_updates( $request_args, $url ) {
 
-			if ( ! self::is_local_server( $url ) ) {
+			if ( ! self::is_license_server( $url ) ) {
 				return $request_args;
 			}
 
