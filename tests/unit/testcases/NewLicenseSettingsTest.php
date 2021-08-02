@@ -21,11 +21,16 @@
 
 namespace E20R\Tests\Unit;
 
+use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Settings\NewLicenseSettings;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use E20R\Utilities\Utilities;
+use Mockery\Mock;
 
 class NewLicenseSettingsTest extends \Codeception\Test\Unit {
+
+	private $m_default = null;
 
 	/**
 	 * The setup function for this Unit Test suite
@@ -33,6 +38,21 @@ class NewLicenseSettingsTest extends \Codeception\Test\Unit {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+
+		if ( ! defined( 'DAY_IN_SECONDS' ) ) {
+			define( 'DAY_IN_SECONDS', 60 * 60 * 24 );
+		}
+
+		if ( ! defined( 'PLUGIN_PHPUNIT' ) ) {
+			define( 'PLUGIN_PHPUNIT', true );
+		}
+
+		$this->m_default = $this->makeEmpty(
+			Defaults::class,
+			array(
+				'read_config' => true,
+			)
+		);
 
 		Functions\expect( 'plugins_url' )
 			->andReturn( sprintf( 'https://localhost:7254/wp-content/plugins/' ) );
@@ -47,6 +67,30 @@ class NewLicenseSettingsTest extends \Codeception\Test\Unit {
 		Functions\expect( 'get_current_blog_id' )
 			->andReturn( 1 );
 
+		Functions\expect( 'get_option' )
+			->with( \Mockery::contains( 'e20r_license_settings' ) )
+			->andReturn( array() );
+
+		Functions\expect( 'get_option' )
+			->with( \Mockery::contains( 'timezone_string' ) )
+			->andReturn( 'Europe/Oslo' );
+
+		Functions\when( 'esc_attr__' )
+			->returnArg( 1 );
+
+		Functions\when( 'esc_attr' )
+			->returnArg( 1 );
+
+		Functions\when( 'esc_html__' )
+			->returnArg( 1 );
+
+		Functions\expect( 'get_transient' )
+			->with( \Mockery::contains( 'err_info' ) )
+			->andReturn( '' );
+
+		Functions\expect( 'set_transient' )
+			->with( 'err_info' )
+			->andreturn( true );
 		$this->loadFiles();
 	}
 
@@ -65,27 +109,58 @@ class NewLicenseSettingsTest extends \Codeception\Test\Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../../../inc/autoload.php';
-		require_once __DIR__ . '/../../../src/E20R/Licensing/Settings/NewLicenseSettings.php';
 	}
 
 	/**
 	 * Test create license settings class (new API)
 	 *
 	 * @dataProvider fixture_license_settings
+	 * @covers \E20R\Licensing\Settings\NewLicenseSettings()
 	 */
-	public function test_create_license_settings( $sku, $expected ) {
+	public function test_instantiate_new_license_settings( $sku, $license_settings, $server_url, $expected ) {
 
-		$settings = new NewLicenseSettings( $sku );
+		Functions\expect( 'get_option' )
+			->with( \Mockery::contains( 'timezone_string' ) )
+			->andReturn( 'Europe/Oslo' );
 
 		Functions\expect( 'get_option' )
 			->with( \Mockery::contains( 'e20r_license_settings' ) )
-			->andReturnUsing(
-				function() use ( $settings, $sku ) {
-					return $settings->defaults( $sku );
+			->andReturn(
+				function( $key, $default_value ) use ( $license_settings ) {
+					if ( empty( $license_settings ) ) {
+						return $default_value;
+					}
+					return $license_settings;
 				}
 			);
 
-		self::assertEquals( $expected, $settings->get( 'product_sku' ) );
+		$m_default = $this->makeEmpty(
+			Defaults::class,
+			array(
+				'set' => true,
+				'get' => function( $param_name ) use ( $server_url ) {
+					if ( 'server_url' === $param_name ) {
+						return $server_url;
+					}
+					return null;
+				},
+			)
+		);
+
+		$m_utils = $this->makeEmpty(
+			Utilities::class,
+			array( 'log' => null )
+		);
+
+		$m_default->set( 'server_url', $server_url );
+
+		try {
+			$settings = new NewLicenseSettings( $sku, $m_default, $m_utils );
+			self::assertEquals( $expected, $settings->get( 'product_sku' ) );
+			self::assertInstanceOf( NewLicenseSettings::class, $settings );
+		} catch ( \Exception $e ) {
+			self::assertFalse( true, $e->getMessage() );
+		}
 	}
 
 	/**
@@ -94,7 +169,8 @@ class NewLicenseSettingsTest extends \Codeception\Test\Unit {
 	 */
 	public function fixture_license_settings() {
 		return array(
-			array( 'PRODUCT_1', 'PRODUCT_1' ),
+			// TODO: Add more fixtures for the MewLicenseSettingsTest::test_instantiate_new_license_settings() unit test
+			array( 'PRODUCT_1', array(), 'https://eighty20results.co', 'PRODUCT_1' ),
 		);
 	}
 }
