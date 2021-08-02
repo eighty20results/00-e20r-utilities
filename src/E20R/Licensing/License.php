@@ -23,6 +23,7 @@
 namespace E20R\Licensing;
 
 use E20R\Licensing\Exceptions\MissingServerURL;
+use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Settings\LicenseSettings;
 use E20R\Utilities\Utilities;
 use LicenseKeys\Utility\Api;
@@ -671,7 +672,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				$api_params = array(
 					'slm_action'        => 'slm_deactivate',
 					'license_key'       => $settings['key'],
-					'secret_key'        => LicenseServer::E20R_LICENSE_SECRET_KEY,
+					'secret_key'        => Defaults::constant( 'E20R_LICENSE_SECRET_KEY' ),
 					'registered_domain' => $_SERVER['SERVER_NAME'],
 					'status'            => 'pending',
 				);
