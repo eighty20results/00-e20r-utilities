@@ -45,17 +45,17 @@ if ( ! defined( 'E20R_UTILITIES_BASE_FILE' ) ) {
 
 if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 
+	/**
+	 * Class Loader
+	 * @package E20R\Utilities
+	 */
 	class Loader {
 
+		// Load the default PSR-4 Autoloader
 		public function __construct() {
-
-			// Load the composer autoloader for the 10quality utilities
-			if ( function_exists( 'plugin_dir_path' ) ) {
-				require_once \plugin_dir_path( __FILE__ ) . 'inc/autoload.php';
-			} else {
-				require_once __DIR__ . '/inc/autoload.php';
-			}
+			require_once __DIR__ . '/inc/autoload.php';
 		}
+
 		/**
 		 * Class auto-loader for the Utilities Module
 		 *
@@ -64,7 +64,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 * @since  1.0
 		 * @access public static
 		 */
-		public static function auto_load( $class_name ) {
+		public function auto_load( string $class_name ): bool {
 
 			if ( false === stripos( $class_name, 'e20r' ) ) {
 				return false;
@@ -163,22 +163,26 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		/**
 		 * Add filter to indicate this plugin is active
 		 */
-		public static function utilities_loaded() {
+		public function utilities_loaded() {
 			add_filter( 'e20r_utilities_module_installed', '__return_true', -1, 1 );
 		}
 	}
 }
 
+$loader = new Loader();
+
 try {
-	spl_autoload_register( '\\E20R\\Utilities\\Loader::auto_load' );
+	spl_autoload_register( array( $loader, 'auto_load' ) );
 } catch ( \Exception $exception ) {
 	// phpcs:ignore
 	error_log( 'Unable to register autoloader: ' . $exception->getMessage(), E_USER_ERROR );
 	return false;
 }
 
-\add_action( 'plugins_loaded', 'E20R\\Utilities\\Loader::utilities_loaded', -1 );
+if ( function_exists( '\add_action' ) ) {
+	\add_action( 'plugins_loaded', array( $loader, 'utilities_loaded' ), -1 );
+}
 
-if ( class_exists( 'Utilities' ) ) {
+if ( class_exists( '\E20R\Utilities\Utilities' ) && defined( 'WP_PLUGIN_DIR' ) ) {
 	Utilities::configure_update( '00-e20r-utilities', __FILE__ );
 }
