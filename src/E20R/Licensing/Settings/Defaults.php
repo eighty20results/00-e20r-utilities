@@ -23,6 +23,7 @@ namespace E20R\Licensing\Settings;
 
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\ConfigDataNotFound;
+use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 use Exception;
 
@@ -118,7 +119,8 @@ class Defaults {
 		);
 
 		if ( empty( $utils ) ) {
-			$utils = Utilities::get_instance();
+			$message = new Message();
+			$utils   = new Utilities( $message );
 		}
 
 		$this->utils = $utils;
