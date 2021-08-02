@@ -1,7 +1,6 @@
 <?php
-/**
- *
- * Copyright (c) 2018. - Eighty / 20 Results by Wicked Strong Chicks.
+/*
+ * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +15,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
 namespace E20R\Utilities;

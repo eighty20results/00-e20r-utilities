@@ -3,11 +3,11 @@
         "vendor-dir": "inc/"
     },
     "name": "eight20results/utilities",
-    "type": "plugin",
+    "type": "wordpress-plugin",
     "description": "Adds various utility functions and license capabilities",
     "keywords": ["wordpress",
-        "src/utilities",
-        "src/licensing"
+        "src/E20R/Utilities",
+        "src/Licensing"
     ],
     "minimum-stability": "stable",
     "homepage": "https://eighty20results.com",
@@ -54,12 +54,24 @@
     },
     "autoload": {
         "psr-4": {
-            "E20R\\": "",
-            "E20R\\Utilities\\": "src/utilities",
-            "E20R\\Utilities\\Licensing\\": "src/licensing",
-            "E20R\\Test\\Unit\\": "tests/unit/testcases",
-            "E20R\\Test\\WPUnit\\": "tests/wpunit/testcases",
-            "E20R\\Test\\API\\": "tests/api/testcases"
+            "ProjectRoot\\" : "",
+            "NamespaceInSourceDir\\": "",
+            "E20R\\": "src/E20R",
+            "E20R\\Utilities\\": "src/E20R/Utilities",
+            "E20R\\Utilities\\Licensing\\": "src/E20R/Licensing",
+            "E20R\\Licensing\\Exceptions\\": "src/E20R/Licensing/Exceptions"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ProjectRoot\\" : "",
+            "NamespaceInSourceDir\\": "",
+            "E20R\\Tests\\": "tests",
+            "E20R\\Tests\\Unit\\": "tests/unit/testcases",
+            "E20R\\Tests\\WPUnit\\": "tests/wpunit/testcases",
+            "E20R\\Tests\\Functional\\": "tests/functional/testcases",
+            "E20R\\Tests\\Acceptance\\": "tests/acceptance/testcases",
+            "E20R\\Tests\\Api\\": "tests/api/testcases"
         }
     },
     "scripts": {

@@ -19,11 +19,16 @@
  *
  */
 
-namespace E20R\Test\Unit;
+namespace E20R\test\unit;
 
-use E20R\Utilities\Licensing\AjaxHandler;
-use E20R\Utilities\Licensing\LicensePage;
-use E20R\Utilities\Licensing\Licensing;
+use E20R\Licensing\AjaxHandler;
+use E20R\Licensing\Exceptions\InvalidSettingKeyException;
+use E20R\Licensing\Exceptions\MissingServerURL;
+use E20R\Licensing\LicensePage;
+use E20R\Licensing\LicenseServer;
+use E20R\Licensing\Settings\LicenseSettings;
+use E20R\Licensing\License;
+use E20R\Licensing\Settings\Defaults;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 use Codeception\Test\Unit;
@@ -33,16 +38,51 @@ use Brain\Monkey\Filters;
 use function Brain\Monkey\setUp;
 use function Brain\Monkey\tearDown;
 
-class LicensingTest extends Unit {
+class LicenseTest extends Unit {
+
+	/**
+	 * @var LicenseSettings $settings_mock
+	 */
+	private LicenseSettings $settings_mock;
+
+	/**
+	 * @var LicenseServer $server_mock
+	 */
+	private LicenseServer $server_mock;
+
+	/**
+	 * @var LicensePage $page_mock
+	 */
+	private LicensePage $page_mock;
+
+	/**
+	 * @var Utilities $utils_mock
+	 */
+	private Utilities $utils_mock;
 
 	/**
 	 * The setup function for this Unit Test suite
 	 *
 	 */
 	protected function setUp(): void {
+		if ( ! defined( 'ABSPATH' ) ) {
+			define( 'ABSPATH', __DIR__ );
+		}
+		if ( ! defined( 'PLUGIN_PHPUNIT' ) ) {
+			define( 'PLUGIN_PHPUNIT', true );
+		}
 		parent::setUp();
 		setUp();
 
+		$this->loadStubs();
+		$this->loadFiles();
+		$this->loadMocks();
+	}
+
+	/**
+	 * Define stubs for various WP functions
+	 */
+	protected function loadStubs() {
 		Functions\expect( 'home_url' )
 			->andReturn( 'https://localhost:7254/' );
 
@@ -82,10 +122,58 @@ class LicensingTest extends Unit {
 
 		Functions\expect( 'get_current_blog_id' )
 			->andReturn( 1 );
-
-		$this->loadFiles();
 	}
 
+	/**
+	 * Create mocked functions for the required License() arguments
+	 *
+	 * @throws \Exception
+	 */
+	protected function loadMocks() {
+
+		$defaults_mock = $this->makeEmpty(
+			Defaults::class,
+			array(
+				'get' => false,
+			)
+		);
+
+		$this->settings_mock = $this->makeEmpty(
+			LicenseSettings::class,
+			array(
+				'update_plugin_defaults' => null,
+				'get'                    => function( $param_name ) use ( $defaults_mock ) {
+					$retval = null;
+					switch ( $param_name ) {
+						case 'plugin_defaults':
+							$retval = $defaults_mock;
+							break;
+					}
+
+					return $retval;
+				},
+			)
+		);
+
+		$this->server_mock = $this->makeEmpty(
+			LicenseServer::class,
+		);
+
+		$this->page_mock = $this->makeEmpty(
+			LicensePage::class
+		);
+
+		$this->utils_mock = $this->makeEmpty(
+			Utilities::class,
+			array(
+				'log' => function( $text ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( $text );
+					return null;
+				},
+			)
+		);
+	}
 	/**
 	 * Teardown function for the Unit Tests
 	 *
@@ -100,13 +188,15 @@ class LicensingTest extends Unit {
 	 * Load source files for the Unit Test to execute
 	 */
 	public function loadFiles() {
-//		require_once __DIR__ . '/../../../inc/autoload.php';
-//		require_once __DIR__ . '/../../../class-loader.php';
-		require_once __DIR__ . '/../../../src/licensing/class-licensing.php';
-		require_once __DIR__ . '/../../../src/licensing/class-licensepage.php';
-		require_once __DIR__ . '/../../../src/licensing/class-ajaxhandler.php';
-		require_once __DIR__ . '/../../../src/utilities/class-utilities.php';
-		require_once __DIR__ . '/../../../src/utilities/class-message.php';
+		require_once __DIR__ . '/../../../src/Licensing/Defaults.php';
+		require_once __DIR__ . '/../../../src/Utilities/Utilities.php';
+		require_once __DIR__ . '/../../../src/Utilities/Message.php';
+
+		require_once __DIR__ . '/../../../src/Licensing/License.php';
+		require_once __DIR__ . '/../../../src/Licensing/LicensePage.php';
+		require_once __DIR__ . '/../../../src/Licensing/LicenseServer.php';
+		require_once __DIR__ . '/../../../src/Licensing/LicenseSettings.php';
+		require_once __DIR__ . '/../../../src/Licensing/AjaxHandler.php';
 	}
 
 	public function testAjax_handler_verify_license() {
@@ -120,50 +210,29 @@ class LicensingTest extends Unit {
 	 * @param string $sku_value
 	 *
 	 * @test
-	 * @covers \E20R\Utilities\Licensing\Licensing::load_hooks
+	 * @covers \E20R\Utilities\Licensing\License::load_hooks
 	 */
 	public function test_load_hooks() {
-		$licensing = new Licensing();
+
+		try {
+			$license = new License( null, $this->settings_mock, $this->server_mock, $this->page_mock, $this->utils_mock );
+		} catch ( \Exception $e ) {
+			self::assertFalse( true, $e->getMessage() );
+		}
+
 		try {
 			Actions\expectAdded( 'admin_enqueue_scripts' )
-				->with( array( $licensing, 'enqueue' ), 10 );
+				->with( array( $license, 'enqueue' ), 10 );
 		} catch ( \Exception $e ) {
-			error_log( 'Error: ' . $e->getMessage() ); // phpcs:ignore
+			self::assertFalse( true, $e->getMessage() );
 		}
-		$licensing->load_hooks();
+
+		$license->load_hooks();
 	}
 
 	/**
-	 * Unit test of the load_settings() method in the Licensing() class
-	 *
-	 * @param $sku
-	 * @param $expected_settings
-	 *
-	 * @dataProvider fixture_settings
-	 * @covers \E20R\Utilities\Licensing\Licensing::load_settings
+	 * Test the enqueue method for JavaScript and styles
 	 */
-	public function test_load_settings( $sku, $use_new, $expected_settings ) {
-
-	}
-
-	public function fixture_settings() {
-		return $this->fixture_new_settings() + $this->fixture_old_settings();
-	}
-
-	public function fixture_new_settings() {
-		// Assuming new licensing API service
-		return array(
-			array( 'some-sku', true, array( '' ) ),
-		);
-	}
-
-	public function fixture_old_settings() {
-		// Assuming old licensing API service
-		return array(
-			array( 'some-sku', false, array( '' ) ),
-		);
-	}
-
 	public function test_enqueue() {
 
 	}
@@ -182,8 +251,7 @@ class LicensingTest extends Unit {
 	 * @param $stub
 	 * @param $expected
 	 *
-	 * @dataProvider page_url_fixture
-	 * @test
+	 * @dataProvider fixture_page_url
 	 */
 	public function test_get_license_page_url( $stub, $expected ) {
 
@@ -191,7 +259,8 @@ class LicensingTest extends Unit {
 			Functions\expect( 'esc_url_raw' )
 				->andReturnFirstArg();
 		} catch ( \Exception $e ) {
-			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
+			self::assertFalse( true, 'Error: ' . $e->getMessage() );
+			return false;
 		}
 
 		try {
@@ -199,27 +268,33 @@ class LicensingTest extends Unit {
 				->with(
 					\Mockery::contains(
 						array(
-							'page'         => 'e20r-licensing',
+							'page'         => 'e20r-Licensing',
 							'license_stub' => $stub,
 						)
 					)
 				)
 				->andReturn(
 					sprintf(
-						'https://localhost:7254/wp-admin/options-general.php?page=e20r-licensing&license_stub=%s',
+						'https://localhost:7254/wp-admin/options-general.php?page=e20r-Licensing&license_stub=%s',
 						rawurlencode( $stub )
 					)
 				);
 		} catch ( \Exception $e ) {
-			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
+			self::assertFalse( true, 'Error: ' . $e->getMessage() );
+			return false;
 		}
 
-		$licensing = new Licensing( $stub );
+		try {
+			$license = new License( $stub, $this->settings_mock, $this->server_mock, $this->page_mock );
+		} catch ( InvalidSettingKeyException | MissingServerURL $e ) {
+			self::assertFalse( true, 'get_license_page_url() - ' . $e->getMessage() );
+			return false;
+		}
 
 		self::assertEquals(
 			$expected,
-			$licensing->get_license_page_url( $stub ),
-			sprintf( 'Testing that license server URL contains "%s"', $stub )
+			$license->get_license_page_url( $stub ),
+			sprintf( 'License server URL did not contain "%s"', $stub )
 		);
 	}
 
@@ -228,13 +303,13 @@ class LicensingTest extends Unit {
 	 *
 	 * @return \string[][]
 	 */
-	public function page_url_fixture() {
+	public function fixture_page_url() {
 		return array(
-			array( 'test-license-1', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-licensing&license_stub=test-license-1' ),
-			array( 'test license 1', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-licensing&license_stub=test%20license%201' ),
-			array( 'vXzfjW9M2O4sP1a57DG399SmA2-176', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-licensing&license_stub=vXzfjW9M2O4sP1a57DG399SmA2-176' ),
-			array( 'ovCCBklB8cz2H9Q787Asv2w0rC-166', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-licensing&license_stub=ovCCBklB8cz2H9Q787Asv2w0rC-166' ),
-			array( 'vXzfjW9M2O4sP1a57DG399SmA2%176', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-licensing&license_stub=vXzfjW9M2O4sP1a57DG399SmA2%25176' ),
+			array( 'test-license-1', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-Licensing&license_stub=test-license-1' ),
+			array( 'test license 1', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-Licensing&license_stub=test%20license%201' ),
+			array( 'vXzfjW9M2O4sP1a57DG399SmA2-176', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-Licensing&license_stub=vXzfjW9M2O4sP1a57DG399SmA2-176' ),
+			array( 'ovCCBklB8cz2H9Q787Asv2w0rC-166', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-Licensing&license_stub=ovCCBklB8cz2H9Q787Asv2w0rC-166' ),
+			array( 'vXzfjW9M2O4sP1a57DG399SmA2%176', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-Licensing&license_stub=vXzfjW9M2O4sP1a57DG399SmA2%25176' ),
 		);
 	}
 
@@ -244,7 +319,7 @@ class LicensingTest extends Unit {
 	 * @param $stub
 	 * @param $expected
 	 *
-	 * @dataProvider page_url_neg_fixture
+	 * @dataProvider fixture_page_url_neg
 	 * @test
 	 */
 	public function test_neg_get_license_page_url( $stub, $expected ) {
@@ -260,22 +335,22 @@ class LicensingTest extends Unit {
 				->with(
 					\Mockery::contains(
 						array(
-							'page'         => 'e20r-licensing',
+							'page'         => 'e20r-Licensing',
 							'license_stub' => $stub,
 						)
 					)
 				)
 				->andReturn(
-					"https://localhost:7254/wp-admin/options-general.php?page=e20r-licensing&license_stub={$stub}"
+					"https://localhost:7254/wp-admin/options-general.php?page=e20r-Licensing&license_stub={$stub}"
 				);
 		} catch ( \Exception $e ) {
 			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
 		}
 
-		$licensing = new Licensing( $stub );
+		$license = new License( $stub, $this->settings_mock, $this->server_mock, $this->page_mock );
 		self::assertNotEquals(
 			$expected,
-			$licensing->get_license_page_url( $stub ),
+			$license->get_license_page_url( $stub ),
 			sprintf( 'Testing that license server URL contains "%s"', $stub )
 		);
 	}
@@ -285,18 +360,16 @@ class LicensingTest extends Unit {
 	 *
 	 * @return \string[][]
 	 */
-	public function page_url_neg_fixture() {
+	public function fixture_page_url_neg() {
 		return array(
-			array( 'test license 1', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-licensing&license_stub=test-license-1' ),
-			array( 'test license 1', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-licensing&license_stub=test+license+1' ),
+			array( 'test license 1', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-Licensing&license_stub=test-license-1' ),
+			array( 'test license 1', 'https://localhost:7254/wp-admin/options-general.php?page=e20r-Licensing&license_stub=test+license+1' ),
 		);
 	}
 
-	public function test_get_ssl_verify() {
-
-	}
-
 	/**
+	 * Test the is_new_version() function
+	 *
 	 * @param $expected
 	 *
 	 * @dataProvider fixture_new_version
@@ -308,9 +381,13 @@ class LicensingTest extends Unit {
 		}
 
 		runkit_constant_remove( 'WP_PLUGIN_DIR' );
-		$licensing = new Licensing();
+		try {
+			$license = new License( null, $this->settings_mock, $this->server_mock, $this->page_mock, $this->utils_mock );
+		} catch ( InvalidSettingKeyException | MissingServerURL $e ) {
+			self::assertFalse( true, $e->getMessage() );
+		}
 
-		self::assertEquals( $expected, $licensing->is_new_version() );
+		self::assertEquals( $expected, $license->is_new_version() );
 	}
 
 	/**
@@ -331,7 +408,7 @@ class LicensingTest extends Unit {
 	/**
 	 * Test that the get_instance() function returns the correct class type
 	 *
-	 * @covers \E20R\Utilities\Licensing\Licensing()
+	 * @covers \E20R\Utilities\Licensing\License()
 	 * @dataProvider fixture_skus
 	 */
 	public function test_get_instance( $test_sku ) {
@@ -356,7 +433,10 @@ class LicensingTest extends Unit {
 		$utilities_mock->method( 'is_local_server' )
 			->willReturn( true );
 
-		self::assertInstanceOf( '\\E20R\\Utilities\\Licensing\\Licensing', new Licensing( $test_sku ) );
+		self::assertInstanceOf(
+			'\\E20R\\Utilities\\Licensing\\License',
+			new License( $test_sku, $this->settings_mock, $this->server_mock, $this->page_mock, $this->utils_mock )
+		);
 	}
 
 	/**

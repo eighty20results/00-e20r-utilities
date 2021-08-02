@@ -19,16 +19,16 @@
  *
  */
 
-namespace E20R\Utilities\Licensing\Exceptions;
+namespace E20R\Licensing\Exceptions;
 
 use Exception;
 
-class NoLicenseKeyFoundException extends Exception {
+class NoLicenseKeyFound extends Exception {
 	public function __construct( $license_key ) {
 
 		$message = sprintf(
 			// translators: %s - The License Key supplied
-			__( 'Error: The specified license key (%s) was not found!', 'e20r-utilities-licensing' ),
+			__( 'Error: The specified license key (%s) was not found!', 'e20r-Utilities-Licensing' ),
 			$license_key
 		);
 		parent::__construct( $message );

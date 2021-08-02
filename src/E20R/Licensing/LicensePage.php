@@ -1,6 +1,6 @@
 <?php
 /**
- *  Copyright (c) 2019-2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ *  Copyright (c) 2019 - 2021. - Eighty / 20 Results by Wicked Strong Chicks.
  *  ALL RIGHTS RESERVED
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,10 @@
  *  You can contact us at mailto:info@eighty20results.com
  */
 
-namespace E20R\Utilities\Licensing;
+namespace E20R\Licensing;
 
-use E20R\Utilities\Licensing\Licensing;
+use E20R\Licensing\License;
+use E20R\Licensing\Settings\LicenseSettings;
 use E20R\Utilities\Utilities;
 
 // Deny direct access to the file
@@ -29,7 +30,7 @@ if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 	wp_die( 'Cannot access file directly' );
 }
 
-if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
+if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 	class LicensePage {
 
 		/**
@@ -145,8 +146,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 			}
 
 			$this->page_handle = add_options_page(
-				__( 'E20R Licenses', 'e20r-utilities-licensing' ),
-				__( 'E20R Licenses', 'e20r-utilities-licensing' ),
+				__( 'E20R Licenses', '00-e20r-utilities' ),
+				__( 'E20R Licenses', '00-e20r-utilities' ),
 				'manage_options',
 				'e20r-licensing',
 				array( $this, 'page' )
@@ -154,7 +155,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 		}
 
 		/**
-		 * Show the licensing section on the options page
+		 * Show the Licensing section on the options page
 		 */
 		public function show_section() {
 
@@ -165,13 +166,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 			$pricing_page = apply_filters( 'e20r-license-pricing-page-url', 'https://eighty20results.com/shop/' );
 
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			$button_text = apply_filters( 'e20r-license-save-btn-text', esc_attr__( 'Activate/Deactivate & Save license(s)', 'e20r-utilities-licensing' ) );
+			$button_text = apply_filters( 'e20r-license-save-btn-text', esc_attr__( 'Activate/Deactivate & Save license(s)', '00-e20r-utilities' ) );
 			?>
 			<p class="e20r-licensing-section">
 			<?php
 			echo esc_html__(
 				'This add-on is distributed under version 2 of the GNU Public License (GPLv2). One of the things the GPLv2 license grants is the right to use this software on your site, free of charge.',
-				'e20r-utilities-licensing'
+				'00-e20r-utilities'
 			);
 			?>
 			</p>
@@ -184,7 +185,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 					"To verify and activate the license, add the license key and email address to the appropriate field(s), then click the '%s' button.",
 					$button_text
 				),
-				'e20r-utilities-licensing'
+				'00-e20r-utilities'
 			);
 			?>
 			</p>
@@ -194,29 +195,29 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 			echo esc_attr__(
 					// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
 				sprintf( 'To deactivate the license and clear the license settings from this system, check the check-box in the \"Deactivate\" column and then click the \'%1$s\' button.', $button_text ),
-				'e20r-utilities-licensing'
+				'00-e20r-utilities'
 			);
 			?>
 			</p>
 			<p class="e20r-licensing-section">
 				<a href="<?php echo esc_url_raw( $pricing_page ); ?>" target="_blank">
-					<?php echo esc_attr__( 'Purchase Licenses/Add-ons &raquo;', 'e20r-utilities-licensing' ); ?>
+					<?php echo esc_attr__( 'Purchase Licenses/Add-ons &raquo;', '00-e20r-utilities' ); ?>
 				</a>
 			</p>
 			<div class="form-table">
 				<div class="e20r-license-settings-row">
 					<div class="e20r-license-settings-column e20r-license-settings-header e20r-license-name-column">
-						<?php echo esc_attr__( 'Name', 'e20r-utilities-licensing' ); ?>
+						<?php echo esc_attr__( 'Name', '00-e20r-utilities' ); ?>
 					</div>
 					<div class="e20r-license-settings-column e20r-license-settings-header e20r-license-key-column">
-						<?php echo esc_attr__( 'Key', 'e20r-utilities-licensing' ); ?>
+						<?php echo esc_attr__( 'Key', '00-e20r-utilities' ); ?>
 					</div>
 					<div class="e20r-license-settings-column e20r-license-settings-header e20r-license-email-column">
-						<?php echo esc_attr__( 'Email', 'e20r-utilities-licensing' ); ?>
+						<?php echo esc_attr__( 'Email', '00-e20r-utilities' ); ?>
 					</div>
 					<div
 						class="e20r-license-settings-column e20r-license-settings-header e20r-license-deactivate-column">
-						<?php echo esc_attr__( 'Deactivate', 'e20r-utilities-licensing' ); ?>
+						<?php echo esc_attr__( 'Deactivate', '00-e20r-utilities' ); ?>
 					</div>
 				</div>
 			</div>
@@ -242,7 +243,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 			$is_active       = isset( $args['is_active'] ) && 1 === (int) $args['is_active'];
 			$product_sku     = isset( $args['product_sku'] ) ? $args['product_sku'] : '';
 			$status_color    = $is_active ? 'e20r-license-active' : 'e20r-license-inactive';
-			$product         = esc_attr__( 'Unknown', 'e20r-utilities-licensing' );
+			$product         = esc_attr__( 'Unknown', '00-e20r-utilities' );
 			$var_name        = "{$args['option_name']}[product][0]";
 			$is_subscription = ( isset( $args['has_subscription'] ) && ! empty( $args['has_subscription'] ) && 1 === $args['has_subscription'] );
 
@@ -261,7 +262,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 			<div class="e20r-license-data-row">
 				<div class="e20r-license-settings-column e20r-license-key-column">
 				<?php
-					// translators: Generates dynamic HTML for the licensing page. Nothing to see here
+					// translators: Generates dynamic HTML for the Licensing page. Nothing to see here
 					echo esc_html__(
 							// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
 						sprintf(
@@ -270,7 +271,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 							$args['value']
 						)
 					);
-					// translators: Generates dynamic HTML for the licensing page. Nothing to see here
+					// translators: Generates dynamic HTML for the Licensing page. Nothing to see here
 					echo esc_html__(
 						// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
 						sprintf(
@@ -279,7 +280,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 							$args['fulltext_name']
 						)
 					);
-					// translators: Generates dynamic HTML for the licensing page. Nothing to see here
+					// translators: Generates dynamic HTML for the Licensing page. Nothing to see here
 					echo esc_html__(
 						// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
 						sprintf(
@@ -288,7 +289,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 							$product
 						)
 					);
-					// translators: Generates dynamic HTML for the licensing page. Nothing to see here
+					// translators: Generates dynamic HTML for the Licensing page. Nothing to see here
 					echo esc_html__(
 						// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
 						sprintf(
@@ -297,7 +298,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 							$product_sku
 						)
 					);
-					// translators: Generates dynamic HTML for the licensing page. Nothing to see here
+					// translators: Generates dynamic HTML for the Licensing page. Nothing to see here
 					echo esc_html__(
 						// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
 						sprintf(
@@ -326,7 +327,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 							$args['index'],
 							$args['label_for'],
 							$args['email_value'],
-							__( 'Email used to buy license', '20r-licensing-utility' ),
+							__( 'Email used to buy license', '20r-Licensing-utility' ),
 							$status_color
 						)
 					);
@@ -358,7 +359,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 								'<input type="button" name="%1$s[check_license][%2$d]" class="e20r-check-license button button-secondary" value="%3$s" />',
 								$args['option_name'],
 								$args['index'],
-								__( 'Verify license', '20r-licensing-utility' )
+								__( 'Verify license', '00-e20r-utilities' )
 							)
 						);
 					}
@@ -372,9 +373,9 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 						$expiration_date = '';
 
 						if ( $is_active ) {
-							$expiration_message = esc_attr__( 'This license does not expire', 'e20r-utilities-licensing' );
+							$expiration_message = esc_attr__( 'This license does not expire', '00-e20r-utilities' );
 						} else {
-							$expiration_message = esc_attr__( 'This license is not activated', 'e20r-utilities-licensing' );
+							$expiration_message = esc_attr__( 'This license is not activated', '00-e20r-utilities' );
 						}
 
 						if ( $has_expiration || $is_subscription ) {
@@ -388,22 +389,22 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 										$args['expiration_ts']
 									)
 								),
-								'e20r-utilities-licensing'
+								'00-e20r-utilities'
 							);
 						}
 
 						$body_msg = $is_subscription && ! $has_expiration ?
-							__( 'will renew automatically (unless cancelled)', 'e20r-utilities-licensing' ) :
-							__( 'needs to be renewed manually', 'e20r-utilities-licensing' );
+							__( 'will renew automatically (unless cancelled)', '00-e20r-utilities' ) :
+							__( 'needs to be renewed manually', '00-e20r-utilities' );
 
 						if ( ! $is_subscription && ! $has_expiration ) {
-							$body_msg = esc_attr__( 'does not need to be renewed', 'e20r-utilities-licensing' );
+							$body_msg = esc_attr__( 'does not need to be renewed', '00-e20r-utilities' );
 						}
 
 						if ( $is_subscription || $has_expiration ) {
 							$expiration_message = sprintf(
 									// translators: Message to show when the license is expiring
-								__( 'This license %1$s %2$s', 'e20r-utilities-licensing' ),
+								__( 'This license %1$s %2$s', '00-e20r-utilities' ),
 								$body_msg,
 								$expiration_date
 							);
@@ -411,7 +412,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 
 						$this->utils->log( "License expiration info: {$expiration_message}" );
 						// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
-						echo esc_html__( $expiration_message, 'e20r-utilities-licensing' );
+						echo esc_html__( $expiration_message, '00-e20r-utilities' );
 						?>
 					</p>
 				</div>
@@ -422,7 +423,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 		/**
 		 * The page content for the E20R Licensing section
 		 *
-		 * @since 1.6.1 - BUG FIX: Would sometimes show the wrong license status on the licensing page
+		 * @since 1.6.1 - BUG FIX: Would sometimes show the wrong license status on the Licensing page
 		 */
 		public function page() {
 
@@ -439,7 +440,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 				wp_die(
 					esc_html__(
 						'You are not permitted to perform this action.',
-						'e20r-utilities-licensing'
+						'00-e20r-utilities'
 					)
 				);
 			}
@@ -449,7 +450,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 				'e20r_license_save_btn_text',
 				esc_attr__(
 					'Activate/Deactivate & Save license(s)',
-					'e20r-utilities-licensing'
+					'00-e20r-utilities'
 				)
 			);
 			?>
@@ -498,7 +499,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 			}
 
 			foreach ( $settings as $product_sku => $license ) {
-				$licensing = new Licensing( $product_sku );
+				try {
+					$licensing = new License( $product_sku );
+				} catch ( Exceptions\InvalidSettingKeyException | Exceptions\MissingServerURL $e ) {
+					$this->utils->add_message( 'Error: ' . $e->getMessage(), 'error', 'backend' );
+				}
 
 				if ( count( $settings ) > 1 && in_array(
 					$product_sku,
@@ -524,13 +529,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 				<?php
 					$license_expired = false;
 				if ( isset( $license['expires'] ) ) {
-					$this->utils->log( 'Have old licensing config, so...' );
+					$this->utils->log( 'Have old Licensing config, so...' );
 					$license_expired =
 						! empty( $license['expires'] ) && $license['expires'] <= time();
 				}
 
 				if ( isset( $license['expire'] ) ) {
-					$this->utils->log( 'Have new licensing config, so...' );
+					$this->utils->log( 'Have new Licensing config, so...' );
 					$license_expired =
 						! empty( $license['expire'] ) && $license['expire'] <= time();
 				}
@@ -548,7 +553,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 									'Your <em>%s</em> license is either not configured, invalid or has expired.',
 									$license['fulltext_name']
 								),
-								'e20r-utilities-licensing'
+								'00-e20r-utilities'
 							);
 							?>
 									</strong>
@@ -560,7 +565,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 									'Visit your Eighty / 20 Results <a href="%1$s" target="_blank">Support Account</a> page to confirm that your account is active and to locate your license key.',
 									$support_account_url
 								),
-								'e20r-utilities-licensing'
+								'00-e20r-utilities'
 							);
 							?>
 						</p>
@@ -572,7 +577,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 					?>
 						<div class="notice notice-info inline">
 						<p>
-							<strong><?php esc_attr_e( 'Thank you!', 'e20r-utilities-licensing' ); ?></strong>
+							<strong><?php esc_attr_e( 'Thank you!', '00-e20r-utilities' ); ?></strong>
 						<?php
 						// translators: The name of the licensed product is supplied from the product
 						echo esc_attr__(
@@ -581,7 +586,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicensePage' ) ) {
 								'A valid %1$s license key is being used on this site.',
 								$license['fulltext_name']
 							),
-							'e20r-utilities-licensing'
+							'00-e20r-utilities'
 						);
 						?>
 						</p>

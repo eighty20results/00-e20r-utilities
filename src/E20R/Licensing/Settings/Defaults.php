@@ -19,16 +19,18 @@
  *
  */
 
-namespace E20R\Utilities\Licensing\Settings;
+namespace E20R\Licensing\Settings;
 
-use E20R\Utilities\Licensing\Exceptions\InvalidSettingKeyException;
-use E20R\Utilities\Licensing\Exceptions\ConfigFileNotFound;
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Licensing\Exceptions\ConfigDataNotFound;
 use E20R\Utilities\Utilities;
 use Exception;
 
-use WP_Filesystem_Base;
-
 class Defaults {
+
+	const E20R_LICENSE_SECRET_KEY = '5687dc27b50520.33717427';
+	const E20R_STORE_CONFIG       = '{"store_code":"L4EGy6Y91a15ozt","server_url":"https://eighty20results.com"}';
+	const E20R_LICENSE_SERVER     = 'eighty20results.com';
 
 	/**
 	 * The version number for this plugin (E20R Licensing module)
@@ -80,19 +82,40 @@ class Defaults {
 	protected ?string $connection_uri = null;
 
 	/**
+	 * Default settings for the plugin
+	 *
+	 * @var array $default
+	 */
+	private array $default = array();
+
+	/**
 	 * The Utilities class instance
 	 * @var Utilities|null $utils
 	 */
 	private ?Utilities $utils = null;
+
 	/**
 	 * Defaults constructor.
 	 *
 	 * @param bool           $use_rest
 	 * @param Utilities|null $utils
 	 *
-	 * @throws ConfigFileNotFound
+	 * @throws ConfigDataNotFound
+	 * @throws InvalidSettingsKey
+	 * @throws Exception
 	 */
 	public function __construct( bool $use_rest = true, Utilities $utils = null ) {
+
+		$this->default = array(
+			'version'        => '3.2',
+			'server_url'     => 'https://eighty20results.com',
+			'rest_url'       => '/wp-json/woo-license-server/v1',
+			'ajax_url'       => '/wp-admin/wp-ajax.php',
+			'use_rest'       => true,
+			'debug_logging'  => false,
+			'connection_uri' => null,
+			'store_code'     => null,
+		);
 
 		if ( empty( $utils ) ) {
 			$utils = Utilities::get_instance();
@@ -102,10 +125,8 @@ class Defaults {
 
 		// Load the config settings from the locally installed config file
 		try {
-			if ( false === $this->read_config() ) {
-				throw new \Exception( esc_attr__( 'Cannot read the configuration', '00-e20r-utilities' ) );
-			}
-		} catch ( ConfigFileNotFound | Exception $exp ) {
+			$this->read_config();
+		} catch ( ConfigDataNotFound | Exception | InvalidSettingsKey $exp ) {
 			$this->utils->log( 'Error: ' . $exp->getMessage() );
 			throw $exp;
 		}
@@ -125,46 +146,46 @@ class Defaults {
 
 	/**
 	 * Loads the configuration from the current directory.
+	 *
+	 * @param string|null $json_blob
+	 *
+	 * @retun bool
+	 * @throws ConfigDataNotFound
+	 * @throws InvalidSettingsKey
 	 */
-	public function read_config() {
-		global $wp_filesystem;
+	public function read_config( ?string $json_blob = null ): bool {
 
-		// Init the global if it's currently empty
-		if ( empty( $wp_filesystem ) ) {
-			\WP_Filesystem();
+		if ( empty( $json_blob ) ) {
+			$json_blob = self::E20R_STORE_CONFIG;
 		}
 
-		// Get the path to the
-		$config_file = plugin_dir_path( __FILE__ ) . '/.info.json';
-
-		if ( ! file_exists( $config_file ) ) {
-			throw new ConfigFileNotFound(
-				esc_attr__( 'Error: Could not find the plugin configuration file!', '00-e20r-utilities' )
+		if ( empty( $json_blob ) ) {
+			throw new ConfigDataNotFound(
+				esc_attr__( 'No configuration data found', '00-e20r-utilities' )
 			);
 		}
 
-		if ( empty( $wp_filesystem ) ) {
-			return false;
-		}
-
-		$json_blob = $wp_filesystem->get_contents( $config_file );
-		$settings  = json_decode( $json_blob, true );
+		$settings = json_decode( $json_blob, true );
 
 		if ( null === $settings ) {
-			throw new \Exception( esc_attr__( 'Unable to decode the configuration file', '00-e20r-utilities' ) );
+			throw new ConfigDataNotFound(
+				esc_attr__( 'Unable to decode the configuration data', '00-e20r-utilities' )
+			);
 		}
 
 		if ( ! is_array( $settings ) ) {
-			throw new \Exception( esc_attr__( 'Invalid configuration file format', '00-e20r-utilities' ) );
+			throw new ConfigDataNotFound(
+				esc_attr__( 'Invalid configuration file format', '00-e20r-utilities' )
+			);
 		}
 
 		$settings = array_map( 'trim', $settings );
 		foreach ( $settings as $key => $value ) {
 			try {
 				$this->set( $key, $value );
-			} catch ( \Exception $e ) {
+			} catch ( InvalidSettingsKey | \Exception $e ) {
 				$this->utils->log( 'Error: ' . esc_attr( $e->getMessage() ) );
-				return false;
+				throw $e;
 			}
 		}
 
@@ -191,7 +212,7 @@ class Defaults {
 	 * @param mixed $value
 	 *
 	 * @return bool
-	 * @throws InvalidSettingKeyException
+	 * @throws InvalidSettingsKey
 	 * @throws Exception
 	 */
 	public function set( $name, $value ) {
@@ -202,7 +223,7 @@ class Defaults {
 
 		try {
 			$this->exists( $name );
-		} catch ( InvalidSettingKeyException $e ) {
+		} catch ( InvalidSettingsKey $e ) {
 			throw $e;
 		}
 
@@ -220,7 +241,11 @@ class Defaults {
 		}
 
 		// Do we need to change the value?
-		$default = $this->get_default( $name );
+		try {
+			$default = $this->get_default( $name );
+		} catch ( InvalidSettingsKey $e ) {
+			throw $e;
+		}
 
 		if ( $this->{$name} !== $default && $this->{$name} !== $value ) {
 			$this->{$name} = $value;
@@ -240,23 +265,25 @@ class Defaults {
 
 	/**
 	 * Return the default value for the parameter
+	 *
 	 * @param string $name
 	 *
 	 * @return string|bool|null
+	 * @throws InvalidSettingsKey
 	 */
-	protected function get_default( string $name ) {
-		$default = array(
-			'version'        => '3.2',
-			'server_url'     => 'https://eighty20results.com',
-			'rest_url'       => '/wp-json/woo-license-server/v1',
-			'ajax_url'       => '/wp-admin/wp-ajax.php',
-			'use_rest'       => true,
-			'debug_logging'  => false,
-			'connection_uri' => null,
-			'store_code'     => null,
-		);
+	public function get_default( string $name ) {
 
-		return $default[ $name ];
+		if ( ! property_exists( $this, $name ) ) {
+			throw new InvalidSettingsKey(
+				sprintf(
+					// translators: %1$s - Supplied parameter name
+					esc_attr__( '%1$s is not a valid default setting', '00-e20r-utilities' ),
+					$name
+				)
+			);
+		}
+
+		return $this->default[ $name ];
 	}
 
 	/**
@@ -265,12 +292,12 @@ class Defaults {
 	 * @param string $name
 	 *
 	 * @return mixed
-	 * @throws InvalidSettingKeyException
+	 * @throws InvalidSettingsKey
 	 */
 	public function get( $name ) {
 		try {
 			$this->exists( $name );
-		} catch ( InvalidSettingKeyException $e ) {
+		} catch ( InvalidSettingsKey $e ) {
 			throw $e;
 		}
 
@@ -282,14 +309,14 @@ class Defaults {
 	 *
 	 * @param string $param_name
 	 *
-	 * @throws InvalidSettingKeyException
+	 * @throws InvalidSettingsKey
 	 */
 	protected function exists( string $param_name ) : bool {
 		$reflection = new \ReflectionClass( self::class );
 		$params     = array_keys( $reflection->getDefaultProperties() );
 
 		if ( ! in_array( $param_name, $params, true ) ) {
-			throw new InvalidSettingKeyException(
+			throw new InvalidSettingsKey(
 				sprintf(
 					// translators: %s - The parameter given by the calling function
 					esc_attr__( 'Error: %s is not a valid parameter', '00-e20r-utilities' ),

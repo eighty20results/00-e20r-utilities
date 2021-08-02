@@ -19,7 +19,7 @@
 *
 */
 
-namespace E20R\Utilities\Licensing\Exceptions;
+namespace E20R\Licensing\Exceptions;
 
 use Exception;
 use Throwable;

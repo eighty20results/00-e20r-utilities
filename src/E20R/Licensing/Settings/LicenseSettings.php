@@ -19,17 +19,17 @@
  *  You can contact us at mailto:info@eighty20results.com
  */
 
-namespace E20R\Utilities\Licensing;
+namespace E20R\Licensing\Settings;
 
-use E20R\Utilities\Licensing\Exceptions\InvalidSettingKeyException;
-use E20R\Utilities\Licensing\Exceptions\MissingServerURL;
-use E20R\Utilities\Licensing\Exceptions\NoLicenseKeyFoundException;
-use E20R\Utilities\Licensing\Settings\Defaults;
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Licensing\Exceptions\MissingServerURL;
+use E20R\Licensing\Exceptions\NoLicenseKeyFound;
+use E20R\Licensing\Settings\Defaults;
 use E20R\Utilities\Utilities;
 
 // Deny direct access to the file
-if ( ! defined( 'ABSPATH' ) ) {
-	die( 'Cannot access file directly' );
+if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
+	wp_die( 'Cannot access file directly' );
 }
 
 if ( ! defined( 'E20R_MISSING_SETTING' ) ) {
@@ -87,7 +87,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		protected bool $ssl_verify = true;
 
 		/**
-		 * New or old version of licensing system
+		 * New or old version of Licensing system
 		 *
 		 * @var bool $new_version
 		 */
@@ -112,7 +112,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @param string|null $product_sku
 		 *
-		 * @throws InvalidSettingKeyException|MissingServerURL
+		 * @throws InvalidSettingsKey|MissingServerURL
 		 */
 		public function __construct( $product_sku = 'e20r_default_license', $plugin_defaults = null ) {
 
@@ -164,7 +164,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		/**
 		 * Configure the plugin defaults (reset them if necessary)
 		 *
-		 * @throws InvalidSettingKeyException
+		 * @throws InvalidSettingsKey
 		 */
 		public function update_plugin_defaults() {
 			try {
@@ -196,7 +196,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			}
 
 			if ( $this->to_debug ) {
-				$this->utils->log( 'Using new or old version of licensing code..? ' . ( $this->new_version ? 'New' : 'Old' ) );
+				$this->utils->log( 'Using new or old version of Licensing code..? ' . ( $this->new_version ? 'New' : 'Old' ) );
 			}
 		}
 		/**
@@ -293,7 +293,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			if ( ! isset( $this->{$key} ) ) {
 				$this->utils->log( "Error: '{$key}' does not exist!" );
-				throw new InvalidSettingKeyException(
+				throw new InvalidSettingsKey(
 					sprintf(
 						// translators: %1$s - Key name for the failed setting update
 						esc_attr__( 'Error: The %1$s property is not valid', '00-e20r-utilities' ),
@@ -320,7 +320,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @param string $sku
 		 *
-		 * @throws NoLicenseKeyFoundException
+		 * @throws NoLicenseKeyFound
+		 * @return string[]
 		 */
 		public function get_settings( $sku = null ) {
 
@@ -338,7 +339,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			}
 
 			if ( ! isset( $this->settings[ $sku ] ) ) {
-				throw new NoLicenseKeyFoundException( $sku );
+				throw new NoLicenseKeyFound( $sku );
 			}
 
 			return $this->settings[ $sku ];
@@ -467,7 +468,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 							if ( Licensing::E20R_LICENSE_DOMAIN_ACTIVE === intval( $result['status'] ) ) {
 
 								if ( $this->to_debug ) {
-									$this->utils->log( 'This license & server combination is already active on the licensing server' );
+									$this->utils->log( 'This license & server combination is already active on the Licensing server' );
 								}
 
 								if ( true === $licensing->deactivate( $product, $result['settings'] ) ) {

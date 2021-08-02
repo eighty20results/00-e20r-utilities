@@ -1,6 +1,6 @@
 <?php
-/**
- * Copyright (c) 2018 - Eighty / 20 Results by Wicked Strong Chicks.
+/*
+ * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -71,28 +71,28 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 			$why_text       = '';
 
 			/**
-			 * @filter e20r-utilities-collected-data-labels Identifying data collected by a plugin/add-on
+			 * @filter e20r-Utilities-collected-data-labels Identifying data collected by a plugin/add-on
 			 */
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			$collected_data = apply_filters( 'e20r-utilities-collected-data-labels', array() );
+			$collected_data = apply_filters( 'e20r-Utilities-collected-data-labels', array() );
 
 			/**
-			 * @filter e20r-utilities-collected-data-plugins Plugin name collecting/saving data above/beyond what WordPress collects
+			 * @filter e20r-Utilities-collected-data-plugins Plugin name collecting/saving data above/beyond what WordPress collects
 			 */
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			$plugins = apply_filters( 'e20r-utilities-collected-data-plugins', array() );
+			$plugins = apply_filters( 'e20r-Utilities-collected-data-plugins', array() );
 
 			/**
-			 * @filter e20r-utilities-why-plugins-collected-data - Plain language explanation of what the collected data will be used for.
+			 * @filter e20r-Utilities-why-plugins-collected-data - Plain language explanation of what the collected data will be used for.
 			 */
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			$why_paragraphs = apply_filters( 'e20r-utilities-why-plugins-collected-data', array() );
+			$why_paragraphs = apply_filters( 'e20r-Utilities-why-plugins-collected-data', array() );
 
 			/**
-			 * @filter e20r-utilities-collected-data-3rdparty-platform-text 3rd party site name(s) wrapped in a href/link to the 3rd party site where data is being transmitted
+			 * @filter e20r-Utilities-collected-data-3rdparty-platform-text 3rd party site name(s) wrapped in a href/link to the 3rd party site where data is being transmitted
 			 */
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			$caveats = apply_filters( 'e20r-utilities-collected-data-3rdparty-platform-text', array() );
+			$caveats = apply_filters( 'e20r-Utilities-collected-data-3rdparty-platform-text', array() );
 
 			if ( empty( $collected_data ) ) {
 				// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
@@ -199,7 +199,7 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 			);
 
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			$erase_status = apply_filters( 'e20r-utilities-erase-personal-data', $default_status, $email_address, $page );
+			$erase_status = apply_filters( 'e20r-Utilities-erase-personal-data', $default_status, $email_address, $page );
 
 			return $erase_status;
 		}
@@ -217,7 +217,7 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 			$user = get_user_by( 'email', $email_address );
 
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			$data_to_export = apply_filters( 'e20r-utilities-export-personal-data', array(), $user, $page );
+			$data_to_export = apply_filters( 'e20r-Utilities-export-personal-data', array(), $user, $page );
 
 			return $data_to_export;
 		}

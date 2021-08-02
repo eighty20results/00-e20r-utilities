@@ -1,6 +1,6 @@
 <?php
 /**
- *  Copyright (c) 2019-2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ *  Copyright (c) 2019 - 2021. - Eighty / 20 Results by Wicked Strong Chicks.
  *  ALL RIGHTS RESERVED
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -19,33 +19,28 @@
  *  You can contact us at mailto:info@eighty20results.com
  */
 
-namespace E20R\Utilities\Licensing;
+namespace E20R\Licensing;
 
-use E20R\Utilities\Cache;
 use E20R\Utilities\Utilities;
+use E20R\Utilities\Cache;
+use E20R\Licensing\Settings\LicenseSettings;
+use E20R\Licensing\Settings\Defaults;
 # For the 10quality license client handling
 use Exception;
 use LicenseKeys\Utility\Api;
 use LicenseKeys\Utility\Client;
 use LicenseKeys\Utility\LicenseRequest;
 
-if ( file_exists( plugin_dir_path( __FILE__ ) . 'inc/autoload.php' ) ) {
-	require_once plugin_dir_path( __FILE__ ) . 'inc/autoload.php';
-}
-
 // Deny direct access to the file
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 	wp_die( 'Cannot access file directly' );
 }
 
-if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
+if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 	/**
 	 * Class LicenseServer
 	 */
 	class LicenseServer {
-
-		const E20R_LICENSE_SECRET_KEY = '5687dc27b50520.33717427';
-		const E20R_LICENSE_STORE_CODE = 'L4EGy6Y91a15ozt';
 
 		/**
 		 * Utilities class (logging, etc)
@@ -162,7 +157,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 					add_query_arg( 'action', $action, E20R_LICENSE_SERVER_URL . '/wp-admin/admin-ajax.php' ),
 					array(
 						'timeout'     => apply_filters( 'e20r-license-remote-server-timeout', 30 ),
-						'sslverify'   => $licensing->get_ssl_verify(),
+						'sslverify'   => $license->get_ssl_verify(),
 						'httpversion' => '1.1',
 						'decompress'  => true,
 						'body'        => $api_params,
@@ -174,7 +169,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 			// Check for error in the response
 			if ( is_wp_error( $response ) ) {
 				// translators: The error message is supplied from the repsponse object
-				$msg = sprintf( esc_attr__( 'E20R Licensing: %s', 'e20r-licensing-utility' ), $response->get_error_message() );
+				$msg = sprintf( esc_attr__( 'E20R Licensing: %s', '00-e20r-utilities' ), $response->get_error_message() );
 				if ( $this->log_debug ) {
 					$this->utils->log( $msg );
 				}
@@ -193,24 +188,24 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 
 				switch ( json_last_error() ) {
 					case JSON_ERROR_DEPTH:
-						$error = esc_attr__( 'Maximum stack depth exceeded', 'e20r-licensing-utility' );
+						$error = esc_attr__( 'Maximum stack depth exceeded', '00-e20r-utilities' );
 						break;
 					case JSON_ERROR_STATE_MISMATCH:
-						$error = esc_attr__( 'Underflow or the modes mismatch', 'e20r-licensing-utility' );
+						$error = esc_attr__( 'Underflow or the modes mismatch', '00-e20r-utilities' );
 						break;
 					case JSON_ERROR_CTRL_CHAR:
-						$error = esc_attr__( 'Unexpected control character found', 'e20r-licensing-utility' );
+						$error = esc_attr__( 'Unexpected control character found', '00-e20r-utilities' );
 						break;
 					case JSON_ERROR_SYNTAX:
-						$error = esc_attr__( 'Syntax error, malformed JSON', 'e20r-licensing-utility' );
+						$error = esc_attr__( 'Syntax error, malformed JSON', '00-e20r-utilities' );
 						break;
 					case JSON_ERROR_UTF8:
-						$error = esc_attr__( 'Malformed UTF-8 characters, possibly incorrectly encoded', 'e20r-licensing-utility' );
+						$error = esc_attr__( 'Malformed UTF-8 characters, possibly incorrectly encoded', '00-e20r-utilities' );
 						break;
 					default:
 						$error = sprintf(
 							// translators: The message is returned from the json parser (if it exists)
-							__( 'No error, supposedly? %s', 'e20r-licensing-utility' ),
+							__( 'No error, supposedly? %s', '00-e20r-utilities' ),
 							// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 							print_r( json_last_error(), true )
 						);
@@ -286,7 +281,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 				// Configure request for license check
 				$api_params = array(
 					'slm_action'  => 'slm_check',
-					'secret_key'  => self::E20R_LICENSE_SECRET_KEY,
+					'secret_key'  => Defaults::E20R_LICENSE_SECRET_KEY,
 					'license_key' => $settings['key'],
 					// 'registered_domain' => $_SERVER['SERVER_NAME'] phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 				);
@@ -351,7 +346,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 		}
 
 		/**
-		 * Using the new licensing plugin for WooCommerce (different format)
+		 * Using the new Licensing plugin for WooCommerce (different format)
 		 *
 		 * @param string $sku
 		 * @param \stdClass $decoded
@@ -370,7 +365,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 			if ( ! isset( $decoded->result ) || 'success' !== $decoded->result ) {
 				$msg = sprintf(
 					// translators: License name is provided by the calling plugin
-					__( 'Sorry, no valid license found for: %s', 'e20r-licensing-utility' ),
+					__( 'Sorry, no valid license found for: %s', '00-e20r-utilities' ),
 					$product_name
 				);
 				if ( $this->log_debug ) {
@@ -413,7 +408,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 
 							$msg = sprintf(
 							// translators: The license name is received from the plugin being licensed
-								__( 'Unable to save the %s license settings', 'e20r-licensing-utility' ),
+								__( 'Unable to save the %s license settings', '00-e20r-utilities' ),
 								$settings['fulltext_name']
 							);
 							if ( $this->log_debug ) {
@@ -443,7 +438,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 			if ( isset( $settings['expires'] ) && $settings['expires'] < time() || ( isset( $settings['active'] ) && 'active' !== $settings['status'] ) ) {
 				$msg = sprintf(
 				// translators: The license name is set by the plugin being licensed
-					__( 'Your %s license has expired!', 'e20r-licensing-utility' ),
+					__( 'Your %s license has expired!', '00-e20r-utilities' ),
 					$settings['fulltext_name']
 				);
 
@@ -480,7 +475,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 
 			if ( empty( $decoded ) ) {
 				// translators: License name is provided by the calling plugin
-				$msg = esc_attr__( 'No data received from license server for %1$s. Please contact the store owner!', 'e20r-utilities-licensing' );
+				$msg = esc_attr__( 'No data received from license server for %1$s. Please contact the store owner!', '00-e20r-utilities' );
 
 				$this->utils->add_message(
 					sprintf( $msg, $settings['fulltext_name'] ),
@@ -495,7 +490,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseServer' ) ) {
 
 			if ( 1 === (int) $decoded->error && ( isset( $decoded->status ) && 500 === (int) $decoded->status ) ) {
 				// translators: License name is provided by the calling plugin and the error from the decoded request
-				$msg = esc_attr__( 'Error validating the %1$s license: %2$s -> %3$s', 'e20r-utilities-licensing' );
+				$msg = esc_attr__( 'Error validating the %1$s license: %2$s -> %3$s', '00-e20r-utilities' );
 
 				foreach ( (array) $decoded->errors as $error_key => $error_info ) {
 

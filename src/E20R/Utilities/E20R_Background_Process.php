@@ -1,10 +1,12 @@
 <?php
-/**
- * Copyright 2017-2018 Eighty / 20 Results by Wicked Strong Chicks, LLC (thomas@eighty20results.com)
+/*
+ * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
+ * ALL RIGHTS RESERVED
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -12,10 +14,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Thanks to @A5hleyRich at https://github.com/A5hleyRich/wp-background-processing
  */
 
 namespace E20R\Utilities;
@@ -31,6 +31,8 @@ namespace E20R\Utilities;
  * @since   1.9.14 - BUG FIX: Minor nits to make code more readable
  * @since   1.9.15 - ENHANCEMENT: Added is_queue_good() method to verify content of queue
  * @since   1.9.15 - ENHANCEMENT: Exit maybe_handle() if queue is invalid (clear the queue too)
+ *
+ *          * @credit Thanks to @A5hleyRich at https://github.com/A5hleyRich/wp-background-processing
  */
 
 if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
@@ -653,7 +655,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 						// translators: The $time_limit values are defined by the calling function
 						__(
 							'Warning: PHP setting \'max_execution_time\' is too low! (Current value is %1$d. Recommend using > %2$d.)',
-							'e20r-utilities'
+							'e20r-Utilities'
 						),
 						$time_limit,
 						$default_time_limit

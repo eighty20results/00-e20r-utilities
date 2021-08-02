@@ -19,12 +19,12 @@
 *
 */
 
-namespace E20R\Utilities\Licensing\Exceptions;
+namespace E20R\Licensing\Exceptions;
 
 use Exception;
 use Throwable;
 
-class InvalidSettingKeyException extends Exception {
+class ConfigDataNotFound extends Exception {
 	public function __construct( string $message = '', int $code = 0, ?Throwable $previous = null ) {
 		parent::__construct( $message, $code, $previous );
 	}

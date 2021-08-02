@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2017-2021 - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2017 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Utilities\Licensing;
+namespace E20R\Licensing;
 
 use E20R\Utilities\Utilities;
 
@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 	wp_die( 'Cannot access file directly' );
 }
 
-if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseClient' ) ) {
+if ( ! class_exists( '\E20R\Licensing\LicenseClient' ) ) {
 
 	/**
 	 * Class LicenseClient
@@ -106,7 +106,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseClient' ) ) {
 					// translators: The licensed plugin will set its own label (name)
 					esc_attr__(
 						'Paste the received \'%1$s\' key here',
-						'e20r-licensing-utility'
+						'00-e20r-utilities'
 					),
 					$plugin_settings['label']
 				),
