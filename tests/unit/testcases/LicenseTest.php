@@ -23,6 +23,7 @@ namespace E20R\test\unit;
 
 use E20R\Licensing\AjaxHandler;
 use E20R\Licensing\Exceptions\InvalidSettingKeyException;
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\LicensePage;
 use E20R\Licensing\LicenseServer;
@@ -75,8 +76,8 @@ class LicenseTest extends Unit {
 		setUp();
 
 		$this->loadStubs();
+		$this->loadDefaultMocks();
 		$this->loadFiles();
-		$this->loadMocks();
 	}
 
 	/**
@@ -129,7 +130,7 @@ class LicenseTest extends Unit {
 	 *
 	 * @throws \Exception
 	 */
-	protected function loadMocks() {
+	protected function loadDefaultMocks() {
 
 		$defaults_mock = $this->makeEmpty(
 			Defaults::class,
@@ -166,6 +167,7 @@ class LicenseTest extends Unit {
 		$this->utils_mock = $this->makeEmpty(
 			Utilities::class,
 			array(
+				'is_local_server' => false,
 				'log' => function( $text ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( $text );
@@ -188,15 +190,7 @@ class LicenseTest extends Unit {
 	 * Load source files for the Unit Test to execute
 	 */
 	public function loadFiles() {
-		require_once __DIR__ . '/../../../src/Licensing/Defaults.php';
-		require_once __DIR__ . '/../../../src/Utilities/Utilities.php';
-		require_once __DIR__ . '/../../../src/Utilities/Message.php';
-
-		require_once __DIR__ . '/../../../src/Licensing/License.php';
-		require_once __DIR__ . '/../../../src/Licensing/LicensePage.php';
-		require_once __DIR__ . '/../../../src/Licensing/LicenseServer.php';
-		require_once __DIR__ . '/../../../src/Licensing/LicenseSettings.php';
-		require_once __DIR__ . '/../../../src/Licensing/AjaxHandler.php';
+		require_once __DIR__ . '/../../../inc/autoload.php';
 	}
 
 	public function testAjax_handler_verify_license() {
@@ -210,7 +204,7 @@ class LicenseTest extends Unit {
 	 * @param string $sku_value
 	 *
 	 * @test
-	 * @covers \E20R\Utilities\Licensing\License::load_hooks
+	 * @covers \E20R\Licensing\License::load_hooks()
 	 */
 	public function test_load_hooks() {
 
@@ -252,6 +246,7 @@ class LicenseTest extends Unit {
 	 * @param $expected
 	 *
 	 * @dataProvider fixture_page_url
+	 * @covers \E20R\Licensing\License::get_license_page_url()
 	 */
 	public function test_get_license_page_url( $stub, $expected ) {
 
@@ -286,7 +281,7 @@ class LicenseTest extends Unit {
 
 		try {
 			$license = new License( $stub, $this->settings_mock, $this->server_mock, $this->page_mock );
-		} catch ( InvalidSettingKeyException | MissingServerURL $e ) {
+		} catch ( InvalidSettingsKey | MissingServerURL $e ) {
 			self::assertFalse( true, 'get_license_page_url() - ' . $e->getMessage() );
 			return false;
 		}
@@ -320,7 +315,7 @@ class LicenseTest extends Unit {
 	 * @param $expected
 	 *
 	 * @dataProvider fixture_page_url_neg
-	 * @test
+	 * @covers \E20R\Licensing\License::get_license_page_url()
 	 */
 	public function test_neg_get_license_page_url( $stub, $expected ) {
 		try {
@@ -373,6 +368,7 @@ class LicenseTest extends Unit {
 	 * @param $expected
 	 *
 	 * @dataProvider fixture_new_version
+	 * @covers \E20R\Licensing\License::is_new_version()
 	 */
 	public function test_is_new_version( $expected ) {
 
@@ -383,7 +379,7 @@ class LicenseTest extends Unit {
 		runkit_constant_remove( 'WP_PLUGIN_DIR' );
 		try {
 			$license = new License( null, $this->settings_mock, $this->server_mock, $this->page_mock, $this->utils_mock );
-		} catch ( InvalidSettingKeyException | MissingServerURL $e ) {
+		} catch ( InvalidSettingsKey | MissingServerURL $e ) {
 			self::assertFalse( true, $e->getMessage() );
 		}
 
@@ -408,7 +404,7 @@ class LicenseTest extends Unit {
 	/**
 	 * Test that the get_instance() function returns the correct class type
 	 *
-	 * @covers \E20R\Utilities\Licensing\License()
+	 * @covers \E20R\Licensing\License()
 	 * @dataProvider fixture_skus
 	 */
 	public function test_get_instance( $test_sku ) {
