@@ -19,7 +19,7 @@
  *
  */
 
-namespace E20R\Test\Unit;
+namespace E20R\Tests\Unit;
 
 use Codeception\Test\Unit;
 use E20R\Utilities\Message;
@@ -36,6 +36,8 @@ class UtilitiesTest extends Unit {
 
 	use MockeryPHPUnitIntegration;
 
+	private $m_messages;
+
 	/**
 	 * The setup function for this Unit Test suite
 	 *
@@ -44,6 +46,8 @@ class UtilitiesTest extends Unit {
 		parent::setUp();
 		Monkey\setUp();
 		$this->loadFiles();
+		$this->loadStubs();
+		$this->loadDefaultMocks();
 	}
 
 	/**
@@ -61,10 +65,35 @@ class UtilitiesTest extends Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../../../inc/autoload.php';
-		require_once __DIR__ . '/../../../src/utilities/class-utilities.php';
-		require_once __DIR__ . '/../../../src/utilities/class-message.php';
+//		require_once __DIR__ . '/../../../src/E20R/Utilities/Utilities.php';
+//		require_once __DIR__ . '/../../../src/E20R/Utilities/Message.php';
 	}
 
+	public function loadStubs() {
+
+		Functions\stubs(
+			array(
+				'plugins_url'         => 'https://localhost/wp-content/plugins/00-e20r-utilities',
+				'plugin_dir_path'     => '/var/www/html/wp-content/plugins/00-e20r-utilities',
+				'get_current_blog_id' => 1,
+			)
+		);
+	}
+	/**
+	 * Define Mocked classes
+	 *
+	 * @throws \Exception
+	 */
+	public function loadDefaultMocks() {
+		$this->m_messages = $this->makeEmpty(
+			Message::class,
+			array(
+				'display'            => false,
+				'clear_notices'      => null,
+				'filter_passthrough' => null,
+			)
+		);
+	}
 	/**
 	 * Test the instantiation of the Utilities class
 	 *
@@ -168,7 +197,7 @@ class UtilitiesTest extends Unit {
 	 * @dataProvider pluginListData
 	 */
 	public function test_plugin_is_active( $plugin_name, $function_name, $is_admin, $expected ) {
-		$utils  = Utilities::get_instance();
+		$utils  = new Utilities( $this->m_messages );
 		$result = null;
 
 		Functions\expect( 'is_admin' )
@@ -206,7 +235,7 @@ class UtilitiesTest extends Unit {
 	 */
 	public function pluginListData() {
 		return array(
-			// $plugin_name, $function_name, $is_admin, $expected
+			// plugin_name, function_name, is_admin, expected
 			array( 'plugin_file/something.php', 'my_function', false, false ),
 			array( '00-e20r-utilities/class-loader.php', null, false, false ),
 			array( '00-e20r-utilities/class-loader.php', null, true, true ),
@@ -219,4 +248,48 @@ class UtilitiesTest extends Unit {
 		);
 	}
 
+	/**
+	 * Test the Utilities::is_license_server() function
+	 *
+	 * @param string $url
+	 * @param string $home_url
+	 * @param string $license_server
+	 * @param bool $expected
+	 *
+	 * @throws \Exception
+	 *
+	 * @dataProvider fixture_is_license_server
+	 */
+	public function test_is_license_server( $url, $home_url, $license_server, $expected ) {
+
+		if ( empty( $url ) ) {
+			Functions\expect( 'home_url' )
+				->atLeast()
+				->once()
+				->andReturn( $home_url );
+		}
+
+		// TODO: Add support for the E20R_LICENSE_SERVER_URL constant
+		// TODO: Can we also mock the Defaults::E20R_LICENSE_SERVER constant
+
+		$utils  = new Utilities( $this->m_messages );
+		$result = $utils::is_license_server( $url );
+
+		self::assertSame( $expected, $result );
+	}
+
+	/**
+	 * Test fixture for test_is_license_server()
+	 *
+	 * @return array[]
+	 */
+	public function fixture_is_license_server() : array {
+		return array(
+			// url, home_url, license_server, expected
+			array( 'https://eighty20results.com', 'https://eighty20results.com', 'eighty20results.com', true ),
+			array( 'https://bitbetter.coach', 'https://eighty20results.com', 'eighty20results.com', false ),
+			array( null, 'https://eighty20results.com', 'eighty20results.com', true ),
+			array( null, 'https://example.com', 'eighty20results.com', false ),
+		);
+	}
 }
