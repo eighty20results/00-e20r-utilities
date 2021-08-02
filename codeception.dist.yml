@@ -26,11 +26,11 @@ coverage:
   show_uncovered: true
   show_only_summary: true
   include:
-    - src/utilities/*.php
-    - src/licensing/*.php
+    - src/E20R/Utilities/*.php
+    - src/E20R/Licensing/*.php
     - ./class-loader.php
   exclude:
-    - src/licensing/compatibility/*.php
+    - src/E20R/Licensing/Licensing.php
     - inc/*
     - languages/*
     - tests/*
