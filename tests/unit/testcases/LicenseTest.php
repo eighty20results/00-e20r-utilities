@@ -19,10 +19,10 @@
  *
  */
 
-namespace E20R\test\unit;
+namespace E20R\Tests\Unit;
 
+use Codeception\AssertThrows;
 use E20R\Licensing\AjaxHandler;
-use E20R\Licensing\Exceptions\InvalidSettingKeyException;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\LicensePage;
@@ -36,11 +36,14 @@ use Codeception\Test\Unit;
 use Brain\Monkey\Functions;
 use Brain\Monkey\Actions;
 use Brain\Monkey\Filters;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use function Brain\Monkey\setUp;
 use function Brain\Monkey\tearDown;
 
 class LicenseTest extends Unit {
 
+	use AssertThrows;
+	use MockeryPHPUnitIntegration;
 	/**
 	 * @var LicenseSettings $settings_mock
 	 */
@@ -168,7 +171,7 @@ class LicenseTest extends Unit {
 			Utilities::class,
 			array(
 				'is_local_server' => false,
-				'log' => function( $text ) {
+				'log'             => function( $text ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( $text );
 					return null;
