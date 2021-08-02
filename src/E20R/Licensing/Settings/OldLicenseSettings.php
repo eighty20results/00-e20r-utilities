@@ -39,6 +39,8 @@
 
 namespace E20R\Licensing\Settings;
 
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Utilities\Utilities;
 
 /**
@@ -54,79 +56,82 @@ class OldLicenseSettings extends LicenseSettings {
 	 *
 	 * @var string $product
 	 */
-	private $product = '';
+	protected $product = '';
 
 	/**
 	 * The license key
 	 *
 	 * @var null|string $key
 	 */
-	private $key = null;
+	protected $key = null;
 
 	/**
 	 * Timestamp (datetime) when the license was updated/renewed
 	 *
 	 * @var null|\DateTime
 	 */
-	private $renewed = null;
+	protected $renewed = null;
 
 	/**
 	 * License server domain name (FQDN)
 	 *
 	 * @var string $domain
 	 */
-	private $domain = '';
+	protected $domain = '';
 
 
 	/**
 	 * @var null|string Date and time of expiration for the license
 	 */
-	private $expires = null;
+	protected $expires = null;
 
 	/**
 	 * Current license status
 	 *
 	 * @var string $status
 	 */
-	private $status = '';
+	protected $status = '';
 
 	/**
 	 * The name of the license owner (first name)
 	 *
 	 * @var string $first_name
 	 */
-	private $first_name = '';
+	protected $first_name = '';
 
 	/**
 	 * The surname of the license owner
 	 *
 	 * @var string $last_name
 	 */
-	private $last_name = '';
+	protected $last_name = '';
 
 	/**
 	 * The email address of the license owner
 	 *
 	 * @var string $email
 	 */
-	private $email = '';
+	protected $email = '';
 
 	/**
 	 * The timestamp for the last update to the license (on the server?)
 	 *
 	 * @var int|string $timestamp
 	 */
-	private $timestamp = 0;
+	protected $timestamp = 0;
 
 
 	/**
 	 * oldLicenseSettings constructor.
 	 *
 	 * @param string|null $product_sku
+	 * @param Defaults|null $plugin_defaults
+	 * @param Utilities|null $utils
+	 *
+	 * @throws InvalidSettingsKey|MissingServerURL
 	 */
-	public function __construct( $product_sku = null ) {
-
-		parent::__construct( $product_sku );
+	public function __construct( $product_sku = 'e20r_default_license', $plugin_defaults = null, $utils = null ) {
+		parent::__construct( $product_sku, $plugin_defaults, $utils );
 
 		global $current_user;
 
@@ -148,13 +153,7 @@ class OldLicenseSettings extends LicenseSettings {
 		// Add the product_sku member variable since we use 'product'
 		$this->excluded[] = 'product_sku';
 
-		$this->domain    = $_SERVER['HTTP_HOST'];
+		$this->domain    = $_SERVER['HTTP_HOST'] ?? 'localhost.local';
 		$this->timestamp = time();
-
-		try {
-			$this->load_settings();
-		} catch ( \Exception $e ) {
-			Utilities::get_instance()->log( "Error: " . $e->getMessage() ); // phpcs:ignore
-		}
 	}
 }
