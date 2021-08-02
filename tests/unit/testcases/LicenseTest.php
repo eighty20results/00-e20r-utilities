@@ -193,17 +193,13 @@ class LicenseTest extends Unit {
 		require_once __DIR__ . '/../../../inc/autoload.php';
 	}
 
-	public function testAjax_handler_verify_license() {
+	public function test_ajax_handler_verify_license() {
 
 	}
 
 	/**
 	 * Tests the load_hooks() function
 	 *
-	 * @param string $key_name
-	 * @param string $sku_value
-	 *
-	 * @test
 	 * @covers \E20R\Licensing\License::load_hooks()
 	 */
 	public function test_load_hooks() {
