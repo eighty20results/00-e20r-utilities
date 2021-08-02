@@ -281,7 +281,7 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 				// Configure request for license check
 				$api_params = array(
 					'slm_action'  => 'slm_check',
-					'secret_key'  => Defaults::E20R_LICENSE_SECRET_KEY,
+					'secret_key'  => Defaults::constant( 'E20R_LICENSE_SECRET_KEY' ),
 					'license_key' => $settings['key'],
 					// 'registered_domain' => $_SERVER['SERVER_NAME'] phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 				);
