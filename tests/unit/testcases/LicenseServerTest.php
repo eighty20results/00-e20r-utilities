@@ -19,12 +19,12 @@
  *
  */
 
-namespace E20R\Test\Unit;
+namespace E20R\test\unit;
 
 use Codeception\Test\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use E20R\Utilities\Licensing\LicenseServer;
+use E20R\Licensing\LicenseServer;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
 class LicenseServerTest extends Unit {
@@ -61,7 +61,7 @@ class LicenseServerTest extends Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../../../inc/autoload.php';
-		require_once __DIR__ . '/../../../src/licensing/class-licenseserver.php';
+		require_once __DIR__ . '/../../../src/E20R/Licensing/LicenseServer.php';
 	}
 
 	public function testGetStatus() {

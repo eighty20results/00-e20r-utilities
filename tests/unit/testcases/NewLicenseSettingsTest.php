@@ -19,9 +19,9 @@
  *
  */
 
-namespace E20R\Test\Unit;
+namespace E20R\Tests\Unit;
 
-use E20R\Utilities\Licensing\NewLicenseSettings;
+use E20R\Licensing\Settings\NewLicenseSettings;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 
@@ -42,7 +42,7 @@ class NewLicenseSettingsTest extends \Codeception\Test\Unit {
 			->andReturn( 'https://localhost:7254/wp-admin/options-general.php' );
 
 		Functions\expect( 'plugin_dir_path' )
-			->andReturn( sprintf( '/var/www/html/wp-content/plugins/00-e20r-utilities/src/licensing' ) );
+			->andReturn( sprintf( '/var/www/html/wp-content/plugins/00-e20r-utilities/src/Licensing' ) );
 
 		Functions\expect( 'get_current_blog_id' )
 			->andReturn( 1 );
@@ -65,7 +65,7 @@ class NewLicenseSettingsTest extends \Codeception\Test\Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../../../inc/autoload.php';
-		require_once __DIR__ . '/../../../src/licensing/class-newlicensesettings.php';
+		require_once __DIR__ . '/../../../src/E20R/Licensing/Settings/NewLicenseSettings.php';
 	}
 
 	/**

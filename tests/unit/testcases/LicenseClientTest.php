@@ -19,12 +19,12 @@
  *
  */
 
-namespace E20R\Test\Unit;
+namespace E20R\test\unit;
 
 use Codeception\Test\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use E20R\Utilities\Licensing\LicenseClient;
+use E20R\Licensing\LicenseClient;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
 
@@ -56,8 +56,7 @@ class LicenseClientTest extends Unit {
 	 * Load source files for the Unit Test to execute
 	 */
 	public function loadFiles() {
-		// require_once __DIR__ . '/../../../class-loader.php';
-		require_once __DIR__ . '/../../../src/licensing/class-licenseclient.php';
+		require_once __DIR__ . '/../../../class-loader.php';
 	}
 
 	public function test_check_licenses() {

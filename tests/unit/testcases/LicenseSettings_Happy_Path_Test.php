@@ -19,15 +19,15 @@
  *
  */
 
-namespace E20R\Test\Unit;
+namespace E20R\Tests\Unit;
 
 use Codeception\AssertThrows;
 use Codeception\Test\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use E20R\Utilities\Cache;
-use E20R\Utilities\Licensing\Exceptions\MissingServerURL;
-use E20R\Utilities\Licensing\LicenseSettings;
+use E20R\Licensing\Exceptions\MissingServerURL;
+use E20R\Licensing\Settings\LicenseSettings;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
@@ -145,15 +145,15 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../../../inc/autoload.php';
-		require_once __DIR__ . '/../../../src/licensing/exceptions/class-invalidsettingkeyexception.php';
-		require_once __DIR__ . '/../../../src/licensing/exceptions/class-configfilenotfound.php';
-		require_once __DIR__ . '/../../../src/licensing/exceptions/class-missingserverurl.php';
-		require_once __DIR__ . '/../../../src/licensing/class-defaults.php';
-		require_once __DIR__ . '/../../../src/licensing/class-licensesettings.php';
-		require_once __DIR__ . '/../../../src/utilities/class-utilities.php';
-		require_once __DIR__ . '/../../../src/utilities/class-cache.php';
-		require_once __DIR__ . '/../../../src/utilities/class-cache-object.php';
-		require_once __DIR__ . '/../../../src/utilities/class-message.php';
+		require_once __DIR__ . '/../../../src/E20R/Licensing/Exceptions/InvalidSettingKey.php';
+		require_once __DIR__ . '/../../../src/E20R/Licensing/Exceptions/ConfigDataNotFound.php';
+		require_once __DIR__ . '/../../../src/E20R/Licensing/Exceptions/MissingServerUrl.php';
+		require_once __DIR__ . '/../../../src/E20R/Licensing/Settings/Defaults.php';
+		require_once __DIR__ . '/../../../src/E20R/Licensing/Settings/LicenseSettings.php';
+		require_once __DIR__ . '/../../../src/E20R/Utilities/Utilities.php';
+		require_once __DIR__ . '/../../../src/E20R/Utilities/Cache.php';
+		require_once __DIR__ . '/../../../src/E20R/Utilities/Cache_Object.php';
+		require_once __DIR__ . '/../../../src/E20R/Utilities/Message.php';
 	}
 
 	/**
@@ -212,7 +212,7 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 		Functions\expect( 'dirname' )
 			->zeroOrMoreTimes()
 			->with( \Mockery::contains( '/.info.json' ) )
-			->andReturn( '/var/www/html/wp-content/plugins/00-e20r-utilities/src/licensing/.info.json' );
+			->andReturn( '/var/www/html/wp-content/plugins/00-e20r-utilities/src/Licensing/.info.json' );
 
 		Functions\when( 'get_transient' )
 			->justReturn( '' );
@@ -328,7 +328,7 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	 */
 	public function fixture_instantiate_class(): array {
 		return array(
-			// SKU, domain, with_debug_logging, licensing version, result array
+			// SKU, domain, with_debug_logging, Licensing version, result array
 			array(
 				'E20R_TEST_LICENSE',
 				'example.net',
