@@ -8,6 +8,8 @@ Requires PHP: 7.3
 Author: Thomas Sjolshagen <thomas@eighty20results.com>
 Author URI: https://eighty20results.com/thomas-sjolshagen/
 License: GPLv2
+Text Domain: 00-e20r-utilities
+Domain Path: languages/
 
  * Copyright (c) 2014 - 2021. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
@@ -70,23 +72,23 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 				return false;
 			}
 
-			$parts  = explode( '\\', $class_name );
-			$c_name = preg_replace( '/_/', '-', $parts[ ( count( $parts ) - 1 ) ] );
-			$c_name = strtolower( $c_name );
+			// $parts  = explode( '\\', $class_name );
+			// $c_name = preg_replace( '/_/', '-', $parts[ ( count( $parts ) - 1 ) ] );
+			// $c_name = strtolower( $c_name );
 
 			if ( function_exists( 'plugin_dir_path' ) ) {
 				$base_path = \plugin_dir_path( __FILE__ );
 				$src_path  = \plugin_dir_path( __FILE__ ) . 'src/';
 			} else {
 				$base_path = __DIR__;
-				$src_path  = __DIR__ . '/src/';
+				$src_path  = __DIR__ . '/src/E20R/';
 			}
 
 			if ( file_exists( $src_path ) ) {
 				$base_path = $src_path;
 			}
 
-			$filename = "class-{$c_name}.php";
+			$filename = "{$class_name}.php";
 
 			try {
 				$iterator = new RecursiveDirectoryIterator(
@@ -97,7 +99,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 					RecursiveDirectoryIterator::FOLLOW_SYMLINKS
 				);
 			} catch ( \Exception $e ) {
-				print 'Error: ' . $e->getMessage(); // phpcs:ignore
+				error_log( 'Error: ' . $e->getMessage() ); // phpcs:ignore
 				return false;
 			}
 
@@ -122,7 +124,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 					}
 				);
 			} catch ( \Exception $e ) {
-				echo 'Autoloader error: ' . $e->getMessage(); // phpcs:ignore
+				error_log( 'Autoloader error: ' . $e->getMessage() ); // phpcs:ignore
 				return false;
 			}
 
