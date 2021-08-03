@@ -126,6 +126,13 @@ class LicenseTest extends Unit {
 
 		Functions\expect( 'get_current_blog_id' )
 			->andReturn( 1 );
+
+		Functions\expect( 'date_i18n' )
+			->andReturn(
+				function( $date_string, $time ) {
+					return date( $date_string, $time ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
+				}
+			);
 	}
 
 	/**
@@ -170,8 +177,8 @@ class LicenseTest extends Unit {
 		$this->utils_mock = $this->makeEmpty(
 			Utilities::class,
 			array(
-				'is_local_server' => false,
-				'log'             => function( $text ) {
+				'is_license_server' => false,
+				'log'               => function( $text ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( $text );
 					return null;
@@ -241,20 +248,19 @@ class LicenseTest extends Unit {
 	/**
 	 * Unit tests for get_license_page_url()
 	 *
-	 * @param $stub
-	 * @param $expected
+	 * @param string $stub
+	 * @param string $expected
 	 *
 	 * @dataProvider fixture_page_url
 	 * @covers \E20R\Licensing\License::get_license_page_url()
 	 */
-	public function test_get_license_page_url( $stub, $expected ) {
+	public function test_get_license_page_url( string $stub, string $expected ) {
 
 		try {
 			Functions\expect( 'esc_url_raw' )
 				->andReturnFirstArg();
 		} catch ( \Exception $e ) {
 			self::assertFalse( true, 'Error: ' . $e->getMessage() );
-			return false;
 		}
 
 		try {
@@ -275,14 +281,12 @@ class LicenseTest extends Unit {
 				);
 		} catch ( \Exception $e ) {
 			self::assertFalse( true, 'Error: ' . $e->getMessage() );
-			return false;
 		}
 
 		try {
-			$license = new License( $stub, $this->settings_mock, $this->server_mock, $this->page_mock );
+			$license = new License( $stub, $this->settings_mock, $this->server_mock, $this->page_mock, $this->utils_mock );
 		} catch ( InvalidSettingsKey | MissingServerURL $e ) {
 			self::assertFalse( true, 'get_license_page_url() - ' . $e->getMessage() );
-			return false;
 		}
 
 		self::assertEquals(
@@ -310,18 +314,18 @@ class LicenseTest extends Unit {
 	/**
 	 * Negative tests for get_license_page_url()
 	 *
-	 * @param $stub
-	 * @param $expected
+	 * @param string $stub
+	 * @param string $expected
 	 *
 	 * @dataProvider fixture_page_url_neg
 	 * @covers \E20R\Licensing\License::get_license_page_url()
 	 */
-	public function test_neg_get_license_page_url( $stub, $expected ) {
+	public function test_neg_get_license_page_url( string $stub, string $expected ) {
 		try {
 			Functions\expect( 'esc_url_raw' )
 				->andReturnFirstArg();
 		} catch ( \Exception $e ) {
-			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
+			self::assertFalse( true, 'Error: ' . $e->getMessage() );
 		}
 
 		try {
@@ -338,15 +342,19 @@ class LicenseTest extends Unit {
 					"https://localhost:7254/wp-admin/options-general.php?page=e20r-Licensing&license_stub={$stub}"
 				);
 		} catch ( \Exception $e ) {
-			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
+			self::assertFalse( true, 'Error: ' . $e->getMessage() );
 		}
 
-		$license = new License( $stub, $this->settings_mock, $this->server_mock, $this->page_mock );
-		self::assertNotEquals(
-			$expected,
-			$license->get_license_page_url( $stub ),
-			sprintf( 'Testing that license server URL contains "%s"', $stub )
-		);
+		try {
+			$license = new License( $stub, $this->settings_mock, $this->server_mock, $this->page_mock, $this->utils_mock );
+			self::assertNotEquals(
+				$expected,
+				$license->get_license_page_url( $stub ),
+				sprintf( 'Testing that license server URL contains "%s"', $stub )
+			);
+		} catch ( \Exception $e ) {
+			self::assertFalse( true, 'Error: ' . $e->getMessage() );
+		}
 	}
 
 	/**
@@ -378,11 +386,10 @@ class LicenseTest extends Unit {
 		runkit_constant_remove( 'WP_PLUGIN_DIR' );
 		try {
 			$license = new License( null, $this->settings_mock, $this->server_mock, $this->page_mock, $this->utils_mock );
+			self::assertEquals( $expected, $license->is_new_version() );
 		} catch ( InvalidSettingsKey | MissingServerURL $e ) {
 			self::assertFalse( true, $e->getMessage() );
 		}
-
-		self::assertEquals( $expected, $license->is_new_version() );
 	}
 
 	/**
@@ -411,27 +418,15 @@ class LicenseTest extends Unit {
 		Filters\expectApplied( 'e20r_licensing_text_domain' )
 			->with( '00-e20r-utilities' );
 
-		$message_mock = $this->getMockBuilder( Message::class )
-			->onlyMethods( array( 'convert_destination' ) )
-			->getMock();
-
-		$message_mock->method( 'convert_destination' )
-			->willReturn( 'backend' );
-
-		$utilities_mock = $this->getMockBuilder( Utilities::class )
-								->onlyMethods( array( 'log', 'is_local_server' ) )
-								->getMock();
-
-		$utilities_mock->method( 'log' )
-				->willReturn( null );
-
-		$utilities_mock->method( 'is_local_server' )
-			->willReturn( true );
-
-		self::assertInstanceOf(
-			'\\E20R\\Utilities\\Licensing\\License',
-			new License( $test_sku, $this->settings_mock, $this->server_mock, $this->page_mock, $this->utils_mock )
-		);
+		try {
+			$license = new License( $test_sku, $this->settings_mock, $this->server_mock, $this->page_mock, $this->utils_mock );
+			self::assertInstanceOf(
+				'\\E20R\\Utilities\\Licensing\\License',
+				$license
+			);
+		} catch ( \Exception $e ) {
+			self::assertFalse( true, $e->getMessage() );
+		}
 	}
 
 	/**
