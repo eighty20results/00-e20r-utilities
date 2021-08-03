@@ -167,7 +167,7 @@ class UtilitiesTest extends Unit {
 	 * @dataProvider fixture_test_dates
 	 */
 	public function test_is_date( $date, $expected ) {
-		$utils  = Utilities::get_instance();
+		$utils  = new Utilities( $this->m_message );
 		$result = $utils->is_valid_date( $date );
 
 		self::assertEquals( $expected, $result );
