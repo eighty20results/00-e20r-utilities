@@ -737,7 +737,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$remote_addr      = isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
 			$req_time         = isset( $_SERVER['REQUEST_TIME'] ) ? $_SERVER['REQUEST_TIME'] : time();
 			$thread_id        = sprintf( '%08x', abs( crc32( $remote_addr . $req_time ) ) );
-			$timestamp        = gmdate( 'H:m:s', strtotime( get_option( 'timezone_string' ) ) );
+			$tz_string        = get_option( 'timezone_string' );
+			error_log( print_r( $tz_string, true ) );
+			$timestamp        = gmdate( 'H:m:s', strtotime( $tz_string ) );
 			$calling_function = $this->who_called_me();
 
 			// Log the message to the custom E20R debug log
