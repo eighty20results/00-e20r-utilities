@@ -65,8 +65,6 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "ProjectRoot\\" : "",
-            "NamespaceInSourceDir\\": "",
             "E20R\\Tests\\": "tests",
             "E20R\\Tests\\Unit\\": "tests/unit/testcases",
             "E20R\\Tests\\WPUnit\\": "tests/wpunit/testcases",
