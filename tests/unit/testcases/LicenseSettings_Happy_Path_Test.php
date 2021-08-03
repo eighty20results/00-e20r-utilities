@@ -145,15 +145,15 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../../../inc/autoload.php';
-		require_once __DIR__ . '/../../../src/E20R/Licensing/Exceptions/InvalidSettingKey.php';
-		require_once __DIR__ . '/../../../src/E20R/Licensing/Exceptions/ConfigDataNotFound.php';
-		require_once __DIR__ . '/../../../src/E20R/Licensing/Exceptions/MissingServerUrl.php';
-		require_once __DIR__ . '/../../../src/E20R/Licensing/Settings/Defaults.php';
-		require_once __DIR__ . '/../../../src/E20R/Licensing/Settings/LicenseSettings.php';
-		require_once __DIR__ . '/../../../src/E20R/Utilities/Utilities.php';
-		require_once __DIR__ . '/../../../src/E20R/Utilities/Cache.php';
-		require_once __DIR__ . '/../../../src/E20R/Utilities/Cache_Object.php';
-		require_once __DIR__ . '/../../../src/E20R/Utilities/Message.php';
+//		require_once __DIR__ . '/../../../src/E20R/Licensing/Exceptions/InvalidSettingsKey.php';
+//		require_once __DIR__ . '/../../../src/E20R/Licensing/Exceptions/ConfigDataNotFound.php';
+//		require_once __DIR__ . '/../../../src/E20R/Licensing/Exceptions/MissingServerUrl.php';
+//		require_once __DIR__ . '/../../../src/E20R/Licensing/Settings/Defaults.php';
+//		require_once __DIR__ . '/../../../src/E20R/Licensing/Settings/LicenseSettings.php';
+//		require_once __DIR__ . '/../../../src/E20R/Utilities/Utilities.php';
+//		require_once __DIR__ . '/../../../src/E20R/Utilities/Cache.php';
+//		require_once __DIR__ . '/../../../src/E20R/Utilities/Cache_Object.php';
+//		require_once __DIR__ . '/../../../src/E20R/Utilities/Message.php';
 	}
 
 	/**
@@ -312,7 +312,7 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 				'store_code' => 'dummy_store_code_2',
 				'server_url' => 'https://eighty20results.com/',
 			),
-			'e20r_no_server_url' => array(
+			'e20r_no_server_url'  => array(
 				'store_code' => 'dummy_store_code_4',
 				'server_url' => null,
 			),
