@@ -34,9 +34,12 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 	 */
 	class Defaults {
 
-		const E20R_LICENSE_SECRET_KEY = '5687dc27b50520.33717427';
-		const E20R_STORE_CONFIG       = '{"store_code":"L4EGy6Y91a15ozt","server_url":"https://eighty20results.com"}';
-		const E20R_LICENSE_SERVER     = 'eighty20results.com';
+		const READ_CONSTANT   = 1;
+		const UPDATE_CONSTANT = 0;
+
+		private static $E20R_LICENSE_SECRET_KEY = '5687dc27b50520.33717427';
+		private static $E20R_STORE_CONFIG       = '{"store_code":"L4EGy6Y91a15ozt","server_url":"https://eighty20results.com"}';
+		private static $E20R_LICENSE_SERVER     = 'eighty20results.com';
 
 		/**
 		 * The version number for this plugin (E20R Licensing module)
@@ -103,14 +106,20 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		/**
 		 * Defaults constructor.
 		 *
-		 * @param bool           $use_rest
-		 * @param Utilities|null $utils
+		 * @param bool              $use_rest
+		 * @param Utilities|null    $utils
+		 * @param string|null|false $json
 		 *
 		 * @throws ConfigDataNotFound
 		 * @throws InvalidSettingsKey
 		 * @throws Exception
 		 */
-		public function __construct( bool $use_rest = true, Utilities $utils = null ) {
+		public function __construct( bool $use_rest = true, Utilities $utils = null, $json = null ) {
+
+			// Set the config for the store (as supplied by the caller)
+			if ( defined( 'PLUGIN_PHPUNIT' ) && true === PLUGIN_PHPUNIT && null !== $json ) {
+				self::constant( 'E20R_STORE_CONFIG', self::UPDATE_CONSTANT, $json );
+			}
 
 			$this->default = array(
 				'version'        => '3.2',
@@ -144,7 +153,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 				$this->debug_logging = E20R_LICENSING_DEBUG;
 			}
 
-			if ( defined( 'E20R_LICENSE_SERVER_URL' ) ) {
+			if ( defined( 'E20R_LICENSE_SERVER_URL' ) && ! empty( E20R_LICENSE_SERVER_URL ) ) {
 				$this->server_url = E20R_LICENSE_SERVER_URL;
 			}
 
@@ -154,15 +163,15 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		/**
 		 * Loads the configuration from the current directory.
 		 *
-		 * @param string|null $json_blob
+		 * @param string|null|bool $json_blob
 		 *
 		 * @throws ConfigDataNotFound
 		 * @throws InvalidSettingsKey
 		 */
-		public function read_config( ?string $json_blob = null ) {
+		public function read_config( $json_blob = null ) {
 
 			if ( empty( $json_blob ) ) {
-				$json_blob = self::E20R_STORE_CONFIG;
+				$json_blob = self::constant( 'E20R_STORE_CONFIG' );
 			}
 
 			if ( empty( $json_blob ) ) {
@@ -207,6 +216,36 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 			}
 
 			$this->connection_uri = sprintf( '%1$s%2$s', $this->server_url, $default_path );
+		}
+
+		/**
+		 * Set/Read the class constant(s)
+		 *
+		 * @param string       $name
+		 * @param int          $operation
+		 * @param mixed   $value
+		 *
+		 * @return bool|mixed
+		 * @throws InvalidSettingsKey
+		 */
+		public static function constant( string $name, int $operation = self::READ_CONSTANT, $value = null ) {
+			if ( ! property_exists( self::class, $name ) ) {
+				throw new InvalidSettingsKey(
+					sprintf(
+					// translators: %1$s - Name of requested constatn
+						esc_attr__( '%1$s is not a valid Defaults() constant!', '00-e20r-utilities' ),
+						$name
+					)
+				);
+			}
+			switch ( $operation ) {
+				case self::READ_CONSTANT:
+					return self::${$name};
+				case self::UPDATE_CONSTANT:
+					self::${$name} = $value;
+					return true;
+			}
+			return false;
 		}
 
 		/**
