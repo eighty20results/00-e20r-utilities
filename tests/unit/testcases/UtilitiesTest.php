@@ -65,8 +65,6 @@ class UtilitiesTest extends Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../../../inc/autoload.php';
-//		require_once __DIR__ . '/../../../src/E20R/Utilities/Utilities.php';
-//		require_once __DIR__ . '/../../../src/E20R/Utilities/Message.php';
 	}
 
 	public function loadStubs() {
@@ -78,6 +76,14 @@ class UtilitiesTest extends Unit {
 				'get_current_blog_id' => 1,
 			)
 		);
+
+		Functions\expect( 'get_option' )
+			->with( Mockery::contains( 'e20r_license_settings' ) )
+			->andReturn( array() );
+
+		Functions\expect( 'get_option' )
+			->with( Mockery::contains( 'timezone_string' ) )
+			->andReturn( 'Europe/Oslo' );
 	}
 	/**
 	 * Define Mocked classes
@@ -120,23 +126,22 @@ class UtilitiesTest extends Unit {
 		Functions\when( 'has_action' )
 			->justReturn( $has_action );
 
-		$utils    = Utilities::get_instance();
-		$messages = new Message();
+		$utils = new Utilities( $this->m_messages );
 
 		if ( $is_admin ) {
 			Filters\has( 'pmpro_save_discount_code', array( $utils, 'clear_delay_cache' ) );
 			Actions\has( 'pmpro_save_membership_level', array( $utils, 'clear_delay_cache' ) );
 			Filters\has( 'http_request_args', array( $utils, 'set_ssl_validation_for_updates' ) );
 
-			if ( ! has_action( 'admin_notices', array( $messages, 'display' ) ) ) {
-				Actions\has( 'admin_notices', array( $messages, 'display' ) );
+			if ( ! has_action( 'admin_notices', array( $this->m_messages, 'display' ) ) ) {
+				Actions\has( 'admin_notices', array( $this->m_messages, 'display' ) );
 			}
 		} else {
 			// Filters should be set/defined if we think we're in the wp-admin backend
-			Filters\has( 'woocommerce_update_cart_action_cart_updated', array( $messages, 'clear_notices' ) );
-			Filters\has( 'pmpro_email_field_type', array( $messages, 'filter_passthrough' ) );
-			Filters\has( 'pmpro_get_membership_levels_for_user', array( Message::class, 'filter_passthrough' ) );
-			Actions\has( 'woocommerce_init', array( $messages, 'display' ) );
+			Filters\has( 'woocommerce_update_cart_action_cart_updated', array( $this->m_messages, 'clear_notices' ) );
+			Filters\has( 'pmpro_email_field_type', array( $this->m_messages, 'filter_passthrough' ) );
+			Filters\has( 'pmpro_get_membership_levels_for_user', array( $this->m_messages, 'filter_passthrough' ) );
+			Actions\has( 'woocommerce_init', array( $this->m_messages, 'display' ) );
 		}
 
 	}
@@ -197,8 +202,9 @@ class UtilitiesTest extends Unit {
 	 * @dataProvider pluginListData
 	 */
 	public function test_plugin_is_active( $plugin_name, $function_name, $is_admin, $expected ) {
-		$utils  = new Utilities( $this->m_messages );
-		$result = null;
+		Functions\expect( 'get_option' )
+			->with( Mockery::contains( 'timezone_string' ) )
+			->andReturn( 'Europe/Oslo' );
 
 		Functions\expect( 'is_admin' )
 			->andReturn( $is_admin );
@@ -212,7 +218,7 @@ class UtilitiesTest extends Unit {
 				->with( Mockery::contains( $plugin_name ) )
 				->andReturn( $expected );
 		} catch ( \Exception $e ) {
-			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
+			self::assertFalse( true, $e->getMessage() );
 		}
 
 		try {
@@ -220,9 +226,10 @@ class UtilitiesTest extends Unit {
 				->with( Mockery::contains( $plugin_name ) )
 				->andReturn( $expected );
 		} catch ( \Exception $e ) {
-			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
+			self::assertFalse( true, $e->getMessage() );
 		}
 
+		$utils  = new Utilities( $this->m_messages );
 		$result = $utils->plugin_is_active( $plugin_name, $function_name );
 
 		self::assertEquals( $expected, $result );
