@@ -37,6 +37,8 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	use MockeryPHPUnitIntegration;
 	use AssertThrows;
 
+	private $m_utils;
+
 	/**
 	 * The setup function for this Unit Test suite
 	 *
@@ -80,9 +82,24 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 		if ( ! defined( 'DAY_IN_SECONDS' ) ) {
 			define( 'DAY_IN_SECONDS', 60 * 60 * 24 );
 		}
+
+		try {
+			$this->m_utils = $this->makeEmpty(
+				Utilities::class,
+				array(
+					'add_message'        => null,
+					'log'                => null,
+					'get_util_cache_key' => 'e20r_pw_utils_0',
+				)
+			);
+		} catch ( \ Exception $exception ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Utilities() mocker: ' . $exception->getMessage() );
+		}
+
 		try {
 			Functions\expect( 'get_option' )
-				->with( \Mockery::contains( 'timezone_string' ) )
+				->with( 'timezone_string' )
 				->zeroOrMoreTimes()
 				->andReturn( 'Europe/Oslo' );
 		} catch ( \Exception $e ) {
@@ -130,7 +147,7 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 		Functions\stubs(
 			array(
 				'plugins_url'         => 'https://localhost:7254/wp-content/plugins/00-e20r-utilities/',
-				'plugin_dir_path'     => '/var/www/html/wp-content/plugins/00-e20r-utilities/',
+				'plugin_dir_path'     => __DIR__ . '/../../../',
 				'get_current_blog_id' => 0,
 				'esc_html__'          => null,
 				'esc_attr__'          => null,
@@ -145,15 +162,6 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../../../inc/autoload.php';
-//		require_once __DIR__ . '/../../../src/E20R/Licensing/Exceptions/InvalidSettingsKey.php';
-//		require_once __DIR__ . '/../../../src/E20R/Licensing/Exceptions/ConfigDataNotFound.php';
-//		require_once __DIR__ . '/../../../src/E20R/Licensing/Exceptions/MissingServerUrl.php';
-//		require_once __DIR__ . '/../../../src/E20R/Licensing/Settings/Defaults.php';
-//		require_once __DIR__ . '/../../../src/E20R/Licensing/Settings/LicenseSettings.php';
-//		require_once __DIR__ . '/../../../src/E20R/Utilities/Utilities.php';
-//		require_once __DIR__ . '/../../../src/E20R/Utilities/Cache.php';
-//		require_once __DIR__ . '/../../../src/E20R/Utilities/Cache_Object.php';
-//		require_once __DIR__ . '/../../../src/E20R/Utilities/Message.php';
 	}
 
 	/**
@@ -168,33 +176,6 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	 * @dataProvider fixture_instantiate_class
 	 */
 	public function test_instantiate_class( $sku, $domain, $with_debug, $version, $expected ) {
-
-		try {
-			$this->makeEmpty( Utilities::class )
-				->method( 'add_message' )
-				->willReturn( null );
-		} catch ( \ Exception $exception ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( 'Utilities::add_message() error: ' . $exception->getMessage() );
-		}
-
-		try {
-			$this->makeEmpty( Utilities::class )
-					->method( 'log' )
-					->willReturn( null );
-		} catch ( \ Exception $exception ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( 'Utilities::log() error: ' . $exception->getMessage() );
-		}
-
-		try {
-			$this->makeEmpty( Utilities::class )
-				->method( 'get_util_cache_key' )
-				->willReturn( 'e20r_pw_utils_0' );
-		} catch ( \ Exception $exception ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( 'Utilities::get_util_cache_key() error: ' . $exception->getMessage() );
-		}
 
 		$message_mock = $this->getMockBuilder( Message::class )
 							->onlyMethods( array( 'convert_destination' ) )
@@ -212,7 +193,7 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 		Functions\expect( 'dirname' )
 			->zeroOrMoreTimes()
 			->with( \Mockery::contains( '/.info.json' ) )
-			->andReturn( '/var/www/html/wp-content/plugins/00-e20r-utilities/src/Licensing/.info.json' );
+			->andReturn( __DIR__ . '/../../../src/E20R/Licensing/.info.json' );
 
 		Functions\when( 'get_transient' )
 			->justReturn( '' );
@@ -262,13 +243,13 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 				MissingServerURL::class,
 				"Error: Haven't configured the Eighty/20 Results server URL, or the URL is malformed. Can be configured in the wp-config.php file.",
 				function() use ( $sku, $mocked_plugin_defaults ) {
-					$settings = new LicenseSettings( $sku, $mocked_plugin_defaults );
+					$settings = new LicenseSettings( $sku, $mocked_plugin_defaults, $this->m_utils );
 				}
 			);
 			return;
 		} else {
 			try {
-				$settings = new LicenseSettings( $sku, $mocked_plugin_defaults );
+				$settings = new LicenseSettings( $sku, $mocked_plugin_defaults, $this->m_utils );
 			} catch ( \Exception $e ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( 'Error: Unable to instantiate the LicenseSettings class: ' . $e->getMessage() );
@@ -312,7 +293,7 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 				'store_code' => 'dummy_store_code_2',
 				'server_url' => 'https://eighty20results.com/',
 			),
-			'e20r_no_server_url'  => array(
+			'e20r_no_server_url'   => array(
 				'store_code' => 'dummy_store_code_4',
 				'server_url' => null,
 			),
