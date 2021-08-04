@@ -489,8 +489,8 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 				'e20r-license-support-account-url',
 				sprintf(
 					'%1$s?redirect_to=%2$s',
-					Defaults::constant( 'E20R_LICENSE_SERVER_URL' ) . '/wp-login.php',
-					Defaults::constant( 'E20R_LICENSE_SERVER_URL' ) . '/account/'
+					$l_settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSE_SERVER_URL' ) . '/wp-login.php',
+					$l_settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSE_SERVER_URL' ) . '/account/'
 				)
 			);
 
