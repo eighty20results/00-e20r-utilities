@@ -149,7 +149,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 
 			if ( empty( $server ) ) {
 				try {
-					$server = new LicenseServer( $this->settings->get( 'new_version' ), $this->settings->get( 'ssl_verify' ) );
+					$server = new LicenseServer( $this->settings );
 				} catch ( \Exception $e ) {
 					$this->utils->log( 'License Server configuration: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
@@ -297,7 +297,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				return false;
 			}
 
-			if ( $this->utils::is_license_server( $this->settings->get( 'plugin_defaults' )->get( 'server_url' ) ) ) {
+			if ( $this->utils->is_license_server( $this->settings->get( 'plugin_defaults' )->get( 'server_url' ) ) ) {
 				$this->utils->log( 'Running on the server issuing licenses. Skipping check (treating as licensed)' );
 
 				return true;
@@ -672,7 +672,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				$api_params = array(
 					'slm_action'        => 'slm_deactivate',
 					'license_key'       => $settings['key'],
-					'secret_key'        => Defaults::constant( 'E20R_LICENSE_SECRET_KEY' ),
+					'secret_key'        => $this->settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSE_SECRET_KEY' ),
 					'registered_domain' => $_SERVER['SERVER_NAME'],
 					'status'            => 'pending',
 				);
