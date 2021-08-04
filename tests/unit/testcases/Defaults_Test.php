@@ -23,17 +23,17 @@ namespace E20R\Tests\Unit;
 
 use Codeception\AssertThrows;
 use Codeception\Test\Unit;
-use Codeception\Stub\Expected;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use E20R\Utilities\Utilities;
+use E20R\Licensing\Settings\Defaults;
+use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Exceptions\ConfigDataNotFound;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
-use E20R\Licensing\Settings\Defaults;
-use E20R\Utilities\Utilities;
 use Exception;
+use Throwable;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-use Throwable;
 
 class Defaults_Test extends Unit {
 
@@ -43,7 +43,7 @@ class Defaults_Test extends Unit {
 	/**
 	 * @var Utilities|null $mock_utils
 	 */
-	private ?Utilities $mock_utils = null;
+	private $mock_utils = null;
 
 	/**
 	 * The setup function for this Unit Test suite
@@ -86,7 +86,6 @@ class Defaults_Test extends Unit {
 		Functions\stubs(
 			array(
 				'plugins_url'         => 'https://localhost:7254/wp-content/plugins/00-e20r-utilities/',
-				'plugin_dir_path'     => '/var/www/html/wp-content/plugins/00-e20r-utilities/',
 				'get_current_blog_id' => 0,
 				'date_i18n'           => function( $date_string, $time ) {
 					return date( $date_string, $time ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
@@ -108,7 +107,7 @@ class Defaults_Test extends Unit {
 		Functions\expect( 'dirname' )
 			->with( Mockery::contains( 'src/E20R/Licensing/Defaults.php' ) )
 			->zeroOrMoreTimes()
-			->andReturn( '/var/www/html/wp-content/plugins/00-e20r-utilities/src/E20R/Licensing/' );
+			->andReturn( '../../../src/E20R/Licensing/' );
 
 		Functions\expect( 'get_filesystem_method' )
 			->zeroOrMoreTimes()
@@ -119,7 +118,7 @@ class Defaults_Test extends Unit {
 			->with( Mockery::contains( 'src/E20R/Licensing/Defaults.php' ) )
 			->andReturn(
 				function() {
-					return '../../../src/E20R/Licensing/';
+					return __DIR__ . '/../../../src/E20R/Licensing/';
 				}
 			);
 
@@ -165,16 +164,6 @@ class Defaults_Test extends Unit {
 	 */
 	public function test_instantiate_class( ?bool $use_rest, ?bool $var_debug, ?string $version, ?string $server_url, ?bool $const_for_debug_logging, ?string $const_server_url, ?bool $use_phpunit_constant, $config, array $expected ) {
 
-		// NOTE: Only trigger this as part of the second to thing (fixture) to execute
-		if ( true === $const_for_debug_logging && ! defined( 'E20R_LICENSING_DEBUG' ) ) {
-			define( 'E20R_LICENSING_DEBUG', $const_for_debug_logging );
-		}
-
-		// NOTE: Only trigger this as part of the last thing (fixture) to execute
-		if ( ! empty( $const_server_url ) && ! defined( 'E20R_LICENSE_SERVER_URL' ) ) {
-			define( 'E20R_LICENSE_SERVER_URL', $const_server_url );
-		}
-
 		// NOTE: Only trigger this as the third last thing (fixture) to execute
 		if ( ! defined( 'PLUGIN_PHPUNIT' ) ) {
 			define( 'PLUGIN_PHPUNIT', true );
@@ -191,6 +180,16 @@ class Defaults_Test extends Unit {
 			return;
 		} else {
 			$settings = new Defaults( $use_rest, $this->mock_utils, $config );
+
+			if ( null !== $const_for_debug_logging ) {
+				$settings::constant( 'E20R_LICENSING_DEBUG', $settings::UPDATE_CONSTANT, $const_for_debug_logging );
+				$settings->lock( 'debug' );
+			}
+
+			if ( null !== $const_server_url ) {
+				$settings::constant( 'E20R_LICENSE_SERVER_URL', $settings::UPDATE_CONSTANT, $const_server_url );
+				$settings->lock( 'server' );
+			}
 		}
 
 		$this->assertDoesNotThrow(
@@ -331,19 +330,19 @@ class Defaults_Test extends Unit {
 			),
 			array( // # 5
 				true,
-				true,
+				true, // var_debug
 				'3.1',
 				'',
-				null, // E20R_LICENSING_DEBUG
+				false, // E20R_LICENSING_DEBUG
 				null, // The E20R_LICENSE_SERVER_URL
 				false,
 				$this->fixture_load_config_json( 1 ),
 				array(
 					'use_rest'       => true,
-					'debug_logging'  => true,
+					'debug_logging'  => false,
 					'version'        => '3.1',
-					'server_url'     => $this->fixture_get_config( 1, 'server_url' ),
-					'connection_uri' => $this->fixture_get_config( 1, 'server_url' ) . '/wp-json/woo-license-server/v1',
+					'server_url'     => '',
+					'connection_uri' => '/wp-json/woo-license-server/v1',
 					'store_code'     => $this->fixture_get_config( 1, 'store_code' ),
 				),
 			),
@@ -360,8 +359,8 @@ class Defaults_Test extends Unit {
 					'use_rest'       => true,
 					'debug_logging'  => true,
 					'version'        => '3.1',
-					'server_url'     => $this->fixture_get_config( 1, 'server_url' ),
-					'connection_uri' => $this->fixture_get_config( 1, 'server_url' ) . '/wp-json/woo-license-server/v1',
+					'server_url'     => null,
+					'connection_uri' => '/wp-json/woo-license-server/v1',
 					'store_code'     => $this->fixture_get_config( 1, 'store_code' ),
 				),
 			),
@@ -388,16 +387,16 @@ class Defaults_Test extends Unit {
 				false, // Should get overridden by the E20R_LICENSING_DEBUG constant
 				'3.1',
 				$this->fixture_get_config( 3, 'server_url' ),
-				true, // E20R_LICENSING_DEBUG
-				null, // $this->fixture_get_config( 3, 'server_url' ), // The E20R_LICENSE_SERVER_URL
+				null, // E20R_LICENSING_DEBUG
+				$this->fixture_get_config( 2, 'server_url' ), // The E20R_LICENSE_SERVER_URL
 				false,
 				$this->fixture_load_config_json( 3 ),
 				array(
 					'use_rest'       => false,
-					'debug_logging'  => true,
+					'debug_logging'  => false,
 					'version'        => '3.1',
-					'server_url'     => $this->fixture_get_config( 3, 'server_url' ),
-					'connection_uri' => $this->fixture_get_config( 3, 'server_url' ) . '/wp-admin/wp-ajax.php',
+					'server_url'     => $this->fixture_get_config( 2, 'server_url' ),
+					'connection_uri' => $this->fixture_get_config( 2, 'server_url' ) . '/wp-admin/wp-ajax.php',
 					'store_code'     => $this->fixture_get_config( 3, 'store_code' ),
 				),
 			),
@@ -442,13 +441,13 @@ class Defaults_Test extends Unit {
 				false, // Should get overridden by the E20R_LICENSING_DEBUG constant
 				null,
 				$this->fixture_get_config( 3, 'server_url' ), // Should get overridden by the E20R_LICENSE_SERVER_URL constant
-				true, // E20R_LICENSING_DEBUG
+				null, // E20R_LICENSING_DEBUG
 				null, // $this->fixture_get_config( 3, 'server_url' ), // The E20R_LICENSE_SERVER_URL
 				true, // Shouldn trigger
 				false, // config file is missing and should raise an exception
 				array(
 					'use_rest'       => false,
-					'debug_logging'  => true,
+					'debug_logging'  => false,
 					'version'        => '3.2',
 					'server_url'     => $this->fixture_get_config( 3, 'server_url' ),
 					'connection_uri' => $this->fixture_get_config( 3, 'server_url' ) . '/wp-admin/wp-ajax.php',
@@ -571,22 +570,29 @@ class Defaults_Test extends Unit {
 	 * @dataProvider fixture_read_constant_defaults
 	 * @covers \E20R\Licensing\Settings\Defaults::constant()
 	 */
-	public function test_constant_read_defaults( string $constant_name, string $expected ) {
-		$defaults = new Defaults( false, $this->mock_utils );
-		$result   = $defaults::constant( $constant_name, Defaults::READ_CONSTANT );
-		self::assertSame( $expected, $result );
+	public function test_constant_read_defaults( string $constant_name, $expected ) {
+		try {
+			$defaults = new Defaults( false, $this->mock_utils );
+			$result   = $defaults::constant( $constant_name, Defaults::READ_CONSTANT );
+			error_log( "Result: {$result} vs ${expected}"); // phpcs:ignore
+			self::assertSame( $expected, $result );
+		} catch ( ConfigDataNotFound | InvalidSettingsKey | Exception $e ) {
+			error_log( $e->getMessage() . " for {$constant_name} " ); // phpcs:ignore
+		}
 	}
 
 	/**
 	 * Fixture for happy path Defaults::constant() testing
 	 * @return \string[][]
 	 */
-	public function fixture_read_constant_defaults() {
+	public function fixture_read_constant_defaults(): array {
 		// constant_name, expected
 		return array(
 			array( 'E20R_STORE_CONFIG', '{"store_code":"L4EGy6Y91a15ozt","server_url":"https://eighty20results.com"}' ),
 			array( 'E20R_LICENSE_SECRET_KEY', '5687dc27b50520.33717427' ),
 			array( 'E20R_LICENSE_SERVER', 'eighty20results.com' ),
+			array( 'E20R_LICENSING_DEBUG', false ),
+			array( 'E20R_LICENSE_SERVER_URL', 'https://eighty20results.com' ),
 		);
 	}
 
@@ -606,7 +612,10 @@ class Defaults_Test extends Unit {
 	 */
 	public function test_constant_update_with_errors( int $operation, string $constant_name, $constant_value, $expected, ?string $raise_exception ) {
 
-		if ( null !== $raise_exception ) {
+		if (
+			null !== $raise_exception ||
+			! in_array( $operation, array( Defaults::READ_CONSTANT, Defaults::UPDATE_CONSTANT ), true )
+		) {
 			$this->assertThrows(
 				$raise_exception,
 				function() use ( $operation, $constant_name, $constant_value, $expected ) {
@@ -635,11 +644,13 @@ class Defaults_Test extends Unit {
 		// operation, constant_name, constant_value, expected, raises_exception
 		return array(
 			array( Defaults::UPDATE_CONSTANT, 'E20R_LICENSE_SECRET_KEY', 'some_secret_key_1', true, null ),
+			array( Defaults::UPDATE_CONSTANT, 'E20R_LICENSING_DEBUG', true, true, null ),
 			array( Defaults::UPDATE_CONSTANT, 'E20R_STORE_CONFIG', '{}', true, null ),
 			array( Defaults::UPDATE_CONSTANT, 'E20R_LICENSE_SERVER', 'example.com', true, null ),
-			array( 10, 'E20R_LICENSE_SERVER', 'example.com', false, null ),
-			array( Defaults::UPDATE_CONSTANT, 'E20R_LICENSE_SERVER_URL', 'https://example.com', false, InvalidSettingsKey::class ),
-			array( Defaults::UPDATE_CONSTANT, 'E20R_LICENSE_DEBUG', true, false, InvalidSettingsKey::class ),
+			array( Defaults::UPDATE_CONSTANT, 'E20R_LICENSE_SERVER_URL', 'https://example.com', true, null ),
+			array( 10, 'E20R_LICENSE_SERVER', 'example.com', false, BadOperation::class ),
+			array( Defaults::UPDATE_CONSTANT, 'E20R_SERVER_URL', 'https://example.com', false, InvalidSettingsKey::class ),
+			array( Defaults::UPDATE_CONSTANT, 'E20R_LICENSE', true, false, InvalidSettingsKey::class ),
 		);
 	}
 }
