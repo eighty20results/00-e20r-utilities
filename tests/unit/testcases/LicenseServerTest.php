@@ -19,7 +19,7 @@
  *
  */
 
-namespace E20R\test\unit;
+namespace E20R\Tests\Unit;
 
 use Codeception\Test\Unit;
 use Brain\Monkey;
