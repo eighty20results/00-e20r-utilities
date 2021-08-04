@@ -79,14 +79,19 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 		/**
 		 * LicenseServer constructor.
 		 *
-		 * @param bool $is_new
-		 * @param bool $use_ssl
+		 * @param LicenseSettings $license_settings
+		 * @param Utilities|null $utils
 		 */
-		public function __construct( bool $is_new = false, bool $use_ssl = false ) {
-			$this->log_debug      = defined( 'E20R_LICENSING_DEBUG' ) && E20R_LICENSING_DEBUG;
-			$this->utils          = Utilities::get_instance();
-			$this->is_new_version = $is_new;
-			$this->use_ssl        = $use_ssl;
+		public function __construct( $license_settings, $utils = null ) {
+			if ( empty( $utils ) ) {
+				$utils = new Utilities();
+			}
+			$this->license_settings = $license_settings;
+			$this->utils            = $utils;
+			$this->log_debug        = $this->license_settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSE_DEBUG' ) &&
+									( defined( 'WP_DEBUG' ) && WP_DEBUG );
+			$this->is_new_version   = $this->license_settings->get( 'new_version' );
+			$this->use_ssl          = $this->license_settings->get( 'ssl_verify' );
 		}
 
 
@@ -100,12 +105,12 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 		public function send( $api_params ) {
 
 			if ( $this->log_debug ) {
-				$this->utils->log( 'Attempting remote connection to ' . Defaults::constant( 'E20R_LICENSE_SERVER_URL' ) );
+				$this->utils->log( 'Attempting remote connection to ' . $this->license_settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSE_SERVER_URL' ) );
 			}
 
 			if ( ! $this->is_new_version ) {
 				$response = wp_remote_post(
-					Defaults::constant( 'E20R_LICENSE_SERVER_URL' ),
+					$this->license_settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSE_SERVER_URL' ),
 					array(
 						// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 						'timeout'     => apply_filters( 'e20r-license-remote-server-timeout', 30 ),
@@ -281,7 +286,7 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 				// Configure request for license check
 				$api_params = array(
 					'slm_action'  => 'slm_check',
-					'secret_key'  => Defaults::constant( 'E20R_LICENSE_SECRET_KEY' ),
+					'secret_key'  => $this->license_settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSE_SECRET_KEY' ),
 					'license_key' => $settings['key'],
 					// 'registered_domain' => $_SERVER['SERVER_NAME'] phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 				);
