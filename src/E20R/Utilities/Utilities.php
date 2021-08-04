@@ -21,6 +21,7 @@ namespace E20R\Utilities;
 
 // Disallow direct access to the class definition
 
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Settings\Defaults;
 use Exception;
 use Puc_v4_Factory;
@@ -88,24 +89,21 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 		/**
 		 * Utilities constructor.
+		 *
+		 * @param null|Message $message
 		 */
-		public function __construct( $messages = null ) {
+		public function __construct( $message = null ) {
 
 			self::$library_url  = function_exists( 'plugins_url' ) ? plugins_url( '', __FILE__ ) : '';
 			self::$library_path = function_exists( 'plugin_dir_path' ) ? plugin_dir_path( __FILE__ ) : __DIR__;
 			$this->plugin_slug  = function_exists( 'apply_filters' ) ? apply_filters( 'e20r_licensing_text_domain', '00-e20r-utilities' ) : '00-e20r-utilities';
 
-			$this->log( 'Plugin Slug: ' . $this->plugin_slug );
-
-			$this->blog_id = function_exists( 'get_current_blog_id' ) ? get_current_blog_id() : 1;
-
-			self::$cache_key = "e20r_pw_utils_{$this->blog_id}";
-
-			if ( empty( $messages ) ) {
-				$messages = new Message();
+			if ( empty( $message ) ) {
+				$message = new Message();
 			}
 
-			$this->log( 'Front or backend???' );
+			$this->blog_id   = function_exists( 'get_current_blog_id' ) ? get_current_blog_id() : 1;
+			self::$cache_key = "e20r_pw_utils_{$this->blog_id}";
 
 			if ( ! function_exists( 'add_action' ) ) {
 				$this->log( 'Error: add_action() is undefined!' );
@@ -131,18 +129,18 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				/** Disable SSL validation for localhost request(s) */
 				add_filter( 'http_request_args', array( $this, 'set_ssl_validation_for_updates' ), 9999, 2 );
 
-				if ( ! has_action( 'admin_notices', array( $messages, 'display' ) ) ) {
+				if ( ! has_action( 'admin_notices', array( $message, 'display' ) ) ) {
 					$this->log( 'Loading message(s) for backend' );
-					add_action( 'admin_notices', array( $messages, 'display' ), 10 );
+					add_action( 'admin_notices', array( $message, 'display' ), 10 );
 				}
 			} else {
 
 				$this->log( 'Loading message(s) for frontend' );
-				add_filter( 'woocommerce_update_cart_action_cart_updated', array( $messages, 'clear_notices' ), 10, 1 );
-				add_action( 'woocommerce_init', array( $messages, 'display' ), 1 );
+				add_filter( 'woocommerce_update_cart_action_cart_updated', array( $message, 'clear_notices' ), 10, 1 );
+				add_action( 'woocommerce_init', array( $message, 'display' ), 1 );
 
-				add_filter( 'pmpro_email_field_type', array( $messages, 'filter_passthrough' ), 1, 1 );
-				add_filter( 'pmpro_get_membership_levels_for_user', array( $messages, 'filter_passthrough' ), 10, 2 );
+				add_filter( 'pmpro_email_field_type', array( $message, 'filter_passthrough' ), 1, 1 );
+				add_filter( 'pmpro_get_membership_levels_for_user', array( $message, 'filter_passthrough' ), 10, 2 );
 			}
 		}
 
@@ -676,7 +674,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 *
 		 * @return false|string
 		 */
-		public function get_debug_name() {
+		private function build_debug_log_file() {
 
 			if ( ! function_exists( 'wp_upload_dir' ) ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
@@ -700,13 +698,16 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$log_directory = sprintf( '%1$s/e20r_debug', $upload_dir_info['basedir'] );
 			$log_name      = sprintf( '%1$s/%2$s', $log_directory, $log_file );
 
+			// @codeCoverageIgnoreStart
 			if ( ! file_exists( $log_directory ) ) {
-				if ( ! mkdir( $log_directory, 0755, true ) ) {
+				if ( ! mkdir( $log_directory, 0750, true ) ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( "Unable to create the E20R Debug logging location: {$log_directory}" );
 					return false;
 				}
 			}
+			// @codeCoverageIgnoreEnd
+
 			return $log_name;
 		}
 
@@ -714,7 +715,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * Print a message to the daily E20R Log file if WP_DEBUG is configured (Does not try to mask email addresses)
 		 *
 		 * @param string $message
-		 * @return bool|null
+		 * @return bool
 		 */
 		public function log( $message ) {
 
@@ -742,9 +743,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$calling_function = $this->who_called_me();
 
 			// Log the message to the custom E20R debug log
-			$log_name = $this->get_debug_name();
+			$log_name = $this->build_debug_log_file();
 
-			if ( ! empty( $log_name ) ) {
+			if ( false !== $log_name ) {
 				// phpcs:ignore
 				// $log_fh = fopen( $log_name, 'a+' );
 				// phpcs:ignore
@@ -760,9 +761,10 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				);
 				// phpcs:ignore
 				// fclose( $log_fh );
+				return true;
 			}
 
-			return true;
+			return $log_name;
 		}
 
 		/**
@@ -1220,7 +1222,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		}
 
 		/**
-		 * Is the specified server is the same as the Licensing server
+		 * Does the supplied URL contain the Licensing Server info?
 		 *
 		 * @param string|null $url - The URL to check the license server name against
 		 *
@@ -1232,10 +1234,18 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				$url = home_url();
 			}
 
-			return (
-				false !== stripos( $url, Defaults::constant( 'E20R_LICENSE_SERVER' ) ) ||
-				( defined( 'E20R_LICENSE_SERVER_URL' ) && false !== stripos( $url, E20R_LICENSE_SERVER_URL ) )
-			);
+			try {
+				return (
+					false !== stripos( $url, Defaults::constant( 'E20R_LICENSE_SERVER' ) ) ||
+					false !== stripos( $url, Defaults::constant( 'E20R_LICENSE_SERVER_URL' ) )
+				);
+				// @codeCoverageIgnoreStart
+			} catch ( InvalidSettingsKey $e ) {
+				$me = self::$instance;
+				$me->log( $e->getMessage() );
+				return false;
+			}
+			// @codeCoverageIgnoreEnd
 		}
 
 		/**
