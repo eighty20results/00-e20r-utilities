@@ -21,6 +21,7 @@
 
 namespace E20R\Licensing\Settings;
 
+use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\ConfigDataNotFound;
 use E20R\Utilities\Message;
@@ -37,88 +38,113 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		const READ_CONSTANT   = 1;
 		const UPDATE_CONSTANT = 0;
 
+		// @codingStandardsIgnoreStart
+		// Ignoring the case as we're using this to fake const values (simplify unit testing, for instance)
 		private static $E20R_LICENSE_SECRET_KEY = '5687dc27b50520.33717427';
 		private static $E20R_STORE_CONFIG       = '{"store_code":"L4EGy6Y91a15ozt","server_url":"https://eighty20results.com"}';
 		private static $E20R_LICENSE_SERVER     = 'eighty20results.com';
+		private static $E20R_LICENSE_SERVER_URL = 'https://eighty20results.com';
+		private static $E20R_LICENSING_DEBUG    = false;
+		// @codingStandardsIgnoreEnd
+
+		/**
+		 * Instance of this class
+		 *
+		 * @var null|Defaults
+		 */
+		protected static $instance = null;
+
+		/**
+		 * Should the E20R_LICENSE_SERVER_URL be locked
+		 * @var bool $license_server_url_locked
+		 */
+		private $license_server_url_locked = false;
 
 		/**
 		 * The version number for this plugin (E20R Licensing module)
 		 * @var string $version
 		 */
-		protected string $version = '3.2';
+		protected $version = '3.2';
 
 		/**
 		 * Default server URL for this plugin
 		 * @var string $server_url
 		 */
-		protected string $server_url = 'https://eighty20results.com';
+		protected $server_url = 'https://eighty20results.com';
 
 		/**
 		 * Rest end-point for the license server plugin
 		 * @var string $rest_url
 		 */
-		protected string $rest_url = '/wp-json/woo-license-server/v1';
+		protected $rest_url = '/wp-json/woo-license-server/v1';
 
 		/**
 		 * AJAX end-point for the license server plugin
 		 * @var string $ajax_url
 		 */
-		protected string $ajax_url = '/wp-admin/wp-ajax.php';
+		protected $ajax_url = '/wp-admin/wp-ajax.php';
 
 		/**
 		 * Whether to use the REST or AJAX API
 		 * @var bool $use_rest
 		 */
-		protected bool $use_rest = true;
+		protected $use_rest = true;
 
 		/**
 		 * Whether to add verbose license operations debug logging to the error_log() destination
 		 * @var bool $debug_logging
 		 */
-		protected bool $debug_logging = false;
+		protected $debug_logging = false;
+
+		/**
+		 * Whether to lock the E20R_LICENSING_DEBUG constant for updates
+		 * @var bool $debug_locked
+		 */
+		private $debug_locked = false;
 
 		/**
 		 * The WooCommerce store code to use
 		 *
 		 * @var string|null
 		 */
-		protected ?string $store_code = null;
+		protected $store_code = null;
 
 		/**
 		 * The connection URI for the license client
 		 * @var string|null $connection_uri
 		 */
-		protected ?string $connection_uri = null;
+		protected $connection_uri = null;
 
 		/**
 		 * Default settings for the plugin
 		 *
 		 * @var array $default
 		 */
-		private array $default = array();
+		private $default = array();
 
 		/**
 		 * The Utilities class instance
 		 * @var Utilities|null $utils
 		 */
-		private ?Utilities $utils = null;
+		private $utils = null;
 
 		/**
 		 * Defaults constructor.
 		 *
 		 * @param bool              $use_rest
-		 * @param Utilities|null    $utils
-		 * @param string|null|false $json
+		 * @param null|Utilities    $utils
+		 * @param null|string       $config_json
+		 * @param null|bool         $ignore_constants
 		 *
 		 * @throws ConfigDataNotFound
 		 * @throws InvalidSettingsKey
 		 * @throws Exception
 		 */
-		public function __construct( bool $use_rest = true, Utilities $utils = null, $json = null ) {
+		public function __construct( bool $use_rest = true, ?Utilities $utils = null, ?string $config_json = null, ?bool $ignore_constants = false ) {
 
 			// Set the config for the store (as supplied by the caller)
-			if ( defined( 'PLUGIN_PHPUNIT' ) && true === PLUGIN_PHPUNIT && null !== $json ) {
-				self::constant( 'E20R_STORE_CONFIG', self::UPDATE_CONSTANT, $json );
+			if ( defined( 'PLUGIN_PHPUNIT' ) && true === PLUGIN_PHPUNIT && null !== $config_json ) {
+				self::constant( 'E20R_STORE_CONFIG', self::UPDATE_CONSTANT, $config_json );
 			}
 
 			$this->default = array(
@@ -149,15 +175,44 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 
 			$this->use_rest = $use_rest;
 
-			if ( defined( 'E20R_LICENSING_DEBUG' ) ) {
-				$this->debug_logging = E20R_LICENSING_DEBUG;
+			// @codeCoverageIgnoreStart
+			// Remove the constant if possible and use the Defaults::constant() approach instead (code coverage not needed)
+			if ( false === $ignore_constants && defined( 'E20R_LICENSING_DEBUG' ) ) {
+				self::constant( 'E20R_LICENSING_DEBUG', self::UPDATE_CONSTANT, E20R_LICENSING_DEBUG );
+				$this->lock( 'debug' ); // Lock for updates since it's set as a constant by the user
+				if ( extension_loaded( 'runkit' ) ) {
+					runkit_constant_remove( 'E20R_LICENSE_SERVER_URL' );
+				}
 			}
 
-			if ( defined( 'E20R_LICENSE_SERVER_URL' ) && ! empty( E20R_LICENSE_SERVER_URL ) ) {
-				$this->server_url = E20R_LICENSE_SERVER_URL;
-			}
+			if ( false === $ignore_constants && defined( 'E20R_LICENSE_SERVER_URL' ) && ! empty( E20R_LICENSE_SERVER_URL ) ) {
+				// Update the server URL and set lock it for others
+				self::constant( 'E20R_LICENSE_SERVER_URL', self::UPDATE_CONSTANT, E20R_LICENSE_SERVER_URL );
+				$this->lock( 'server' ); // Lock for updates since it's set as a constant by the user
 
+				// Attempt to remove the constant (if possible)
+				if ( extension_loaded( 'runkit' ) ) {
+					runkit_constant_remove( 'E20R_LICENSE_SERVER_URL' );
+				}
+			}
+			// @codeCoverageIgnoreEnd
+
+			$this->server_url    = self::constant( 'E20R_LICENSE_SERVER_URL' );
+			$this->debug_logging = self::constant( 'E20R_LICENSING_DEBUG' );
 			$this->build_connection_uri();
+		}
+
+		/**
+		 * Create the connection_uri setting for the plugin
+		 */
+		private function build_connection_uri() {
+			$default_path = $this->rest_url;
+
+			if ( ! $this->use_rest ) {
+				$default_path = $this->ajax_url;
+			}
+
+			$this->connection_uri = sprintf( '%1$s%2$s', $this->server_url, $default_path );
 		}
 
 		/**
@@ -197,7 +252,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 			$settings = array_map( 'trim', $settings );
 			foreach ( $settings as $key => $value ) {
 				try {
-					$status = $this->set( $key, $value );
+					$this->set( $key, $value );
 				} catch ( InvalidSettingsKey | \Exception $e ) {
 					$this->utils->log( 'Error: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
@@ -206,16 +261,35 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		}
 
 		/**
-		 * Create the connection_uri setting for the plugin
+		 * Lock the either the E20R_LICENSE_SERVER_URL or E20R_LICENSING_DEBUG 'constants'
+		 *
+		 * @param string $constant_name
 		 */
-		private function build_connection_uri() {
-			$default_path = $this->rest_url;
-
-			if ( ! $this->use_rest ) {
-				$default_path = $this->ajax_url;
+		public function lock( string $constant_name = 'server' ) {
+			switch ( $constant_name ) {
+				case 'server':
+					$this->license_server_url_locked = true;
+					break;
+				case 'debug':
+					$this->debug_locked = true;
+					break;
 			}
+		}
 
-			$this->connection_uri = sprintf( '%1$s%2$s', $this->server_url, $default_path );
+		/**
+		 * Unlock the either the E20R_LICENSE_SERVER_URL or E20R_LICENSING_DEBUG 'constants'
+		 *
+		 * @param string $constant_name
+		 */
+		public function unlock( string $constant_name = 'server' ) {
+			switch ( $constant_name ) {
+				case 'server':
+					$this->license_server_url_locked = false;
+					break;
+				case 'debug':
+					$this->debug_locked = false;
+					break;
+			}
 		}
 
 		/**
@@ -238,6 +312,17 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 					)
 				);
 			}
+
+			if ( ! in_array( $operation, array( self::READ_CONSTANT, self::UPDATE_CONSTANT ), true ) ) {
+				throw new BadOperation(
+					sprintf(
+						// translators: %d - the operation constant to perform
+						esc_attr__( '%d is an invalid operation', '00-e20r-utilities' ),
+						$operation
+					)
+				);
+			}
+
 			switch ( $operation ) {
 				case self::READ_CONSTANT:
 					return self::${$name};
@@ -258,7 +343,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		 * @throws InvalidSettingsKey
 		 * @throws Exception
 		 */
-		public function set( $name, $value ) {
+		public function set( string $name, $value ) : bool {
 
 			if ( 'server_url' !== $name && ! defined( 'PLUGIN_PHPUNIT' ) || ( defined( 'PLUGIN_PHPUNIT' ) && ! PLUGIN_PHPUNIT ) ) {
 				throw new Exception( esc_attr__( 'Error: Cannot change the default plugin settings', '00-e20r-utilities' ) );
@@ -271,17 +356,21 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 			}
 
 			// Exit if the constant has been set for DEBUG
-			if ( 'debug_logging' === $name && defined( 'E20R_LICENSING_DEBUG' ) && E20R_LICENSING_DEBUG !== $value ) {
-				$this->debug_logging = E20R_LICENSING_DEBUG;
-
+			if ( 'debug_logging' === $name ) {
+				if ( ! $this->debug_locked ) {
+					self::constant( 'E20R_LICENSING_DEBUG', self::UPDATE_CONSTANT, $value );
+				}
+				$this->debug_logging = self::constant( 'E20R_LICENSING_DEBUG' );
 				return true;
 			}
 
-			// Exit if the constant has been set for E20R_LICENSE_SERVER_URL
-			if ( 'server_url' === $name && defined( 'E20R_LICENSE_SERVER_URL' ) && ! empty( E20R_LICENSE_SERVER_URL ) ) {
-				$this->server_url = E20R_LICENSE_SERVER_URL;
+			// Set and exit if the we're looking for the server_url
+			if ( 'server_url' === $name ) {
+				if ( ! $this->license_server_url_locked ) {
+					self::constant( 'E20R_LICENSE_SERVER_URL', self::UPDATE_CONSTANT, $value );
+				}
+				$this->server_url = self::constant( 'E20R_LICENSE_SERVER_URL' );
 				$this->build_connection_uri();
-
 				return true;
 			}
 
