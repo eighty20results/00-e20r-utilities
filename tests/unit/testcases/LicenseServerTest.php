@@ -40,7 +40,7 @@ class LicenseServerTest extends Unit {
 		Monkey\setUp();
 
 		Functions\when( 'plugin_dir_path' )
-			->justReturn( __DIR__ );
+			->justReturn( __DIR__ . '/../../../' );
 
 		$this->loadFiles();
 
