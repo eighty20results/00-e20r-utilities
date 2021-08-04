@@ -112,7 +112,7 @@ class NewLicenseSettings extends LicenseSettings {
 	 *
 	 * @var null|string $product_sku
 	 */
-	protected ?string $product_sku = null;
+	protected $product_sku = null;
 
 	/**
 	 * newLicenseSettings constructor.
