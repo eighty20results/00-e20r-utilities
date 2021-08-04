@@ -62,17 +62,13 @@ class OldLicenseSettingsTest extends \Codeception\Test\Unit {
 			->andReturn( 'https://localhost:7254/wp-admin/options-general.php' );
 
 		Functions\expect( 'plugin_dir_path' )
-			->andReturn( sprintf( '/var/www/html/wp-content/plugins/00-e20r-utilities/src/Licensing' ) );
+			->andReturn( __DIR__ . '/../../../src/E20R/Licensing' );
 
 		Functions\expect( 'get_current_blog_id' )
 			->andReturn( 1 );
 
 		Functions\expect( 'get_option' )
-			->with( \Mockery::contains( 'e20r_license_settings' ) )
-			->andReturn( array() );
-
-		Functions\expect( 'get_option' )
-			->with( \Mockery::contains( 'timezone_string' ) )
+			->with( 'timezone_string' )
 			->andReturn( 'Europe/Oslo' );
 
 		Functions\when( 'esc_attr__' )
@@ -120,11 +116,7 @@ class OldLicenseSettingsTest extends \Codeception\Test\Unit {
 	public function test_instantiate_old_license_settings( $sku, $license_settings, $server_url, $expected ) {
 
 		Functions\expect( 'get_option' )
-			->with( \Mockery::contains( 'timezone_string' ) )
-			->andReturn( 'Europe/Oslo' );
-
-		Functions\expect( 'get_option' )
-			->with( \Mockery::contains( 'e20r_license_settings' ) )
+			->with( 'e20r_license_settings' )
 			->andReturn(
 				function( $key, $default_value ) use ( $license_settings ) {
 					if ( empty( $license_settings ) ) {
