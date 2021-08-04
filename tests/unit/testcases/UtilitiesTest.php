@@ -36,7 +36,7 @@ class UtilitiesTest extends Unit {
 
 	use MockeryPHPUnitIntegration;
 
-	private $m_messages;
+	private $m_message;
 
 	/**
 	 * The setup function for this Unit Test suite
@@ -91,7 +91,7 @@ class UtilitiesTest extends Unit {
 	 * @throws \Exception
 	 */
 	public function loadDefaultMocks() {
-		$this->m_messages = $this->makeEmpty(
+		$this->m_message = $this->makeEmpty(
 			Message::class,
 			array(
 				'display'            => false,
@@ -126,22 +126,22 @@ class UtilitiesTest extends Unit {
 		Functions\when( 'has_action' )
 			->justReturn( $has_action );
 
-		$utils = new Utilities( $this->m_messages );
+		$utils = new Utilities( $this->m_message );
 
 		if ( $is_admin ) {
 			Filters\has( 'pmpro_save_discount_code', array( $utils, 'clear_delay_cache' ) );
 			Actions\has( 'pmpro_save_membership_level', array( $utils, 'clear_delay_cache' ) );
 			Filters\has( 'http_request_args', array( $utils, 'set_ssl_validation_for_updates' ) );
 
-			if ( ! has_action( 'admin_notices', array( $this->m_messages, 'display' ) ) ) {
-				Actions\has( 'admin_notices', array( $this->m_messages, 'display' ) );
+			if ( ! has_action( 'admin_notices', array( $this->m_message, 'display' ) ) ) {
+				Actions\has( 'admin_notices', array( $this->m_message, 'display' ) );
 			}
 		} else {
 			// Filters should be set/defined if we think we're in the wp-admin backend
-			Filters\has( 'woocommerce_update_cart_action_cart_updated', array( $this->m_messages, 'clear_notices' ) );
-			Filters\has( 'pmpro_email_field_type', array( $this->m_messages, 'filter_passthrough' ) );
-			Filters\has( 'pmpro_get_membership_levels_for_user', array( $this->m_messages, 'filter_passthrough' ) );
-			Actions\has( 'woocommerce_init', array( $this->m_messages, 'display' ) );
+			Filters\has( 'woocommerce_update_cart_action_cart_updated', array( $this->m_message, 'clear_notices' ) );
+			Filters\has( 'pmpro_email_field_type', array( $this->m_message, 'filter_passthrough' ) );
+			Filters\has( 'pmpro_get_membership_levels_for_user', array( $this->m_message, 'filter_passthrough' ) );
+			Actions\has( 'woocommerce_init', array( $this->m_message, 'display' ) );
 		}
 
 	}
@@ -229,7 +229,7 @@ class UtilitiesTest extends Unit {
 			self::assertFalse( true, $e->getMessage() );
 		}
 
-		$utils  = new Utilities( $this->m_messages );
+		$utils  = new Utilities( $this->m_message );
 		$result = $utils->plugin_is_active( $plugin_name, $function_name );
 
 		self::assertEquals( $expected, $result );
@@ -279,7 +279,7 @@ class UtilitiesTest extends Unit {
 		// TODO: Add support for the E20R_LICENSE_SERVER_URL constant
 		// TODO: Can we also mock the Defaults::E20R_LICENSE_SERVER constant
 
-		$utils  = new Utilities( $this->m_messages );
+		$utils  = new Utilities( $this->m_message );
 		$result = $utils::is_license_server( $url );
 
 		self::assertSame( $expected, $result );
