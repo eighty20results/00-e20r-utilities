@@ -144,7 +144,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 
 			// Set the config for the store (as supplied by the caller)
 			if ( defined( 'PLUGIN_PHPUNIT' ) && true === PLUGIN_PHPUNIT && null !== $config_json ) {
-				self::constant( 'E20R_STORE_CONFIG', self::UPDATE_CONSTANT, $config_json );
+				$this->constant( 'E20R_STORE_CONFIG', self::UPDATE_CONSTANT, $config_json );
 			}
 
 			$this->default = array(
@@ -178,7 +178,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 			// @codeCoverageIgnoreStart
 			// Remove the constant if possible and use the Defaults::constant() approach instead (code coverage not needed)
 			if ( false === $ignore_constants && defined( 'E20R_LICENSING_DEBUG' ) ) {
-				self::constant( 'E20R_LICENSING_DEBUG', self::UPDATE_CONSTANT, E20R_LICENSING_DEBUG );
+				$this->constant( 'E20R_LICENSING_DEBUG', self::UPDATE_CONSTANT, E20R_LICENSING_DEBUG );
 				$this->lock( 'debug' ); // Lock for updates since it's set as a constant by the user
 				if ( extension_loaded( 'runkit' ) ) {
 					runkit_constant_remove( 'E20R_LICENSE_SERVER_URL' );
@@ -187,7 +187,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 
 			if ( false === $ignore_constants && defined( 'E20R_LICENSE_SERVER_URL' ) && ! empty( E20R_LICENSE_SERVER_URL ) ) {
 				// Update the server URL and set lock it for others
-				self::constant( 'E20R_LICENSE_SERVER_URL', self::UPDATE_CONSTANT, E20R_LICENSE_SERVER_URL );
+				$this->constant( 'E20R_LICENSE_SERVER_URL', self::UPDATE_CONSTANT, E20R_LICENSE_SERVER_URL );
 				$this->lock( 'server' ); // Lock for updates since it's set as a constant by the user
 
 				// Attempt to remove the constant (if possible)
@@ -197,8 +197,8 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 			}
 			// @codeCoverageIgnoreEnd
 
-			$this->server_url    = self::constant( 'E20R_LICENSE_SERVER_URL' );
-			$this->debug_logging = self::constant( 'E20R_LICENSING_DEBUG' );
+			$this->server_url    = $this->constant( 'E20R_LICENSE_SERVER_URL' );
+			$this->debug_logging = $this->constant( 'E20R_LICENSING_DEBUG' );
 			$this->build_connection_uri();
 		}
 
@@ -226,7 +226,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		public function read_config( $json_blob = null ) {
 
 			if ( empty( $json_blob ) ) {
-				$json_blob = self::constant( 'E20R_STORE_CONFIG' );
+				$json_blob = $this->constant( 'E20R_STORE_CONFIG' );
 			}
 
 			if ( empty( $json_blob ) ) {
@@ -302,7 +302,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		 * @return bool|mixed
 		 * @throws InvalidSettingsKey
 		 */
-		public static function constant( string $name, int $operation = self::READ_CONSTANT, $value = null ) {
+		public function constant( string $name, int $operation = self::READ_CONSTANT, $value = null ) {
 			if ( ! property_exists( self::class, $name ) ) {
 				throw new InvalidSettingsKey(
 					sprintf(
@@ -358,18 +358,18 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 			// Exit if the constant has been set for DEBUG
 			if ( 'debug_logging' === $name ) {
 				if ( ! $this->debug_locked ) {
-					self::constant( 'E20R_LICENSING_DEBUG', self::UPDATE_CONSTANT, $value );
+					$this->constant( 'E20R_LICENSING_DEBUG', self::UPDATE_CONSTANT, $value );
 				}
-				$this->debug_logging = self::constant( 'E20R_LICENSING_DEBUG' );
+				$this->debug_logging = $this->constant( 'E20R_LICENSING_DEBUG' );
 				return true;
 			}
 
 			// Set and exit if the we're looking for the server_url
 			if ( 'server_url' === $name ) {
 				if ( ! $this->license_server_url_locked ) {
-					self::constant( 'E20R_LICENSE_SERVER_URL', self::UPDATE_CONSTANT, $value );
+					$this->constant( 'E20R_LICENSE_SERVER_URL', self::UPDATE_CONSTANT, $value );
 				}
-				$this->server_url = self::constant( 'E20R_LICENSE_SERVER_URL' );
+				$this->server_url = $this->constant( 'E20R_LICENSE_SERVER_URL' );
 				$this->build_connection_uri();
 				return true;
 			}
