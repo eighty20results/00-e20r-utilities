@@ -613,17 +613,19 @@ class Defaults_Test extends Unit {
 	 * @covers       \E20R\Licensing\Settings\Defaults::constant()
 	 * @throws Throwable
 	 */
-	public function test_constant_update_with_errors( int $operation, string $constant_name, $constant_value, $expected, ?string $raise_exception ) {
+	public function test_constant_update_with_errors( $operation, $constant_name, $constant_value, $expected, $raise_exception ) {
+
+		$defaults = new Defaults( true, $this->mock_utils );
 
 		if (
 			null !== $raise_exception ||
-			! in_array( $operation, array( Defaults::READ_CONSTANT, Defaults::UPDATE_CONSTANT ), true )
+			! in_array( $operation, array( $defaults::READ_CONSTANT, $defaults::UPDATE_CONSTANT ), true )
 		) {
 			$this->assertThrows(
 				$raise_exception,
-				function() use ( $operation, $constant_name, $constant_value, $expected ) {
-					$defaults = new Defaults();
-					$result   = $defaults->constant( $constant_name, $operation, $constant_value );
+				function() use ( $defaults, $operation, $constant_name, $constant_value, $expected ) {
+					$result = $defaults->constant( $constant_name, $operation, $constant_value );
+					// error_log( "Received (with exception): {$result} -> expected {$expected}");
 					self::assertSame( $expected, $result );
 				}
 			);
@@ -631,8 +633,7 @@ class Defaults_Test extends Unit {
 		}
 
 		try {
-			$defaults = new Defaults();
-			$result   = $defaults::constant( $constant_name, $operation, $constant_value );
+			$result = $defaults->constant( $constant_name, $operation, $constant_value );
 			self::assertSame( $expected, $result );
 		} catch ( InvalidSettingsKey $e ) {
 			self::assertFalse( true, $e->getMessage() );
