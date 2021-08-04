@@ -182,32 +182,35 @@ class Defaults_Test extends Unit {
 			$settings = new Defaults( $use_rest, $this->mock_utils, $config );
 
 			if ( null !== $const_for_debug_logging ) {
-				$settings::constant( 'E20R_LICENSING_DEBUG', $settings::UPDATE_CONSTANT, $const_for_debug_logging );
+				$settings->constant( 'E20R_LICENSING_DEBUG', $settings::UPDATE_CONSTANT, $const_for_debug_logging );
+				$this->mock_utils->log( 'Locking the E20R_LICENSING_DEBUG constant' );
 				$settings->lock( 'debug' );
 			}
 
 			if ( null !== $const_server_url ) {
-				$settings::constant( 'E20R_LICENSE_SERVER_URL', $settings::UPDATE_CONSTANT, $const_server_url );
+				$settings->constant( 'E20R_LICENSE_SERVER_URL', $settings::UPDATE_CONSTANT, $const_server_url );
+				$this->mock_utils->log( 'Locking the E20R_LICENSE_SERVER_URL constant' );
 				$settings->lock( 'server' );
 			}
 		}
 
 		$this->assertDoesNotThrow(
-			Exception::class,
+			InvalidSettingsKey::class,
 			function() use ( $settings, $var_debug ) {
+				$this->mock_utils->log( 'Setting the debug_logging variable to ' . $var_debug );
 				$settings->set( 'debug_logging', $var_debug );
 			}
 		);
 
 		$this->assertDoesNotThrow(
-			Exception::class,
+			InvalidSettingsKey::class,
 			function() use ( $settings, $version ) {
 				$settings->set( 'version', $version );
 			}
 		);
 
 		$this->assertDoesNotThrow(
-			Exception::class,
+			InvalidSettingsKey::class,
 			function() use ( $settings, $server_url ) {
 				$settings->set( 'server_url', $server_url );
 			}
@@ -312,7 +315,7 @@ class Defaults_Test extends Unit {
 			),
 			array( // # 4
 				true,
-				true,
+				true, // var_debug
 				'3.1',
 				$this->fixture_get_config( 2, 'server_url' ),
 				null, // E20R_LICENSING_DEBUG
@@ -517,7 +520,7 @@ class Defaults_Test extends Unit {
 				self::assertFalse( true, $e->getMessage() );
 			}
 		} else {
-			$plugin_defaults::constant( 'E20R_STORE_CONFIG', Defaults::UPDATE_CONSTANT, $json );
+			$plugin_defaults->constant( 'E20R_STORE_CONFIG', Defaults::UPDATE_CONSTANT, $json );
 			$this->assertThrowsWithMessage(
 				ConfigDataNotFound::class,
 				'No configuration data found',
@@ -573,7 +576,7 @@ class Defaults_Test extends Unit {
 	public function test_constant_read_defaults( string $constant_name, $expected ) {
 		try {
 			$defaults = new Defaults( false, $this->mock_utils );
-			$result   = $defaults::constant( $constant_name, Defaults::READ_CONSTANT );
+			$result   = $defaults->constant( $constant_name, Defaults::READ_CONSTANT );
 			error_log( "Result: {$result} vs ${expected}"); // phpcs:ignore
 			self::assertSame( $expected, $result );
 		} catch ( ConfigDataNotFound | InvalidSettingsKey | Exception $e ) {
@@ -619,7 +622,8 @@ class Defaults_Test extends Unit {
 			$this->assertThrows(
 				$raise_exception,
 				function() use ( $operation, $constant_name, $constant_value, $expected ) {
-					$result = Defaults::constant( $constant_name, $operation, $constant_value );
+					$defaults = new Defaults();
+					$result   = $defaults->constant( $constant_name, $operation, $constant_value );
 					self::assertSame( $expected, $result );
 				}
 			);
@@ -627,7 +631,8 @@ class Defaults_Test extends Unit {
 		}
 
 		try {
-			$result = Defaults::constant( $constant_name, $operation, $constant_value );
+			$defaults = new Defaults();
+			$result   = $defaults::constant( $constant_name, $operation, $constant_value );
 			self::assertSame( $expected, $result );
 		} catch ( InvalidSettingsKey $e ) {
 			self::assertFalse( true, $e->getMessage() );
