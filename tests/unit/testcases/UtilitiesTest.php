@@ -21,20 +21,25 @@
 
 namespace E20R\Tests\Unit;
 
+use Codeception\AssertThrows;
 use Codeception\Test\Unit;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-use PHPUnit\Framework\TestCase;
 use Mockery;
 use Brain\Monkey;
 use Brain\Monkey\Filters;
 use Brain\Monkey\Actions;
 use Brain\Monkey\Functions;
 
+if ( ! defined( 'PLUGIN_PHPUNIT' ) ) {
+	define( 'PLUGIN_PHPUNIT', true );
+}
+
 class UtilitiesTest extends Unit {
 
 	use MockeryPHPUnitIntegration;
+	use AssertThrows;
 
 	private $m_message;
 
@@ -43,6 +48,7 @@ class UtilitiesTest extends Unit {
 	 *
 	 */
 	protected function setUp(): void {
+
 		parent::setUp();
 		Monkey\setUp();
 		$this->loadFiles();
@@ -72,18 +78,14 @@ class UtilitiesTest extends Unit {
 		Functions\stubs(
 			array(
 				'plugins_url'         => 'https://localhost/wp-content/plugins/00-e20r-utilities',
-				'plugin_dir_path'     => '/var/www/html/wp-content/plugins/00-e20r-utilities',
+				'plugin_dir_path'     => __DIR__ . '/../../../',
 				'get_current_blog_id' => 1,
+				'date_i18n'           => function( $format, $time ) {
+					return date( $format, $time ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
+				},
 			)
 		);
 
-		Functions\expect( 'get_option' )
-			->with( Mockery::contains( 'e20r_license_settings' ) )
-			->andReturn( array() );
-
-		Functions\expect( 'get_option' )
-			->with( Mockery::contains( 'timezone_string' ) )
-			->andReturn( 'Europe/Oslo' );
 	}
 	/**
 	 * Define Mocked classes
@@ -104,27 +106,52 @@ class UtilitiesTest extends Unit {
 	 * Test the instantiation of the Utilities class
 	 *
 	 * @param bool $is_admin
+	 * @param bool $use_debug_logging
+	 * @param array $wp_upload_dir
+	 * @param bool $file_exists
+	 * @param bool $mkdir
 	 * @param bool $has_action
 	 *
 	 * @dataProvider fixtures_constructor
 	 */
-	public function test_class_is_instantiated( $is_admin, $has_action ) {
+	public function test_class_is_instantiated( $is_admin, $use_debug_logging, $wp_upload_dir, $file_exists, $mkdir, $has_action ) {
 
 		Functions\expect( 'plugins_url' )
 			->andReturn( 'https://localhost:7254/wp-content/plugins/00-e20r-utilities' );
 
 		Functions\expect( 'plugin_dir_path' )
-			->andReturn( '/var/www/html/wp-content/plugins/00-e20r-utilities' );
+			->andReturn( __DIR__ . '/../../../' );
 
 		Functions\expect( 'get_current_blog_id' )
 			->andReturn( 1 );
 
-		$util_mock = $this->getMockBuilder( Utilities::class )->onlyMethods( array( 'is_admin', 'log' ) )->getMock();
-		$util_mock->method( 'is_admin' )->willReturn( $is_admin );
-		$util_mock->method( 'log' )->willReturn( null );
-
 		Functions\when( 'has_action' )
 			->justReturn( $has_action );
+
+		Functions\expect( 'get_option' )
+			->with( 'timezone_string' )
+			->andReturn( 'Europe/Oslo' );
+
+		Functions\expect( 'file_exists' )
+			->zeroOrMoreTimes()
+			->andReturn( $file_exists );
+
+		Functions\expect( 'mkdir' )
+			->zeroOrMoreTimes()
+			->andReturn( $mkdir );
+
+		try {
+			Functions\expect( 'wp_upload_dir' )
+				->zeroOrMoreTimes()
+				->andReturn( $wp_upload_dir );
+		} catch ( \Exception $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'wp_upload_dir() mock error: ' . esc_attr( $e->getMessage() ) );
+		}
+
+		if ( ! defined( 'WP_DEBUG' ) && $use_debug_logging ) {
+			define( 'WP_DEBUG', true );
+		}
 
 		$utils = new Utilities( $this->m_message );
 
@@ -151,13 +178,30 @@ class UtilitiesTest extends Unit {
 	 * @return array
 	 */
 	public function fixtures_constructor() {
+		// is_admin, use_debug_logging, wp_upload_dir, file_exists, mkdir, has_action
 		return array(
-			array( true, true ),
-			array( true, false ),
-			array( false, false ),
-			array( false, true ),
+			array( true, false, $this->get_upload_dir(), true, true, true ),
+			array( true, false, $this->get_upload_dir(), true, true, false ),
+			array( false, true, $this->get_upload_dir(), true, true, false ),
+			array( false, true, null, false, true, true ),
 		);
 	}
+
+	/**
+	 * Returns the WP_UPLOAD_DIR structure
+	 *
+	 * @return array
+	 */
+	private function get_upload_dir() {
+		return array(
+			'path'    => __DIR__ . '/../../_output/2021/08/',
+			'url'     => 'https://localhost:7254/wp-content/uploads/2021/08/',
+			'subdir'  => '2021/08/',
+			'basedir' => __DIR__ . '/../../_output/',
+			'error'   => false,
+		);
+	}
+
 	/**
 	 * Tests the is_valid_date() function
 	 *
@@ -166,7 +210,21 @@ class UtilitiesTest extends Unit {
 	 *
 	 * @dataProvider fixture_test_dates
 	 */
-	public function test_is_date( $date, $expected ) {
+	public function test_is_date( $date, $upload_dir, $expected ) {
+
+		Functions\expect( 'get_option' )
+			->with( 'timezone_string' )
+			->andReturn( 'Europe/Oslo' );
+
+		try {
+			Functions\expect( 'wp_upload_dir' )
+				->zeroOrMoreTimes()
+				->andReturn( $upload_dir );
+		} catch ( \Exception $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'wp_upload_dir() mock error: ' . esc_attr( $e->getMessage() ) );
+		}
+
 		$utils  = new Utilities( $this->m_message );
 		$result = $utils->is_valid_date( $date );
 
@@ -179,35 +237,36 @@ class UtilitiesTest extends Unit {
 	 * @return array[]
 	 */
 	public function fixture_test_dates(): array {
+		$upload_dir = $this->get_upload_dir();
+
 		return array(
-			array( '2021-10-11', true ),
-			array( '10-11-2020', true ),
-			array( '31-12-2020', true ),
-			array( '31-02-2020', true ),
-			array( '30th Feb, 2020', true ),
-			array( '29-Nov-2020', true ),
-			array( '1st Jan, 2020', true ),
-			array( 'nothing', false ),
-			array( null, false ),
-			array( false, false ),
+			array( '2021-10-11', $upload_dir, true ),
+			array( '10-11-2020', $upload_dir, true ),
+			array( '31-12-2020', $upload_dir, true ),
+			array( '31-02-2020', $upload_dir, true ),
+			array( '30th Feb, 2020', $upload_dir, true ),
+			array( '29-Nov-2020', $upload_dir, true ),
+			array( '1st Jan, 2020', $upload_dir, true ),
+			array( 'nothing', $upload_dir, false ),
+			array( null, $upload_dir, false ),
+			array( false, $upload_dir, false ),
 		);
 	}
 	/**
 	 * Test if the specified plugin is considered "active" by WordPress
 	 *
-	 * @param string $plugin_name
-	 * @param string $function_name
-	 * @param bool $expected
+	 * @param string|null $plugin_name
+	 * @param string|null $function_name
+	 * @param bool   $is_admin
+	 * @param bool   $expected
 	 *
 	 * @dataProvider pluginListData
 	 */
-	public function test_plugin_is_active( $plugin_name, $function_name, $is_admin, $expected ) {
-		Functions\expect( 'get_option' )
-			->with( Mockery::contains( 'timezone_string' ) )
-			->andReturn( 'Europe/Oslo' );
+	public function test_plugin_is_active( ?string $plugin_name, ?string $function_name, bool $is_admin, bool $expected ) {
 
 		Functions\expect( 'is_admin' )
 			->andReturn( $is_admin );
+
 		Functions\expect( 'plugins_url' )
 			->andReturn(
 				sprintf( 'https://development.local:7254/wp-content/plugins/' )
@@ -227,6 +286,19 @@ class UtilitiesTest extends Unit {
 				->andReturn( $expected );
 		} catch ( \Exception $e ) {
 			self::assertFalse( true, $e->getMessage() );
+		}
+
+		Functions\expect( 'get_option' )
+			->with( 'timezone_string' )
+			->andReturn( 'Europe/Oslo' );
+
+		try {
+			Functions\expect( 'wp_upload_dir' )
+				->zeroOrMoreTimes()
+				->andReturn( $this->get_upload_dir() );
+		} catch ( \Exception $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'wp_upload_dir() mock error: ' . esc_attr( $e->getMessage() ) );
 		}
 
 		$utils  = new Utilities( $this->m_message );
@@ -276,8 +348,21 @@ class UtilitiesTest extends Unit {
 				->andReturn( $home_url );
 		}
 
+		try {
+			Functions\expect( 'wp_upload_dir' )
+				->zeroOrMoreTimes()
+				->andReturn( $this->get_upload_dir() );
+		} catch ( \Exception $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'wp_upload_dir() mock error: ' . esc_attr( $e->getMessage() ) );
+		}
+
+		Functions\expect( 'get_option' )
+			->with( 'timezone_string' )
+			->andReturn( 'Europe/Oslo' );
+
 		// TODO: Add support for the E20R_LICENSE_SERVER_URL constant
-		// TODO: Can we also mock the Defaults::E20R_LICENSE_SERVER constant
+		// TODO: Can we also mock the Defaults::constant( 'E20R_LICENSE_SERVER' ) constant
 
 		$utils  = new Utilities( $this->m_message );
 		$result = $utils::is_license_server( $url );
