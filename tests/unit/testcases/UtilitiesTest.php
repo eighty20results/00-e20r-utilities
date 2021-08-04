@@ -23,6 +23,7 @@ namespace E20R\Tests\Unit;
 
 use Codeception\AssertThrows;
 use Codeception\Test\Unit;
+use E20R\Licensing\Settings\Defaults;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
@@ -348,6 +349,25 @@ class UtilitiesTest extends Unit {
 				->andReturn( $home_url );
 		}
 
+		$license_server_url = sprintf( 'https://%1$s', $license_server );
+
+		$m_defaults = $this->makeEmpty(
+			Defaults::class,
+			array(
+				'constant' => function( $name, $operation, $value ) use ( $license_server, $license_server_url ) {
+					if ( empty( $operation ) || Defaults::READ_CONSTANT === $operation ) {
+						if ( 'E20R_LICENSE_SERVER_URL' === $name ) {
+							return $license_server_url;
+						}
+
+						if ( 'E20R_LICENSE_SERVER' === $name ) {
+							return $license_server;
+						}
+					}
+				},
+			)
+		);
+
 		try {
 			Functions\expect( 'wp_upload_dir' )
 				->zeroOrMoreTimes()
@@ -361,11 +381,8 @@ class UtilitiesTest extends Unit {
 			->with( 'timezone_string' )
 			->andReturn( 'Europe/Oslo' );
 
-		// TODO: Add support for the E20R_LICENSE_SERVER_URL constant
-		// TODO: Can we also mock the Defaults::constant( 'E20R_LICENSE_SERVER' ) constant
-
-		$utils  = new Utilities( $this->m_message );
-		$result = $utils::is_license_server( $url );
+		$utils  = new Utilities( $this->m_message, );
+		$result = $utils->is_license_server( $url, $m_defaults );
 
 		self::assertSame( $expected, $result );
 	}
@@ -378,10 +395,10 @@ class UtilitiesTest extends Unit {
 	public function fixture_is_license_server() : array {
 		return array(
 			// url, home_url, license_server, expected
-			array( 'https://eighty20results.com', 'https://eighty20results.com', 'eighty20results.com', true ),
-			array( 'https://bitbetter.coach', 'https://eighty20results.com', 'eighty20results.com', false ),
-			array( null, 'https://eighty20results.com', 'eighty20results.com', true ),
-			array( null, 'https://example.com', 'eighty20results.com', false ),
+			array( 'https://eighty20results.com', 'https://eighty20results.com', 'eighty20results.com', true ), // # 0
+			array( 'https://bitbetter.coach', 'https://eighty20results.com', 'eighty20results.com', false ), // # 1
+			array( null, 'https://eighty20results.com', 'eighty20results.com', true ), // # 2
+			array( null, 'https://example.com', 'eighty20results.com', false ), // # 3
 		);
 	}
 }
