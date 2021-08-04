@@ -614,7 +614,7 @@ class Defaults_Test extends Unit {
 	 * @throws Throwable
 	 */
 	public function test_constant_update_with_errors( $operation, $constant_name, $constant_value, $expected, $raise_exception ) {
-
+		// FIXME: Need to figure out why the `make coverage` execution doesn't give the same result as the PHPStorm exectuion does?!?
 		$defaults = new Defaults( true, $this->mock_utils );
 
 		if (
@@ -625,7 +625,6 @@ class Defaults_Test extends Unit {
 				$raise_exception,
 				function() use ( $defaults, $operation, $constant_name, $constant_value, $expected ) {
 					$result = $defaults->constant( $constant_name, $operation, $constant_value );
-					// error_log( "Received (with exception): {$result} -> expected {$expected}");
 					self::assertSame( $expected, $result );
 				}
 			);
