@@ -47,22 +47,22 @@ class LicenseTest extends Unit {
 	/**
 	 * @var LicenseSettings $settings_mock
 	 */
-	private LicenseSettings $settings_mock;
+	private $settings_mock;
 
 	/**
 	 * @var LicenseServer $server_mock
 	 */
-	private LicenseServer $server_mock;
+	private $server_mock;
 
 	/**
 	 * @var LicensePage $page_mock
 	 */
-	private LicensePage $page_mock;
+	private $page_mock;
 
 	/**
 	 * @var Utilities $utils_mock
 	 */
-	private Utilities $utils_mock;
+	private $utils_mock;
 
 	/**
 	 * The setup function for this Unit Test suite
@@ -103,7 +103,7 @@ class LicenseTest extends Unit {
 
 		try {
 			Functions\expect( 'get_option' )
-				->with( \Mockery::contains( 'e20r_license_settings' ) )
+				->with( 'e20r_license_settings' )
 				->andReturnUsing(
 					function() {
 						return 'test';
@@ -115,14 +115,14 @@ class LicenseTest extends Unit {
 
 		try {
 			Functions\expect( 'get_option' )
-				->with( \Mockery::contains( 'home' ) )
+				->with( 'home' )
 				->andReturn( 'https://localhost:7254/' );
 		} catch ( \Exception $e ) {
 			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
 		}
 
 		Functions\expect( 'plugin_dir_path' )
-			->andReturn( '/var/www/html/wp-content/plugins/00-e20r-utilities/' );
+			->andReturn( __DIR__ . '/../../../' );
 
 		Functions\expect( 'get_current_blog_id' )
 			->andReturn( 1 );
@@ -421,7 +421,7 @@ class LicenseTest extends Unit {
 		try {
 			$license = new License( $test_sku, $this->settings_mock, $this->server_mock, $this->page_mock, $this->utils_mock );
 			self::assertInstanceOf(
-				'\\E20R\\Utilities\\Licensing\\License',
+				License::class,
 				$license
 			);
 		} catch ( \Exception $e ) {
