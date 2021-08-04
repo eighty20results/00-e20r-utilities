@@ -258,9 +258,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Load and use L10N based text (if available)
 		 */
-		public function load_textdomain() {
+		public function load_text_domain() {
 
-			$this->log( 'Processing load_textdomain' );
+			$this->log( 'Processing load_text_domain' );
 
 			if ( empty( $this->plugin_slug ) ) {
 				$this->log( 'Error attempting to load translation files!' );
