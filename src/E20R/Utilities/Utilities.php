@@ -738,7 +738,6 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$req_time         = isset( $_SERVER['REQUEST_TIME'] ) ? $_SERVER['REQUEST_TIME'] : time();
 			$thread_id        = sprintf( '%08x', abs( crc32( $remote_addr . $req_time ) ) );
 			$tz_string        = get_option( 'timezone_string' );
-			error_log( print_r( $tz_string, true ) );
 			$timestamp        = gmdate( 'H:m:s', strtotime( $tz_string ) );
 			$calling_function = $this->who_called_me();
 
@@ -1234,7 +1233,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			}
 
 			return (
-				false !== stripos( $url, Defaults::E20R_LICENSE_SERVER ) ||
+				false !== stripos( $url, Defaults::constant( 'E20R_LICENSE_SERVER' ) ) ||
 				( defined( 'E20R_LICENSE_SERVER_URL' ) && false !== stripos( $url, E20R_LICENSE_SERVER_URL ) )
 			);
 		}
