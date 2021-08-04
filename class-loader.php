@@ -72,10 +72,6 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 				return false;
 			}
 
-			// $parts  = explode( '\\', $class_name );
-			// $c_name = preg_replace( '/_/', '-', $parts[ ( count( $parts ) - 1 ) ] );
-			// $c_name = strtolower( $c_name );
-
 			if ( function_exists( 'plugin_dir_path' ) ) {
 				$base_path = \plugin_dir_path( __FILE__ );
 				$src_path  = \plugin_dir_path( __FILE__ ) . 'src/';
@@ -183,6 +179,7 @@ try {
 
 if ( function_exists( '\add_action' ) ) {
 	\add_action( 'plugins_loaded', array( $loader, 'utilities_loaded' ), -1 );
+	\add_action( 'plugins_loaded', array( Utilities::get_instance(), 'load_text_domain' ), -1 );
 }
 
 if ( class_exists( '\E20R\Utilities\Utilities' ) && defined( 'WP_PLUGIN_DIR' ) ) {
