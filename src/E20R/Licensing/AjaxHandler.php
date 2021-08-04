@@ -114,7 +114,7 @@ if ( ! class_exists( 'E20R\Licensing\AjaxHandler' ) ) {
 			$this->settings = $settings;
 
 			if ( empty( $server ) ) {
-				$server = new LicenseServer( $this->settings->get( 'new_version' ), $this->settings->get( 'ssl_verify' ) );
+				$server = new LicenseServer( $this->settings );
 			}
 
 			$this->server = $server;
