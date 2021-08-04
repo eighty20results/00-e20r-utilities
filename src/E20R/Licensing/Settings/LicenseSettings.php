@@ -59,56 +59,56 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		/**
 		 * @var null|Utilities
 		 */
-		protected ?Utilities $utils = null;
+		protected $utils = null;
 
 		/**
 		 * The license key to use
 		 *
 		 * @var null|string $product_sku
 		 */
-		protected ?string $product_sku = null;
+		protected $product_sku = null;
 
 		/**
 		 * The description of the license
 		 *
 		 * @var string $fulltext_name
 		 */
-		protected string $fulltext_name = '';
+		protected $fulltext_name = '';
 
 		/**
 		 * List of excluded class variables (i.e. not settings)
 		 *
 		 * @var array|string[] $excluded
 		 */
-		protected array $excluded = array();
+		protected $excluded = array();
 
 		/**
 		 * Should we verify SSL certificate(s)
 		 *
 		 * @var bool $ssl_verify
 		 */
-		protected bool $ssl_verify = true;
+		protected $ssl_verify = true;
 
 		/**
 		 * New or old version of Licensing system
 		 *
 		 * @var bool $new_version
 		 */
-		protected bool $new_version;
+		protected $new_version;
 
 		/**
 		 * Whether to log Licensing specific (extra) debug information
 		 *
 		 * @var bool $to_debug
 		 */
-		protected bool $to_debug = false;
+		protected $to_debug = false;
 
 		/**
 		 * The default settings for the plugin
 		 *
 		 * @var Defaults|null $plugin_defaults
 		 */
-		protected ?Defaults $plugin_defaults = null;
+		protected $plugin_defaults = null;
 
 		/**
 		 * LicenseSettings constructor.
