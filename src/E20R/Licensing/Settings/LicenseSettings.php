@@ -511,7 +511,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 								$this->utils->log( 'Loading updated settings from server' );
 							}
 
-							$server = new LicenseServer( $this->new_version, $this->ssl_verify );
+							$server = new LicenseServer( $this );
 
 							if ( true === $server->status( $product, $license_settings[ $product ], true ) ) {
 								$result['settings'] = $this->merge( $product, $license_settings[ $product ] );
