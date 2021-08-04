@@ -100,12 +100,12 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 		public function send( $api_params ) {
 
 			if ( $this->log_debug ) {
-				$this->utils->log( 'Attempting remote connection to ' . E20R_LICENSE_SERVER_URL );
+				$this->utils->log( 'Attempting remote connection to ' . Defaults::constant( 'E20R_LICENSE_SERVER_URL' ) );
 			}
 
 			if ( ! $this->is_new_version ) {
 				$response = wp_remote_post(
-					E20R_LICENSE_SERVER_URL,
+					Defaults::constant( 'E20R_LICENSE_SERVER_URL' ),
 					array(
 						// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 						'timeout'     => apply_filters( 'e20r-license-remote-server-timeout', 30 ),

@@ -489,8 +489,8 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 				'e20r-license-support-account-url',
 				sprintf(
 					'%1$s?redirect_to=%2$s',
-					E20R_LICENSE_SERVER_URL . '/wp-login.php',
-					E20R_LICENSE_SERVER_URL . '/account/'
+					Defaults::constant( 'E20R_LICENSE_SERVER_URL' ) . '/wp-login.php',
+					Defaults::constant( 'E20R_LICENSE_SERVER_URL' ) . '/account/'
 				)
 			);
 
@@ -501,7 +501,7 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 			foreach ( $settings as $product_sku => $license ) {
 				try {
 					$licensing = new License( $product_sku );
-				} catch ( Exceptions\InvalidSettingKeyException | Exceptions\MissingServerURL $e ) {
+				} catch ( Exceptions\InvalidSettingsKey | Exceptions\MissingServerURL $e ) {
 					$this->utils->add_message( 'Error: ' . $e->getMessage(), 'error', 'backend' );
 				}
 
