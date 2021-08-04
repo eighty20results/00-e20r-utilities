@@ -1228,7 +1228,11 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 *
 		 * @return bool
 		 */
-		public static function is_license_server( ?string $url = null ): bool {
+		public function is_license_server( ?string $url = null, $defaults = null ): bool {
+
+			if ( null === $defaults ) {
+				$defaults = new Defaults();
+			}
 
 			if ( empty( $url ) ) {
 				$url = home_url();
@@ -1236,8 +1240,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			try {
 				return (
-					false !== stripos( $url, Defaults::constant( 'E20R_LICENSE_SERVER' ) ) ||
-					false !== stripos( $url, Defaults::constant( 'E20R_LICENSE_SERVER_URL' ) )
+					false !== stripos( $url, $defaults->constant( 'E20R_LICENSE_SERVER' ) ) ||
+					false !== stripos( $url, $defaults->constant( 'E20R_LICENSE_SERVER_URL' ) )
 				);
 				// @codeCoverageIgnoreStart
 			} catch ( InvalidSettingsKey $e ) {
@@ -1260,7 +1264,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		public function set_ssl_validation_for_updates( $request_args, $url ) {
 
-			if ( ! self::is_license_server( $url ) ) {
+			if ( ! $this->is_license_server( $url ) ) {
 				return $request_args;
 			}
 
