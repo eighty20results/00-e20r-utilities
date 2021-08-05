@@ -25,6 +25,7 @@ use Codeception\AssertThrows;
 use Codeception\Test\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use E20R\Licensing\Settings\Defaults;
 use E20R\Utilities\Cache;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Settings\LicenseSettings;
@@ -169,26 +170,14 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	 *
 	 * @param string $sku
 	 * @param string $domain
-	 * @param bool $with_debug
+	 * @param bool   $with_debug
 	 * @param string $version
-	 * @param array $expected
+	 * @param array  $expected
 	 *
 	 * @dataProvider fixture_instantiate_class
+	 * @throws \Throwable
 	 */
 	public function test_instantiate_class( $sku, $domain, $with_debug, $version, $expected ) {
-		// FixMe: Can't find the Defaults() class file?!?
-		$message_mock = $this->getMockBuilder( Message::class )
-							->onlyMethods( array( 'convert_destination' ) )
-							->getMock();
-		$message_mock->method( 'convert_destination' )
-						->willReturn( 2000 );
-
-		$cache_mock = $this->getMockBuilder( Cache::class )
-			->onlyMethods( array( 'get' ) )
-			->getMock();
-
-		$cache_mock->method( 'get' )
-			->willReturn( '' );
 
 		Functions\expect( 'dirname' )
 			->zeroOrMoreTimes()
@@ -205,7 +194,7 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 
 		try {
 			$mocked_plugin_defaults = $this->makeEmpty(
-				'\E20R\Utilities\Licensing\Settings\Defaults',
+				Defaults::class,
 				array(
 					'read_config' => true,
 					'set'         => true,
@@ -228,7 +217,7 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 						}
 						return $retval;
 					},
-				),
+				)
 			);
 		} catch ( \Exception $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
