@@ -176,7 +176,7 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	 * @dataProvider fixture_instantiate_class
 	 */
 	public function test_instantiate_class( $sku, $domain, $with_debug, $version, $expected ) {
-
+		// FixMe: Can't find the Defaults() class file?!?
 		$message_mock = $this->getMockBuilder( Message::class )
 							->onlyMethods( array( 'convert_destination' ) )
 							->getMock();

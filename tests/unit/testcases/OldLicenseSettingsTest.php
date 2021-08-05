@@ -161,7 +161,7 @@ class OldLicenseSettingsTest extends \Codeception\Test\Unit {
 	 */
 	public function fixture_license_settings() {
 		return array(
-			// TODO: Add more fixtures for the MewLicenseSettingsTest::test_instantiate_new_license_settings() unit test
+			// TODO: Add more fixtures for the OldLicenseSettingsTest::test_instantiate_old_license_settings() unit test
 			array( 'PRODUCT_1', array(), 'https://eighty20results.co', 'PRODUCT_1' ),
 		);
 	}
