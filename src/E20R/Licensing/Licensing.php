@@ -37,9 +37,11 @@
 
 namespace E20R\Licensing;
 
-use E20R\Licensing\Exceptions\InvalidSettingKeyException;
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Exceptions\NoLicenseKeyFound;
+use E20R\Licensing\Settings\LicenseSettings;
+use E20R\Licensing\License;
 use E20R\Utilities\Utilities;
 
 if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
@@ -62,7 +64,16 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 		 */
 		public static function is_active( string $product_sku, array $settings, bool $is_active ): bool {
 
-			$new_settings = new LicenseSettings( $product_sku );
+			try {
+				$new_settings = new LicenseSettings( $product_sku );
+			} catch ( InvalidSettingsKey | MissingServerURL $e ) {
+				Utilities::get_instance()->add_message(
+					$e->getMessage(),
+					'error',
+					'backend'
+				);
+				return false;
+			}
 			$new_settings->merge( $product_sku, $settings );
 
 			$license = new License( $product_sku, $new_settings );
@@ -76,12 +87,11 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 		 * @param string $product_sku
 		 *
 		 * @return bool|int
-		 * @throws Exceptions\InvalidSettingKeyException
+		 * @throws Exceptions\InvalidSettingsKey
 		 * @throws Exceptions\MissingServerURL
 		 */
 		public static function is_expiring( $product_sku ) {
 			$license = new License( $product_sku );
-
 			return $license->is_expiring( $product_sku );
 		}
 
@@ -92,7 +102,7 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 		 * @param false       $force
 		 *
 		 * @return bool
-		 * @throws Exceptions\InvalidSettingKeyException
+		 * @throws Exceptions\InvalidSettingsKey
 		 * @throws Exceptions\MissingServerURL
 		 */
 		public static function is_licensed( ?string $product_sku = null, bool $force = false ): bool {
@@ -107,7 +117,7 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 		 * @param string $product_sku
 		 *
 		 * @return array
-		 * @throws Exceptions\InvalidSettingKeyException
+		 * @throws Exceptions\InvalidSettingsKey
 		 * @throws Exceptions\MissingServerURL
 		 */
 		public static function activate( $product_sku ): array {
@@ -116,7 +126,6 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 			return $license->activate( $product_sku );
 		}
 
-
 		/**
 		 * Compatibility function replacing the old Licensing::deactivate()
 		 *
@@ -124,9 +133,7 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 		 * @param null|array $settings
 		 *
 		 * @return bool
-		 * @throws Exceptions\InvalidSettingKeyException
-		 * @throws Exceptions\MissingServerURL
-		 * @throws Exceptions\NoLicenseKeyFound
+		 * @throws NoLicenseKeyFound
 		 */
 		public static function deactivate( $product_sku, $settings = null ): bool {
 
@@ -136,21 +143,32 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 				if ( ! empty( $settings ) ) {
 					$new_settings = $new_settings->merge( $product_sku, $settings );
 				}
-			} catch ( InvalidSettingKeyException $ike ) {
-				Utilities::get_instance()->add_message( 'Error: ' . $ike->getMessage(), 'error', 'backend' );
-
+			} catch ( InvalidSettingsKey $ike ) {
+				Utilities::get_instance()->add_message(
+					$ike->getMessage(),
+					'error',
+					'backend'
+				);
 				return false;
 			} catch ( MissingServerURL $se ) {
-				Utilities::get_instance()->add_message( 'Error: ' . $se->getMessage(), 'error', 'backend' );
-
-				return false;
-			} catch ( NoLicenseKeyFound $lke ) {
-				Utilities::get_instance()->add_message( 'Error: ' . $lke->getMessage(), 'error', 'backend' );
-
+				Utilities::get_instance()->add_message(
+					$se->getMessage(),
+					'error',
+					'backend'
+				);
 				return false;
 			}
 
-			$license = new License( $product_sku, $new_settings );
+			try {
+				$license = new License( $product_sku, $new_settings );
+			} catch ( Exceptions\InvalidSettingsKey | MissingServerURL $e ) {
+				Utilities::get_instance()->add_message(
+					$e->getMessage(),
+					'error',
+					'backend'
+				);
+				return false;
+			}
 
 			return $license->deactivate( $product_sku, $new_settings->get_settings( $product_sku ) );
 		}
