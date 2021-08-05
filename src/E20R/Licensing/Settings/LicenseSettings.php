@@ -146,7 +146,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				'instance',
 				'page',
 				'to_debug',
-// 				'plugin_defaults',
+ 				// 'plugin_defaults',
 			);
 
 			$server_url = $this->plugin_defaults->get( 'server_url' );
@@ -232,7 +232,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			$defaults           = $this->defaults();
 			$this->all_settings = get_option( 'e20r_license_settings', $defaults );
-			// $this->settings     = isset( $this->all_settings[ $product_sku ] ) ? $this->settings[ $product_sku ] : $defaults;
 
 			// $product_sku  = strtolower( $product_sku ); phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 			$settings = get_option( 'e20r_license_settings', $defaults );
