@@ -146,7 +146,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				'instance',
 				'page',
 				'to_debug',
- 				// 'plugin_defaults',
+				// 'plugin_defaults',
 			);
 
 			$server_url = $this->plugin_defaults->get( 'server_url' );
