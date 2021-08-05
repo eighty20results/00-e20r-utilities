@@ -60,3 +60,4 @@ fabric.properties
 .DS_Store
 
 /docker.hub.key
+/tests/docker/docker.hub.key
