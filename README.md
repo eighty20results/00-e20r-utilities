@@ -1,6 +1,6 @@
 ### Eighty/20 Results Utilities Module
 `Contributors: eighty20results` <br />
-`Tags: e20r` <br />-utilities, module, licensing, tools
+`Tags: utility functions, module, licensing tools` <br/>
 `Requires at least: 5.0` <br />
 `Tested up to: 5.7.2` <br />
 `Stable tag: 2.0.6` <br />
