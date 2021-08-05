@@ -17,13 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Test\Functional;
+namespace E20R\Tests\Functional;
 
-use E20R\Utilities\Licensing\Exceptions\InvalidSettingKeyException;
-use E20R\Utilities\Licensing\Exceptions\MissingServerURL;
-use E20R\Utilities\Licensing\License;
-use E20R\Utilities\Licensing\LicenseSettings;
-use E20R\Utilities\Licensing\Settings\Defaults;
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Licensing\Exceptions\MissingServerURL;
+use E20R\Licensing\License;
+use E20R\Licensing\Settings\LicenseSettings;
+use E20R\Licensing\Settings\Defaults;
 
 class LicenseCest {
 
@@ -63,17 +63,17 @@ class LicenseCest {
 	public function test_get_ssl_verify( string $sku, LicenseSettings $settings, bool $expected ) {
 		try {
 			$license = new License( $sku, $settings );
+			assertSame( $expected, $license->get_ssl_verify() );
 		} catch ( \Exception $e ) {
 			assertFalse( true, $e->getMessage() );
 		}
-
-		assertSame( $expected, $license->get_ssl_verify() );
 	}
 
 	/**
 	 * Generate fixture for the get_ssl_verify() tests
 	 *
 	 * @return array
+	 * @throws \Exception
 	 */
 	public function fixture_ssl_verify() {
 
@@ -85,28 +85,23 @@ class LicenseCest {
 
 		foreach ( $possible_values as $ssl_value ) {
 			try {
-				$settings = new LicenseSettings( 'e20r_default_license' );
+				$defaults = new Defaults();
+				$settings = new LicenseSettings( 'e20r_default_license', $defaults );
 				$settings->set( 'ssl_verify', $ssl_value );
-			} catch ( InvalidSettingKeyException | MissingServerURL $e ) {
+				$fixture_values[] = array( 'e20r_default_license', $settings, $ssl_value );
+			} catch ( InvalidSettingsKey | MissingServerURL $e ) {
 				assertFalse( true, $e->getMessage() );
 			}
-
-			$fixture_values[] = array( 'e20r_default_license', $settings, $ssl_value );
 		}
 
 		return $fixture_values;
 	}
 
-	public function testGet_ssl_verify( FunctionalTester $I ) {
-
-
-	}
-
-	public function testDeactivate( FunctionalTester $I ) {
+	public function test_deactivate( FunctionalTester $I ) {
 
 	}
 
-	public function testRegister( FunctionalTester $I ) {
+	public function test_register( FunctionalTester $I ) {
 
 	}
 }
