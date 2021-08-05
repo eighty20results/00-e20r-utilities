@@ -35,6 +35,11 @@ WPUNIT_TEST_CASE_PATH := $(BASE_PATH)/tests/wpunit/testcases/
 FUNCTIONAL_TEST_CASE_PATH := $(BASE_PATH)/tests/functional/testcases/
 ACCEPTANCE_TEST_CASE_PATH := $(BASE_PATH)/tests/acceptance/testcases/
 
+ifneq ($(wildcard ./tests/docker/docker.hub.key),)
+$(info Path to key for docker hub exists)
+CONTAINER_ACCESS_TOKEN := $(shell cat ./tests/docker/docker.hub.key)
+endif
+
 ifneq ($(wildcard ./docker.hub.key),)
 $(info Path to key for docker hub exists)
 CONTAINER_ACCESS_TOKEN := $(shell cat ./docker.hub.key)
