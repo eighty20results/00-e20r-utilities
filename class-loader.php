@@ -59,106 +59,6 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		}
 
 		/**
-		 * Class auto-loader for the Utilities Module
-		 *
-		 * @param string $class_name Name of the class to auto-load
-		 *
-		 * @since  1.0
-		 * @access public static
-		 */
-		public function auto_load( string $class_name ): bool {
-
-			if ( false === stripos( $class_name, 'e20r' ) ) {
-				return false;
-			}
-
-			if ( function_exists( 'plugin_dir_path' ) ) {
-				$base_path = \plugin_dir_path( __FILE__ );
-				$src_path  = \plugin_dir_path( __FILE__ ) . 'src/';
-			} else {
-				$base_path = __DIR__;
-				$src_path  = __DIR__ . '/src/E20R/';
-			}
-
-			if ( file_exists( $src_path ) ) {
-				$base_path = $src_path;
-			}
-
-			$filename = "{$class_name}.php";
-
-			try {
-				$iterator = new RecursiveDirectoryIterator(
-					$base_path,
-					RecursiveDirectoryIterator::SKIP_DOTS |
-					RecursiveIteratorIterator::SELF_FIRST |
-					RecursiveIteratorIterator::CATCH_GET_CHILD |
-					RecursiveDirectoryIterator::FOLLOW_SYMLINKS
-				);
-			} catch ( \Exception $e ) {
-				error_log( 'Error: ' . $e->getMessage() ); // phpcs:ignore
-				return false;
-			}
-
-			try {
-				// Locate class member files, recursively
-				$filter = new RecursiveCallbackFilterIterator(
-					$iterator,
-					function ( $current, $key, $iterator ) use ( $filename ) {
-
-						// Skip hidden files and directories.
-						if ( '.' === $current->getFilename()[0] || '..' === $current->getFilename() ) {
-							return false;
-						}
-
-						if ( $current->isDir() ) {
-							// Only recurse into intended subdirectories.
-							return $current->getFilename() === $filename;
-						} else {
-							// Only consume files of interest.
-							return str_starts_with( $current->getFilename(), $filename );
-						}
-					}
-				);
-			} catch ( \Exception $e ) {
-				error_log( 'Autoloader error: ' . $e->getMessage() ); // phpcs:ignore
-				return false;
-			}
-
-			try {
-				/** @SuppressWarnings("unused") */
-				$rec_iterator = new RecursiveIteratorIterator(
-					$iterator,
-					RecursiveIteratorIterator::LEAVES_ONLY,
-					RecursiveIteratorIterator::CATCH_GET_CHILD
-				);
-			} catch ( UnexpectedValueException $uvexception ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log(
-					sprintf(
-						"Error: %s.\nState: %s",
-						$uvexception->getMessage(),
-						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-						print_r( $iterator, true )
-					)
-				);
-				return false;
-			}
-
-			// Walk through filesystem looking for our class file
-			foreach ( $rec_iterator as $f_filename => $f_file ) {
-
-				$class_path = sprintf( '%s/%s', $f_file->getPath(), basename( $f_filename ) );
-
-				if ( $f_file->isFile() && false !== strpos( $class_path, $filename ) ) {
-					/** @noinspection PhpIncludeInspection */
-					require_once $class_path;
-				}
-			}
-
-			return true;
-		}
-
-		/**
 		 * Add filter to indicate this plugin is active
 		 */
 		public function utilities_loaded() {
@@ -168,16 +68,8 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 }
 
 $loader = new Loader();
-//
-//try {
-//	spl_autoload_register( array( $loader, 'auto_load' ) );
-//} catch ( \Exception $exception ) {
-//	// phpcs:ignore
-//	error_log( 'Unable to register autoloader: ' . $exception->getMessage(), E_USER_ERROR );
-//	return false;
-//}
 
-if ( function_exists( '\add_action' ) ) {
+if ( function_exists( '\add_action' ) && class_exists( '\E20R\Utilities\Utilities' ) ) {
 	\add_action( 'plugins_loaded', array( $loader, 'utilities_loaded' ), -1 );
 	\add_action( 'plugins_loaded', array( Utilities::get_instance(), 'load_text_domain' ), -1 );
 }
