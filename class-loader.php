@@ -168,14 +168,14 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 }
 
 $loader = new Loader();
-
-try {
-	spl_autoload_register( array( $loader, 'auto_load' ) );
-} catch ( \Exception $exception ) {
-	// phpcs:ignore
-	error_log( 'Unable to register autoloader: ' . $exception->getMessage(), E_USER_ERROR );
-	return false;
-}
+//
+//try {
+//	spl_autoload_register( array( $loader, 'auto_load' ) );
+//} catch ( \Exception $exception ) {
+//	// phpcs:ignore
+//	error_log( 'Unable to register autoloader: ' . $exception->getMessage(), E_USER_ERROR );
+//	return false;
+//}
 
 if ( function_exists( '\add_action' ) ) {
 	\add_action( 'plugins_loaded', array( $loader, 'utilities_loaded' ), -1 );
