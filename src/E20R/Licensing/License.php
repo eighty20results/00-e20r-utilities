@@ -37,10 +37,6 @@ if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 
 if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 
-	if ( ! defined( 'E20R_LICENSING_DEBUG' ) ) {
-		define( 'E20R_LICENSING_DEBUG', false );
-	}
-
 	/**
 	 * Class License
 	 * @package E20R\Utilities\Licensing
@@ -348,7 +344,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			$license_settings = Cache::get( self::CACHE_KEY, self::CACHE_GROUP )
 
 			if ( ! in_array( $product_sku, $excluded ) && ( null === $license_settings || ( true === $force ) ) && false === $is_licensed ) {
-				if ( E20R_LICENSING_DEBUG && $force ) {
+				if ( $this->settings->get( 'plugin_defaults' )->get( 'debug_logging' ) && $force ) {
 					$this->utils->log( "Ignoring cached license status for {$product_sku}" );
 				}
 
@@ -664,7 +660,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				$this->utils->log( "Attempting to deactivate {$product_sku} on remote server" );
 			}
 
-			if ( E20R_LICENSING_DEBUG && $this->is_new_version() ) {
+			if ( $this->settings->get( 'plugin_defaults' )->get( 'debug_logging' ) && $this->is_new_version() ) {
 				$this->utils->log( 'Using new license server plugin for deactivation...' );
 			}
 
