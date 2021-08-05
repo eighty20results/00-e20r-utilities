@@ -482,7 +482,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 								$this->utils->log( "Attempting remote activation for {$product} " );
 							}
 
-							$result = $licensing->activate( $product, $license_settings[ $product ] );
+							$result = $licensing->activate( $product );
 
 							if ( $this->to_debug ) {
 								// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
@@ -501,7 +501,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 										$this->utils->log( 'Was able to deactivate this license/host combination' );
 									}
 
-									$result = $licensing->activate( $product, $license_settings[ $product ] );
+									$result = $licensing->activate( $product );
 
 								}
 							}
