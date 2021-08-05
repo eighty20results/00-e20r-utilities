@@ -555,7 +555,9 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 				}
 				$this->utils->log( "Checking license status for {$product_sku}" );
 
+				// Exception will prevent us from getting here if the $licensing variable is empty
 				$license_valid =
+						// @phpstan-ignore-next-line
 						$licensing->is_licensed( $product_sku, false ) &&
 						( isset( $license['status'] ) && 'active' === $license['status'] );
 				?>
