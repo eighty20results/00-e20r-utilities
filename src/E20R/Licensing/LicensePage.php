@@ -22,8 +22,10 @@
 namespace E20R\Licensing;
 
 use E20R\Licensing\License;
+use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Settings\LicenseSettings;
 use E20R\Utilities\Utilities;
+use E20R\Utilities\Message;
 
 // Deny direct access to the file
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
@@ -55,11 +57,44 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 		private $log_debug = false;
 
 		/**
-		 * LicensePage constructor.
+		 * License Settings object
+		 * @var LicenseSettings|null $settings
 		 */
-		public function __construct() {
-			$this->utils     = Utilities::get_instance();
-			$this->log_debug = defined( 'E20R_LICENSING_DEBUG' ) && E20R_LICENSING_DEBUG;
+		private $settings = null;
+
+		/**
+		 * @param LicenseSettings|null $settings
+		 * @param Utilities|null       $utils
+		 *
+		 * @throws Exceptions\ConfigDataNotFound
+		 * @throws Exceptions\InvalidSettingsKey
+		 * @throws Exceptions\MissingServerURL
+		 */
+		public function __construct( LicenseSettings $settings = null, Utilities $utils = null ) {
+			if ( empty( $utils ) ) {
+				$message = new Message();
+				$utils   = new Utilities( $message );
+			}
+
+			$this->utils = $utils;
+
+			if ( empty( $settings ) ) {
+				try {
+					$defaults = new Defaults( true, $this->utils );
+				} catch ( Exceptions\ConfigDataNotFound | Exceptions\InvalidSettingsKey $e ) {
+					$this->utils->log( $e->getMessage() );
+					throw $e;
+				}
+
+				try {
+					$settings = new LicenseSettings( null, $defaults, $this->utils );
+				} catch ( Exceptions\InvalidSettingsKey | Exceptions\MissingServerURL $e ) {
+					$this->utils->log( $e->getMessage() );
+					throw $e;
+				}
+			}
+			$this->settings  = $settings;
+			$this->log_debug = $this->settings->get( 'plugin_defaults' )->get( 'debug_logging' );
 		}
 
 		/**
@@ -104,7 +139,7 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 				return false;
 			}
 
-			$item = isset( $check_menu['options-general.php'] ) ? $check_menu['options-general.php'] : array();
+			$item = $check_menu['options-general.php'] ?? array();
 
 			if ( true === $sub ) {
 
