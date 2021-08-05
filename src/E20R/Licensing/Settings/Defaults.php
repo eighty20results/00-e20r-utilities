@@ -40,11 +40,11 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 
 		// @codingStandardsIgnoreStart
 		// Ignoring the case as we're using this to fake const values (simplify unit testing, for instance)
-		private static $E20R_LICENSE_SECRET_KEY = '5687dc27b50520.33717427';
-		private static $E20R_STORE_CONFIG       = '{"store_code":"L4EGy6Y91a15ozt","server_url":"https://eighty20results.com"}';
-		private static $E20R_LICENSE_SERVER     = 'eighty20results.com';
-		private static $E20R_LICENSE_SERVER_URL = 'https://eighty20results.com';
-		private static $E20R_LICENSING_DEBUG    = false;
+		private $E20R_LICENSE_SECRET_KEY = '5687dc27b50520.33717427';
+		private $E20R_STORE_CONFIG       = '{"store_code":"L4EGy6Y91a15ozt","server_url":"https://eighty20results.com"}';
+		private $E20R_LICENSE_SERVER     = 'eighty20results.com';
+		private $E20R_LICENSE_SERVER_URL = 'https://eighty20results.com';
+		private $E20R_LICENSING_DEBUG    = false;
 		// @codingStandardsIgnoreEnd
 
 		/**
@@ -56,9 +56,9 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 
 		/**
 		 * Should the E20R_LICENSE_SERVER_URL be locked
-		 * @var bool $license_server_url_locked
+		 * @var bool $server_url_locked
 		 */
-		private $license_server_url_locked = false;
+		private $server_url_locked = false;
 
 		/**
 		 * The version number for this plugin (E20R Licensing module)
@@ -222,6 +222,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		 *
 		 * @throws ConfigDataNotFound
 		 * @throws InvalidSettingsKey
+		 * @throws BadOperation
 		 */
 		public function read_config( $json_blob = null ) {
 
@@ -268,7 +269,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		public function lock( string $constant_name = 'server' ) {
 			switch ( $constant_name ) {
 				case 'server':
-					$this->license_server_url_locked = true;
+					$this->server_url_locked = true;
 					break;
 				case 'debug':
 					$this->debug_locked = true;
@@ -284,7 +285,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		public function unlock( string $constant_name = 'server' ) {
 			switch ( $constant_name ) {
 				case 'server':
-					$this->license_server_url_locked = false;
+					$this->server_url_locked = false;
 					break;
 				case 'debug':
 					$this->debug_locked = false;
@@ -295,18 +296,19 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		/**
 		 * Set/Read the class constant(s)
 		 *
-		 * @param string       $name
-		 * @param int          $operation
-		 * @param mixed   $value
+		 * @param string $name
+		 * @param int    $operation
+		 * @param mixed  $value
 		 *
 		 * @return bool|mixed
 		 * @throws InvalidSettingsKey
+		 * @throws BadOperation
 		 */
 		public function constant( string $name, int $operation = self::READ_CONSTANT, $value = null ) {
 			if ( ! property_exists( self::class, $name ) ) {
 				throw new InvalidSettingsKey(
 					sprintf(
-					// translators: %1$s - Name of requested constatn
+					// translators: %1$s - Name of requested constant
 						esc_attr__( '%1$s is not a valid Defaults() constant!', '00-e20r-utilities' ),
 						$name
 					)
@@ -325,9 +327,9 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 
 			switch ( $operation ) {
 				case self::READ_CONSTANT:
-					return self::${$name};
+					return $this->{$name};
 				case self::UPDATE_CONSTANT:
-					self::${$name} = $value;
+					$this->{$name} = $value;
 					return true;
 			}
 			return false;
@@ -352,6 +354,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 			try {
 				$this->exists( $name );
 			} catch ( InvalidSettingsKey $e ) {
+				$this->utils->log( "Unable to set {$name}: " . $e->getMessage() );
 				throw $e;
 			}
 
@@ -361,12 +364,13 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 					$this->constant( 'E20R_LICENSING_DEBUG', self::UPDATE_CONSTANT, $value );
 				}
 				$this->debug_logging = $this->constant( 'E20R_LICENSING_DEBUG' );
+				$this->utils->log( "Setting to {$value} and is {$this->debug_logging}" );
 				return true;
 			}
 
-			// Set and exit if the we're looking for the server_url
+			// Set and exit if we're looking for the server_url
 			if ( 'server_url' === $name ) {
-				if ( ! $this->license_server_url_locked ) {
+				if ( ! $this->server_url_locked ) {
 					$this->constant( 'E20R_LICENSE_SERVER_URL', self::UPDATE_CONSTANT, $value );
 				}
 				$this->server_url = $this->constant( 'E20R_LICENSE_SERVER_URL' );
@@ -375,11 +379,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 			}
 
 			// Do we need to change the value?
-			try {
-				$default = $this->get_default( $name );
-			} catch ( InvalidSettingsKey $e ) {
-				throw $e;
-			}
+			$default = $this->get_default( $name );
 
 			if ( $this->{$name} !== $default && $this->{$name} !== $value ) {
 				$this->{$name} = $value;
@@ -430,12 +430,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		 * @throws InvalidSettingsKey
 		 */
 		public function get( $name ) {
-			try {
-				$this->exists( $name );
-			} catch ( InvalidSettingsKey $e ) {
-				throw $e;
-			}
-
+			$this->exists( $name );
 			return $this->{$name};
 		}
 
