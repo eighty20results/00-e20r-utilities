@@ -164,11 +164,6 @@ class Defaults_Test extends Unit {
 	 */
 	public function test_instantiate_class( ?bool $use_rest, ?bool $var_debug, ?string $version, ?string $server_url, ?bool $const_for_debug_logging, ?string $const_server_url, ?bool $use_phpunit_constant, $config, array $expected ) {
 
-		// NOTE: Only trigger this as the third last thing (fixture) to execute
-		if ( ! defined( 'PLUGIN_PHPUNIT' ) ) {
-			define( 'PLUGIN_PHPUNIT', true );
-		}
-
 		if ( empty( $config ) ) {
 			$this->assertThrowsWithMessage(
 				ConfigDataNotFound::class,
@@ -197,7 +192,7 @@ class Defaults_Test extends Unit {
 		$this->assertDoesNotThrow(
 			InvalidSettingsKey::class,
 			function() use ( $settings, $var_debug ) {
-				$this->mock_utils->log( 'Setting the debug_logging variable to ' . $var_debug );
+				$this->mock_utils->log( 'Setting the debug_logging variable to ' . ( false === $var_debug ? 'false' : $var_debug ) );
 				$settings->set( 'debug_logging', $var_debug );
 			}
 		);
@@ -284,7 +279,7 @@ class Defaults_Test extends Unit {
 				$this->fixture_get_config( 1, 'server_url' ),
 				null, // E20R_LICENSING_DEBUG
 				null, // The E20R_LICENSE_SERVER_URL
-				false,
+				false, // PHPUNIT_PLUGIN
 				$this->fixture_load_config_json( 1 ),
 				array(
 					'use_rest'       => false,
@@ -320,7 +315,7 @@ class Defaults_Test extends Unit {
 				$this->fixture_get_config( 2, 'server_url' ),
 				null, // E20R_LICENSING_DEBUG
 				null, // The E20R_LICENSE_SERVER_URL
-				false,
+				false, // PHPUNIT_PLUGIN
 				$this->fixture_load_config_json( 2 ),
 				array(
 					'use_rest'       => true,
