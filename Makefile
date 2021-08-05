@@ -14,7 +14,7 @@ CURL := $(shell which curl)
 UNZIP := $(shell which unzip)
 PHP_BIN := $(shell which php)
 DC_BIN := $(shell which docker-compose)
-SQL_BACKUP_FILE ?= $(BASE_PATH)/tests/_data
+SQL_BACKUP_FILE ?= tests/_data
 MYSQL_DATABASE ?= wordpress
 MYSQL_USER ?= wordpress
 MYSQL_PASSWORD ?= wordpress
@@ -25,15 +25,15 @@ E20R_PLUGIN_URL ?= "https://eighty20results.com/protected-content"
 WP_CONTAINER_NAME ?= codecep-wp-$(E20R_PLUGIN_NAME)
 DB_CONTAINER_NAME ?= $(DB_IMAGE)-wp-$(E20R_PLUGIN_NAME)
 
-FOUND_WP_UNIT_TESTS ?= $(wildcard $(BASE_PATH)/tests/wpunit/testcases/*.php)
-FOUND_UNIT_TESTS ?= $(wildcard $(BASE_PATH)/tests/unit/testcases/*.php)
-FOUND_WP_ACCEPTANCE_TESTS ?= $(wildcard $(BASE_PATH)/tests/acceptance/testcases/*.php)
-FOUND_FUNCTIONAL_TESTS ?= $(wildcard $(BASE_PATH)/tests/functional/testcases/*.php)
+FOUND_WP_UNIT_TESTS ?= $(wildcard tests/wpunit/testcases/*.php)
+FOUND_UNIT_TESTS ?= $(wildcard tests/unit/testcases/*.php)
+FOUND_WP_ACCEPTANCE_TESTS ?= $(wildcard /tests/acceptance/testcases/*.php)
+FOUND_FUNCTIONAL_TESTS ?= $(wildcard tests/functional/testcases/*.php)
 
-UNIT_TEST_CASE_PATH := $(BASE_PATH)/tests/unit/testcases/
-WPUNIT_TEST_CASE_PATH := $(BASE_PATH)/tests/wpunit/testcases/
-FUNCTIONAL_TEST_CASE_PATH := $(BASE_PATH)/tests/functional/testcases/
-ACCEPTANCE_TEST_CASE_PATH := $(BASE_PATH)/tests/acceptance/testcases/
+UNIT_TEST_CASE_PATH := tests/unit/testcases/
+WPUNIT_TEST_CASE_PATH := tests/wpunit/testcases/
+FUNCTIONAL_TEST_CASE_PATH := tests/functional/testcases/
+ACCEPTANCE_TEST_CASE_PATH := tests/acceptance/testcases/
 
 ifneq ($(wildcard ./tests/docker/docker.hub.key),)
 $(info Path to key for docker hub exists)
