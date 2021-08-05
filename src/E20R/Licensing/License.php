@@ -372,7 +372,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				$this->utils->log( 'Settings are: ' . print_r( $license_settings, true ) );
 			}
 
-			return $this->is_active( $product_sku, $license_settings, $is_licensed );
+			return $this->is_active( $product_sku, $is_licensed );
 		}
 
 		/**
@@ -527,7 +527,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 *
 		 * @since 1.8.4 - BUG FIX: Didn't save the license settings
 		 */
-		public function activate( $product_sku ) : array {
+		public function activate( string $product_sku ) {
 
 			$state       = null;
 			$product_sku = strtolower( $product_sku );
@@ -552,7 +552,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			}
 
 			if ( empty( $this->settings ) ) {
-				$settings = $this->settings->all_settings( $product_sku );
+				$settings = $this->settings->all_settings();
 			}
 
 			$api_params = array(
@@ -895,7 +895,6 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 
 						$is_active = $this->is_active(
 							$key,
-							$license,
 							$is_licensed
 						);
 						$this->utils->log( "The {$key} license is " . ( $is_active ? 'Active' : 'Inactive' ) );
