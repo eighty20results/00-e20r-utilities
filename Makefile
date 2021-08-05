@@ -417,7 +417,8 @@ code-standard-test: wp-deps
 		--report=full \
 		--colors \
 		-p \
-		--standard=WordPress-Extra \
+		-s \
+		--standard=.phpcs.xml.dist \
 		--ignore='$(PHP_IGNORE_PATHS)' \
 		--extensions=php \
 		$(PHP_CODE_PATHS)
