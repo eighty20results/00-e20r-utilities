@@ -351,12 +351,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 				throw new Exception( esc_attr__( 'Error: Cannot change the default plugin settings', '00-e20r-utilities' ) );
 			}
 
-			try {
-				$this->exists( $name );
-			} catch ( InvalidSettingsKey $e ) {
-				$this->utils->log( "Unable to set {$name}: " . $e->getMessage() );
-				throw $e;
-			}
+			$this->exists( $name );
 
 			// Exit if the constant has been set for DEBUG
 			if ( 'debug_logging' === $name ) {
@@ -364,7 +359,6 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 					$this->constant( 'E20R_LICENSING_DEBUG', self::UPDATE_CONSTANT, $value );
 				}
 				$this->debug_logging = $this->constant( 'E20R_LICENSING_DEBUG' );
-				$this->utils->log( "Setting to {$value} and is {$this->debug_logging}" );
 				return true;
 			}
 

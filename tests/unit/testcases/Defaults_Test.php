@@ -178,13 +178,11 @@ class Defaults_Test extends Unit {
 
 			if ( null !== $const_for_debug_logging ) {
 				$settings->constant( 'E20R_LICENSING_DEBUG', $settings::UPDATE_CONSTANT, $const_for_debug_logging );
-				$this->mock_utils->log( 'Locking the E20R_LICENSING_DEBUG constant' );
 				$settings->lock( 'debug' );
 			}
 
 			if ( null !== $const_server_url ) {
 				$settings->constant( 'E20R_LICENSE_SERVER_URL', $settings::UPDATE_CONSTANT, $const_server_url );
-				$this->mock_utils->log( 'Locking the E20R_LICENSE_SERVER_URL constant' );
 				$settings->lock( 'server' );
 			}
 		}
@@ -192,7 +190,6 @@ class Defaults_Test extends Unit {
 		$this->assertDoesNotThrow(
 			InvalidSettingsKey::class,
 			function() use ( $settings, $var_debug ) {
-				$this->mock_utils->log( 'Setting the debug_logging variable to ' . ( false === $var_debug ? 'false' : $var_debug ) );
 				$settings->set( 'debug_logging', $var_debug );
 			}
 		);
@@ -572,7 +569,6 @@ class Defaults_Test extends Unit {
 		try {
 			$defaults = new Defaults( false, $this->mock_utils );
 			$result   = $defaults->constant( $constant_name, Defaults::READ_CONSTANT );
-			error_log( "Result: {$result} vs ${expected}"); // phpcs:ignore
 			self::assertSame( $expected, $result );
 		} catch ( ConfigDataNotFound | InvalidSettingsKey | Exception $e ) {
 			error_log( $e->getMessage() . " for {$constant_name} " ); // phpcs:ignore
