@@ -81,25 +81,13 @@ class LicenseTest extends Unit {
 		$this->loadStubs();
 		$this->loadDefaultMocks();
 		$this->loadFiles();
+		e20r_unittest_stubs();
 	}
 
 	/**
 	 * Define stubs for various WP functions
 	 */
 	protected function loadStubs() {
-		Functions\expect( 'home_url' )
-			->andReturn( 'https://localhost:7254/' );
-
-		Functions\expect( 'plugins_url' )
-			->andReturn( 'https://localhost:7254/wp-content/plugins/' );
-
-		try {
-			Functions\expect( 'admin_url' )
-				->with( \Mockery::contains( 'options-general.php' ) )
-				->andReturn( 'https://localhost:7254/wp-admin/options-general.php' );
-		} catch ( \Exception $e ) {
-			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
-		}
 
 		try {
 			Functions\expect( 'get_option' )
@@ -112,27 +100,6 @@ class LicenseTest extends Unit {
 		} catch ( \Exception $e ) {
 			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
 		}
-
-		try {
-			Functions\expect( 'get_option' )
-				->with( 'home' )
-				->andReturn( 'https://localhost:7254/' );
-		} catch ( \Exception $e ) {
-			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
-		}
-
-		Functions\expect( 'plugin_dir_path' )
-			->andReturn( __DIR__ . '/../../../' );
-
-		Functions\expect( 'get_current_blog_id' )
-			->andReturn( 1 );
-
-		Functions\expect( 'date_i18n' )
-			->andReturn(
-				function( $date_string, $time ) {
-					return date( $date_string, $time ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
-				}
-			);
 	}
 
 	/**
@@ -200,6 +167,7 @@ class LicenseTest extends Unit {
 	 * Load source files for the Unit Test to execute
 	 */
 	public function loadFiles() {
+		require_once __DIR__ . '/../inc/unittest_stubs.php';
 		require_once __DIR__ . '/../../../inc/autoload.php';
 	}
 

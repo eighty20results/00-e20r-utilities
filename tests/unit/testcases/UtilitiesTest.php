@@ -71,6 +71,7 @@ class UtilitiesTest extends Unit {
 	 * Load source files for the Unit Test to execute
 	 */
 	public function loadFiles() {
+		require_once __DIR__ . '/../inc/unittest_stubs.php';
 		require_once __DIR__ . '/../../../inc/autoload.php';
 	}
 
