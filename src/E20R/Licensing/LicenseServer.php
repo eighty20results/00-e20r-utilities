@@ -80,15 +80,15 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 		 * LicenseServer constructor.
 		 *
 		 * @param LicenseSettings $license_settings
-		 * @param Utilities|null $utils
+		 * @param Utilities|null  $utils
 		 */
-		public function __construct( $license_settings, $utils = null ) {
+		public function __construct( LicenseSettings $license_settings, ?Utilities $utils = null ) {
 			if ( empty( $utils ) ) {
 				$utils = new Utilities();
 			}
 			$this->license_settings = $license_settings;
 			$this->utils            = $utils;
-			$this->log_debug        = $this->license_settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSE_DEBUG' ) &&
+			$this->log_debug        = $this->license_settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSING_DEBUG' ) &&
 									( defined( 'WP_DEBUG' ) && WP_DEBUG );
 			$this->is_new_version   = $this->license_settings->get( 'new_version' );
 			$this->use_ssl          = $this->license_settings->get( 'ssl_verify' );
