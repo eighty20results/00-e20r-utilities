@@ -136,33 +136,38 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 
 			if ( empty( $settings ) ) {
 				try {
-					$settings = new LicenseSettings( $this->product_sku );
+					$defaults = new Defaults();
+					$settings = new LicenseSettings( $this->product_sku, $defaults, $this->utils );
 				} catch ( Exceptions\InvalidSettingsKey | MissingServerURL $e ) {
 					$this->utils->log( 'Error: Invalid setting key used when instantiating the LicenseSettings() class: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
 			}
 
+			// Save the LicenseSettings object
+			$this->settings = $settings;
+
 			if ( empty( $server ) ) {
 				try {
-					$server = new LicenseServer( $this->settings );
+					$server = new LicenseServer( $this->settings, $this->utils );
 				} catch ( \Exception $e ) {
 					$this->utils->log( 'License Server configuration: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
 			}
 
+			// Save the LicenseServer object
+			$this->server = $server;
+
 			if ( empty( $page ) ) {
 				try {
-					$page = new LicensePage();
+					$page = new LicensePage( $this->settings, $this->utils );
 				} catch ( \Exception $e ) {
 					$this->utils->log( 'License Page: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
 			}
-
-			$this->settings  = $settings;
-			$this->server    = $server;
+			// Save the LicensePage object
 			$this->page      = $page;
 			$this->log_debug = $this->settings->get( 'plugin_defaults' )->get( 'debug_logging' );
 
