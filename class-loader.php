@@ -55,10 +55,15 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 	class Loader {
 
 		/**
+		 * @var Utilities|null $utils
+		 */
+		private $utils = null;
+
+		/**
 		 * Loader constructor.
 		 * Loads the default PSR-4 Autoloader and configures a couple of required action handlers
 		 */
-		public function __construct() {
+		public function __construct( $utils = null ) {
 			if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				wp_die(
 					esc_attr__(
@@ -68,21 +73,30 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 				);
 			}
 
-			// Add required actions for this module and its I18N (language modules)
-			add_action( 'plugins_loaded', array( $this, 'utilities_loaded' ), 11 );
-			add_action( 'plugins_loaded', array( Utilities::get_instance(), 'load_text_domain' ), 11 );
+			// The loader uses the Utilities class to load action handlers,
+			// so we need it for testing purposes
+			if ( empty( $utils ) ) {
+				$utils = new Utilities();
+			}
+			$this->utils = $utils;
+
+			// Add required action for language modules (I18N)
+			add_action( 'plugins_loaded', array( $this->utils, 'load_text_domain' ), 11 );
 		}
 
 		/**
 		 * Add filter to indicate this plugin is active
 		 */
 		public function utilities_loaded() {
-			add_filter( 'e20r_utilities_module_installed', '__return_true', -1, 1 );
+			$this->utils->log( 'Confirms we loaded this E20R Utilities module' );
+			// (try to) Make sure this executes last
+			add_filter( 'e20r_utilities_module_installed', '__return_true', 99999, 1 );
 		}
 	}
 }
-if ( function_exists( 'add_action' ) ) {
-	add_action( 'plugins_loaded', array( new Loader(), 'utilities_loaded' ), 10 );
+
+if ( function_exists( '\add_action' ) ) {
+	\add_action( 'plugins_loaded', array( new Loader(), 'utilities_loaded' ), 10 );
 }
 
 // One-click update support for the plugin

@@ -56,21 +56,16 @@ class LoaderTest extends Unit {
 	 * Classes that can be mocked for the entire test
 	 */
 	public function loadMocks() {
-		try {
-			$this->m_utils = $this->makeEmpty(
-				Utilities::class,
-				array(
-					'log'              => function( $text ) {
-						error_log( "{$text}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					},
-					'load_text_domain' => null,
-					'configure_update' => null,
-				)
-			);
-		} catch ( \Exception $e ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( $e->getMessage() );
-		}
+		$this->m_utils = $this->makeEmpty(
+			Utilities::class,
+			array(
+				'log'              => function( $text ) {
+					error_log( "{$text}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				},
+				'load_text_domain' => null,
+				'configure_update' => null,
+			)
+		);
 	}
 
 	/**
@@ -88,17 +83,21 @@ class LoaderTest extends Unit {
 
 	/**
 	 * Unit test for the Loader() class instantiation
-	 * @param string $expected
+	 * @param string $class_name
+	 * @param int    $priority
+	 * @param int    $init_priority
 	 *
 	 * @dataProvider fixture_instantiated
 	 */
-	public function test__construct( string $class_name, $priority ) {
-		$this->loader = new Loader();
+	public function test__construct( string $class_name, int $priority, int $init_priority ) {
+		$this->loader = new Loader( $this->m_utils );
 		self::assertInstanceOf( $class_name, $this->loader );
+
 		Actions\has( 'plugins_loaded', array( $this->loader, 'utilities_loaded' ) );
 		Actions\has( 'plugins_loaded', array( $this->m_utils, 'load_text_domain' ) );
-		self::assertSame( $priority, has_action( 'plugins_loaded', array( $this->loader, 'utilities_loaded' ) ) );
-		self::assertSame( $priority, has_action( 'plugins_loaded', array( Utilities::get_instance(), 'load_text_domain' ) ) );
+
+		// self::assertSame( $priority, has_action( 'plugins_loaded', array( $this->loader, 'utilities_loaded' ) ) );
+		self::assertSame( $init_priority, has_action( 'plugins_loaded', array( $this->m_utils, 'load_text_domain' ) ) );
 	}
 
 	/**
@@ -107,7 +106,7 @@ class LoaderTest extends Unit {
 	 */
 	public function fixture_instantiated() {
 		return array(
-			array( Loader::class, 11 ),
+			array( Loader::class, 10, 11 ),
 		);
 	}
 
@@ -120,7 +119,7 @@ class LoaderTest extends Unit {
 	 * @covers \E20R\Utilities\Loader::utilities_loaded
 	 */
 	public function test_utilities_loaded( $test_value, $expected ) {
-		$this->loader = new Loader();
+		$this->loader = new Loader( $this->m_utils );
 		$this->loader->utilities_loaded();
 		Filters\has( 'e20r_utilities_module_installed', '__return_true' );
 		$result = apply_filters( 'e20r_utilities_module_installed', $test_value );
