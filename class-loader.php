@@ -67,7 +67,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 			if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				wp_die(
 					esc_attr__(
-						"Error: Couldn't load the Utilities class included in this module!",
+						"Error: Couldn't load the Utilities class included in this module. Please deactivate the E20R Utilities Module plugin!",
 						'00-e20r-utilities'
 					)
 				);
