@@ -347,10 +347,6 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		 */
 		public function set( string $name, $value ) : bool {
 
-			if ( 'server_url' !== $name && ! defined( 'PLUGIN_PHPUNIT' ) || ( defined( 'PLUGIN_PHPUNIT' ) && ! PLUGIN_PHPUNIT ) ) {
-				throw new Exception( esc_attr__( 'Error: Cannot change the default plugin settings', '00-e20r-utilities' ) );
-			}
-
 			$this->exists( $name );
 
 			// Exit if the constant has been set for DEBUG
