@@ -31,10 +31,8 @@ Domain Path: languages/
 
 namespace E20R\Utilities;
 
-use RecursiveCallbackFilterIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use UnexpectedValueException;
+use function \add_action;
+use function \add_filter;
 
 // Deny direct access to the file
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
@@ -45,6 +43,9 @@ if ( ! defined( 'E20R_UTILITIES_BASE_FILE' ) ) {
 	define( 'E20R_UTILITIES_BASE_FILE', __FILE__ );
 }
 
+// Load the PSR-4 Autoloader
+require_once __DIR__ . '/inc/autoload.php';
+
 if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 
 	/**
@@ -53,9 +54,23 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 	 */
 	class Loader {
 
-		// Load the default PSR-4 Autoloader
+		/**
+		 * Loader constructor.
+		 * Loads the default PSR-4 Autoloader and configures a couple of required action handlers
+		 */
 		public function __construct() {
-			require_once __DIR__ . '/inc/autoload.php';
+			if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
+				wp_die(
+					esc_attr__(
+						"Error: Couldn't load the Utilities class included in this module!",
+						'00-e20r-utilities'
+					)
+				);
+			}
+
+			// Add required actions for this module and its I18N (language modules)
+			add_action( 'plugins_loaded', array( $this, 'utilities_loaded' ), 11 );
+			add_action( 'plugins_loaded', array( Utilities::get_instance(), 'load_text_domain' ), 11 );
 		}
 
 		/**
@@ -66,14 +81,11 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		}
 	}
 }
-
-$loader = new Loader();
-
-if ( function_exists( '\add_action' ) && class_exists( '\E20R\Utilities\Utilities' ) ) {
-	\add_action( 'plugins_loaded', array( $loader, 'utilities_loaded' ), -1 );
-	\add_action( 'plugins_loaded', array( Utilities::get_instance(), 'load_text_domain' ), -1 );
+if ( function_exists( 'add_action' ) ) {
+	add_action( 'plugins_loaded', array( new Loader(), 'utilities_loaded' ), 10 );
 }
 
+// One-click update support for the plugin
 if ( class_exists( '\E20R\Utilities\Utilities' ) && defined( 'WP_PLUGIN_DIR' ) ) {
 	Utilities::configure_update( '00-e20r-utilities', __FILE__ );
 }
