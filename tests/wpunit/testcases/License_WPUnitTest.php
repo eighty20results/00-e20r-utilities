@@ -17,55 +17,49 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace E20R\Tests\Functional;
+namespace E20R\Tests\WPUnit;
 
+use Codeception\Test\Test;
+use Codeception\TestCase\WPTestCase;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\License;
 use E20R\Licensing\Settings\LicenseSettings;
 use E20R\Licensing\Settings\Defaults;
 
-class LicenseCest {
+class License_WPUnitTest extends WPTestCase {
 
 	private $server = null;
 
 	private $page = null;
 
-	public function testIs_active( FunctionalTester $I ) {
+	public function test_is_active() {
 
 	}
 
-	public function testActivate( FunctionalTester $I ) {
+	public function test_activate() {
 
 	}
 
-	public function testIs_licensed( FunctionalTester $I ) {
-
-	}
-
-	public function testIs_expiring( FunctionalTester $I ) {
-
-	}
-
-	public function testIs_new_version( FunctionalTester $I ) {
+	public function test_is_licensed() {
 
 	}
 
 	/**
 	 * Test whether we'll use SSL verify or not
 	 *
-	 * @param string $sku
-	 * @param bool $expected
-	 * @param LicenseSettings $settings
+	 * @param string|null          $sku
+	 * @param LicenseSettings|null $settings
+	 * @param bool                 $expected
 	 *
 	 * @dataProvider fixture_ssl_verify
 	 */
-	public function test_get_ssl_verify( string $sku, LicenseSettings $settings, bool $expected ) {
+	public function test_get_ssl_verify( ?string $sku, ?LicenseSettings $settings, bool $expected ) {
 		try {
 			$license = new License( $sku, $settings );
-			assertSame( $expected, $license->get_ssl_verify() );
+			self::assertSame( $expected, $license->get_ssl_verify() );
 		} catch ( \Exception $e ) {
-			assertFalse( true, $e->getMessage() );
+			self::assertFalse( true, $e->getMessage() );
 		}
 	}
 
@@ -90,18 +84,25 @@ class LicenseCest {
 				$settings->set( 'ssl_verify', $ssl_value );
 				$fixture_values[] = array( 'e20r_default_license', $settings, $ssl_value );
 			} catch ( InvalidSettingsKey | MissingServerURL $e ) {
-				assertFalse( true, $e->getMessage() );
+				self::assertFalse( true, $e->getMessage() );
 			}
 		}
-
 		return $fixture_values;
 	}
 
-	public function test_deactivate( FunctionalTester $I ) {
+	public function test_is_expiring() {
 
 	}
 
-	public function test_register( FunctionalTester $I ) {
+	public function test_is_new_version() {
+
+	}
+
+	public function test_deactivate() {
+
+	}
+
+	public function test_register() {
 
 	}
 }
