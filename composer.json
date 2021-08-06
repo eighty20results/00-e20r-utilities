@@ -21,7 +21,7 @@
     }
     ],
     "require": {
-        "php": ">=7.1",
+        "php": ">=7.3",
         "yahnis-elsts/plugin-update-checker": ">=4.5",
         "10quality/license-keys-php-client": ">=v1.2.2",
         "ext-curl": "*",
@@ -58,7 +58,7 @@
             "NamespaceInSourceDir\\": "",
             "E20R\\": "src/E20R",
             "E20R\\Utilities\\": "src/E20R/Utilities",
-            "E20R\\Utilities\\Licensing\\": "src/E20R/Licensing",
+            "E20R\\Licensing\\": "src/E20R/Licensing",
             "E20R\\Licensing\\Exceptions\\": "src/E20R/Licensing/Exceptions",
             "E20R\\Licensing\\Settings\\": "src/E20R/Licensing/Settings"
         }
