@@ -25,6 +25,7 @@ namespace E20R\Licensing;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Settings\LicenseSettings;
+use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 use LicenseKeys\Utility\Api;
 use LicenseKeys\Utility\Client;
@@ -125,9 +126,10 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 */
 		public function __construct( ?string $product_sku = null, ?LicenseSettings $settings = null, ?LicenseServer $server = null, ?LicensePage $page = null, Utilities $utils = null ) {
 
-			// Set the Utilities class
+			// Define the Utilities class
 			if ( empty( $utils ) ) {
-				$utils = Utilities::get_instance();
+				$message = new Message();
+				$utils   = new Utilities( $message );
 			}
 
 			$this->utils       = $utils;
