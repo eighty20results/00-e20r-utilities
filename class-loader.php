@@ -106,7 +106,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 *
 		 * @param bool $is_installed
 		 *
-		 * @return bool|int
+		 * @return bool
 		 */
 		public function making_sure_we_win( $is_installed ): bool {
 			global $wp_filter;
