@@ -131,8 +131,6 @@ class OldLicenseSettings extends LicenseSettings {
 	 * @throws InvalidSettingsKey|MissingServerURL
 	 */
 	public function __construct( $product_sku = 'e20r_default_license', $plugin_defaults = null, $utils = null ) {
-		parent::__construct( $product_sku, $plugin_defaults, $utils );
-
 		global $current_user;
 
 		if ( ! empty( $current_user ) ) {

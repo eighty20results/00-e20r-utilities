@@ -121,10 +121,8 @@ class NewLicenseSettings extends LicenseSettings {
 	 * @param Defaults $plugin_defaults
 	 * @param Utilities $utils
 	 *
-	 * @throws InvalidSettingsKey|MissingServerURL
 	 */
 	public function __construct( $product_sku = 'e20r_default_license', $plugin_defaults = null, $utils = null ) {
 		$this->product_sku = $product_sku;
-		parent::__construct( $this->product_sku, $plugin_defaults, $utils );
 	}
 }
