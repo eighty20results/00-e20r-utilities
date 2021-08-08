@@ -259,27 +259,17 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * Load and use L10N based text (if available)
 		 */
 		public function load_text_domain() {
-
-			global $wp_filesystem;
-			if ( empty( $wp_filesystem ) ) {
-				if ( ! function_exists( '\WP_Filesystem' ) ) {
-					require_once ABSPATH . '/wp-admin/includes/file.php';
-				}
-				\WP_Filesystem();
-			}
-
 			$this->log( 'Processing load_text_domain' );
 
 			if ( empty( $this->plugin_slug ) ) {
 				$this->log( 'Error attempting to load translation files!' );
-
 				return;
 			}
 
 			$locale        = apply_filters( 'plugin_locale', get_locale(), '00-e20r-utilities' );
 			$mofile        = "00-e20r-utilities-{$locale}.mo";
 			$mofile_local  = plugin_dir_path( __FILE__ ) . 'languages/' . $mofile;
-			$mofile_global = $wp_filesystem->wp_lang_dir() . '/00-e20r-utilities/' . $mofile;
+			$mofile_global = WP_LANG_DIR . '/00-e20r-utilities/' . $mofile;
 
 			load_textdomain( '00-e20r-utilities', $mofile_local );
 
