@@ -184,7 +184,6 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 */
 		public function get_max_hook_priority(): int {
 			global $wp_filter;
-			// $this->utils->log( 'Filter hooks: ' . print_r( $wp_filter['e20r_utilities_module_installed']->callbacks, true ) );
 			$filter_priority_list = array_keys( $wp_filter['e20r_utilities_module_installed']->callbacks );
 			rsort( $filter_priority_list );
 			return (int) $filter_priority_list[0];
