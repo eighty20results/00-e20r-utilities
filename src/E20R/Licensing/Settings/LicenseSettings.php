@@ -149,6 +149,12 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				// 'plugin_defaults',
 			);
 
+			if ( ! $this->new_version ) {
+				$this->settings = new NewLicenseSettings( $product_sku, $this->plugin_defaults, $this->utils );
+			} else {
+				$this->settings = new OldLicenseSettings( $product_sku, $this->plugin_defaults, $this->utils );
+			}
+
 			$server_url = $this->plugin_defaults->get( 'server_url' );
 
 			if (
@@ -241,12 +247,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			) {
 				$this->utils->log( 'Overwriting license settings with defaults' );
 				$settings = $defaults;
-			}
-
-			if ( $this->new_version ) {
-				$this->settings = new NewLicenseSettings( $product_sku );
-			} else {
-				$this->settings = new OldLicenseSettings( $product_sku );
 			}
 
 			foreach ( $settings as $setting_key => $value ) {
