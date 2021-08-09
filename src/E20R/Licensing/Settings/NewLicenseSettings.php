@@ -19,13 +19,11 @@
 
 namespace E20R\Licensing\Settings;
 
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
-use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Utilities\Utilities;
 
 /**
  * Class NewLicenseSettings
- * @package E20R\Utilities\Licensing
+ * @package E20R\Licensing\Settings
  */
 class NewLicenseSettings extends LicenseSettings {
 
