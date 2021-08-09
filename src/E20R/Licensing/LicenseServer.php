@@ -21,6 +21,7 @@
 
 namespace E20R\Licensing;
 
+use E20R\Licensing\Exceptions\NoLicenseKeyFound;
 use E20R\Utilities\Utilities;
 use E20R\Utilities\Cache;
 use E20R\Licensing\Settings\LicenseSettings;
@@ -231,21 +232,22 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 		 * Connect to license server and check status for the current product/server
 		 *
 		 * @param string     $sku - The product/SKU to get the license status for
-		 * @param null|array $settings - Optional array of parameters for the SKU
 		 * @param bool       $force - Whether to force a check against the license server
 		 *
 		 * @return bool
 		 */
-		public function status( $sku, $settings = null, $force = false ) : bool {
+		public function status( $sku, $force = false ) : bool {
 
 			// Default value for the license (it's not active)
 			$license_status = null;
+			$use_new        = (bool) $this->license_settings->get( 'new_version' );
 
-			$this->license_settings = new LicenseSettings( $sku );
-			$use_new                = (bool) $this->license_settings->get( 'new_version' );
-
-			if ( is_null( $settings ) ) {
-				$settings = $this->license_settings->all_settings();
+			try {
+				$settings = $this->license_settings->get_settings( $sku );
+			} catch ( NoLicenseKeyFound $e ) {
+				$this->utils->log( $e->getMessage() );
+				$this->utils->add_message( $e->getMessage(), 'error', 'backend' );
+				return false;
 			}
 
 			if ( ! $use_new && empty( $settings['key'] ) ) {
@@ -282,11 +284,13 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 				$this->utils->log( "Connecting to license server to validate license for {$sku}" );
 			}
 
+			$login_key = $this->license_settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSE_SECRET_KEY' );
+
 			if ( false === $use_new ) {
 				// Configure request for license check
 				$api_params = array(
 					'slm_action'  => 'slm_check',
-					'secret_key'  => $this->license_settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSE_SECRET_KEY' ),
+					'secret_key'  => $login_key,
 					'license_key' => $settings['key'],
 					// 'registered_domain' => $_SERVER['SERVER_NAME'] phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 				);
