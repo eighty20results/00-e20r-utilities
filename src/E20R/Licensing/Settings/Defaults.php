@@ -45,6 +45,13 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		private $E20R_LICENSE_SERVER     = 'eighty20results.com';
 		private $E20R_LICENSE_SERVER_URL = 'https://eighty20results.com';
 		private $E20R_LICENSING_DEBUG    = false;
+		/**
+		 * License status constants
+		 */
+		private $E20R_LICENSE_MAX_DOMAINS   = 2048;
+		private $E20R_LICENSE_REGISTERED    = 1024;
+		private $E20R_LICENSE_DOMAIN_ACTIVE = 512;
+		private $E20R_LICENSE_ERROR         = 256;
 		// @codingStandardsIgnoreEnd
 
 		/**

@@ -587,6 +587,10 @@ class Defaults_Test extends Unit {
 			array( 'E20R_LICENSE_SERVER', 'eighty20results.com' ),
 			array( 'E20R_LICENSING_DEBUG', false ),
 			array( 'E20R_LICENSE_SERVER_URL', 'https://eighty20results.com' ),
+			array( 'E20R_LICENSE_MAX_DOMAINS', 2048 ),
+			array( 'E20R_LICENSE_REGISTERED ', 1024 ),
+			array( 'E20R_LICENSE_DOMAIN_ACTIVE', 512 ),
+			array( 'E20R_LICENSE_ERROR', 256 ),
 		);
 	}
 
