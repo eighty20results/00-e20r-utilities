@@ -111,6 +111,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		protected $plugin_defaults = null;
 
 		/**
+		 * The Domain name of the server where we're running
+		 *
+		 * @var string $domain_name
+		 */
+		protected $domain_name = '';
+
+		/**
 		 * LicenseSettings constructor.
 		 *
 		 * @param string|null $product_sku
@@ -132,6 +139,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$utils    = new Utilities( $messages );
 			}
 
+			$this->domain_name     = apply_filters( 'e20r_license_domain_to_license', ( $_SERVER['SERVER_NAME'] ?? 'localhost' ) );
 			$this->product_sku     = $product_sku;
 			$this->utils           = $utils;
 			$this->plugin_defaults = $plugin_defaults;
