@@ -211,13 +211,22 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 * Set the SKU and reload setting(s)
 		 *
 		 * @param string $sku
+		 *
+		 * @throws Exceptions\InvalidSettingsKey
+		 * @throws MissingServerURL
 		 */
 		public function set_sku( $sku ) {
 			$this->product_sku = $sku;
 
 			// Update the SKU dependent classes/objects
 			$this->settings = null;
-			$this->settings = new LicenseSettings();
+			$defaults       = new Defaults();
+			try {
+				$this->settings = new LicenseSettings( $this->product_sku, $defaults, $this->utils );
+			} catch ( Exceptions\InvalidSettingsKey | MissingServerURL $e ) {
+				$this->utils->log( $e->getMessage() );
+				throw $e;
+			}
 		}
 
 		/**
@@ -275,20 +284,22 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		/**
 		 * Return the value of new_version
 		 *
-		 * @return bool
+		 * @return bool|null
 		 */
-		public function is_new_version() : bool {
-			return (bool) $this->settings->get( 'new_version' );
+		public function is_new_version(): ?bool {
+			return $this->settings->get( 'new_version' );
 		}
 
 		/**
 		 * Is the specified product licensed for use/updates (check against cached value, if possible)
-		 * The Ccache is configured to time out every 24 hours (or so)
+		 * The Cache is configured to time out every 24 hours (or so)
 		 *
 		 * @param string $product_sku Name of the product/component to test the license for (aka the SKU)
 		 * @param bool   $force       Whether to force the plugin to connect with the license server, regardless of cache value(s)
 		 *
 		 * @return bool
+		 * @test E20R\Tests\WPUnit\License_WPUnitTest::test_is_licensed()
+		 *
 		 */
 		public function is_licensed( $product_sku = null, $force = false ) : bool {
 
@@ -296,89 +307,17 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				if ( $this->log_debug ) {
 					$this->utils->log( 'No Product Stub supplied!' );
 				}
-
 				return false;
 			}
 
 			if ( $this->utils->is_license_server( $this->settings->get( 'plugin_defaults' )->get( 'server_url' ) ) ) {
 				$this->utils->log( 'Running on the server issuing licenses. Skipping check (treating as licensed)' );
-
 				return true;
 			}
 
-			// Make sure the SKU/product stub is upper-cased
-			// $product_sku = strtoupper( $product_sku );
+			$this->utils->log( "Checking license for {$product_sku}" );
 
-			if ( $this->log_debug ) {
-				$this->utils->log( "Checking license for {$product_sku}" );
-			}
-
-			$excluded = apply_filters(
-				'e20r_licensing_excluded',
-				array(
-					'e20r_default_license',
-					'example_gateway_addon',
-					'new_licenses',
-				)
-			);
-
-			$license_settings = $this->settings->all_settings();
-
-			if ( ! isset( $license_settings[ $product_sku ] ) ) {
-
-				if ( $this->log_debug ) {
-					$this->utils->log( "Creating default license settings for {$product_sku}" );
-				}
-
-				if ( ! is_array( $license_settings ) ) {
-					if ( $this->log_debug ) {
-						$this->utils->log( 'Existing license settings need to be initialized' );
-					}
-					$license_settings                 = array();
-					$license_settings[ $product_sku ] = array();
-				}
-
-				if ( $this->log_debug ) {
-					$this->utils->log( "Adding {$product_sku} license settings" );
-				}
-
-				$license_settings[ $product_sku ] = $this->settings->defaults( $product_sku );
-			}
-
-			$is_licensed = $this->server->status( $product_sku, $license_settings, $force );
-
-			/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-			$license_settings = Cache::get( self::CACHE_KEY, self::CACHE_GROUP )
-
-			if ( ! in_array( $product_sku, $excluded ) && ( null === $license_settings || ( true === $force ) ) && false === $is_licensed ) {
-				if ( $this->settings->get( 'plugin_defaults' )->get( 'debug_logging' ) && $force ) {
-					$this->utils->log( "Ignoring cached license status for {$product_sku}" );
-				}
-
-				// Get new/existing settings
-				$license_settings = LicenseSettings::get_settings();
-
-				if ( ! isset( $license_settings[ $product_sku ] ) ) {
-					$license_settings[ $product_sku ] = array();
-				}
-
-				$license_settings[ $product_sku ] = isset( $license_settings[ $product_sku ] ) ?
-					$license_settings[ $product_sku ] :
-					LicenseSettings::defaults( $product_sku );
-
-				if ( $this->log_debug ) {
-					$this->utils->log( "Using license settings for {$product_sku}: " . print_r( $license_settings[ $product_sku ], true ) );
-				}
-				// Update the local cache for the license
-				Cache::set( self::CACHE_KEY, $license_settings, DAY_IN_SECONDS, self::CACHE_GROUP );
-			}
-			*/
-			if ( $this->log_debug ) {
-				$this->utils->log( "Found license settings for {$product_sku}? " . ( ! empty( $license_settings ) ? 'Yes' : 'No' ) );
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-				$this->utils->log( 'Settings are: ' . print_r( $license_settings, true ) );
-			}
-
+			$is_licensed = $this->server->status( $product_sku, $force );
 			return $this->is_active( $product_sku, $is_licensed );
 		}
 
@@ -391,64 +330,51 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 * @return bool
 		 */
 		public function is_active( $product_sku, $is_licensed = false ) : bool {
-
 			$is_active = false;
+			$the_key   = null;
+			$status    = null;
+			$domain    = null;
 
 			if ( 'e20r_default_license' === $product_sku ) {
 				$this->utils->log( 'Processing the Default (non-existent) license. Returning false' );
 				return false;
 			}
 
-			if ( $this->log_debug ) {
-				$this->utils->log( 'New or old Licensing plugin? ' . ( $this->is_new_version() ? 'New' : 'Old' ) );
-			}
+			$new_version = $this->is_new_version();
+			$this->utils->log( 'Use new or old License logic? ' . ( $new_version ? 'New' : 'Old' ) );
 
-			$license_settings = $this->settings->all_settings();
+			if ( true === $new_version ) {
+				$this->utils->log( 'Status of license under new Licensing model... Is licensed? ' . ( $is_licensed ? 'True' : 'False' ) );
 
-			if ( isset( $license_settings[ $product_sku ] ) ) {
-				$this->utils->log( 'SKU specific settings only!' );
-				$settings = $license_settings[ $product_sku ];
-			} else {
-				$this->utils->log( "Have to load the settings for {$product_sku} directly..." );
-				$settings = $license_settings;
-			}
-
-			if ( true === $this->is_new_version() ) {
-
-				if ( $this->log_debug ) {
-					$this->utils->log( 'Status of license under new Licensing plugin... Is licensed? ' . ( $is_licensed ? 'True' : 'False' ) );
-				}
+				$the_key = $this->settings->get( 'the_key' );
+				$status  = $this->settings->get( 'status' );
 
 				$is_active = (
-					! empty( $settings['the_key'] ) &&
-					! empty( $settings['status'] ) &&
-					'active' === $settings['status'] &&
-					true === $is_licensed
+					! empty( $the_key ) &&
+					! empty( $status ) &&
+					'active' === $status
 				);
-			} elseif ( false === $this->is_new_version() ) {
+				$this->utils->log( "Active: '{$is_active}', key: {$the_key}, status: {$status}" );
+			} elseif ( false === $new_version ) {
 
-				if ( $this->log_debug ) {
-					$this->utils->log( 'Status of license under old Licensing plugin... Is licensed? ' . ( $is_licensed ? 'True' : 'False' ) );
-				}
+				$the_key = $this->settings->get( 'key' );
+				$status  = $this->settings->get( 'status' );
+				$domain  = $this->settings->get( 'domain' );
 
 				$is_active = (
-					! empty( $settings['key'] ) &&
-					! empty( $settings['status'] ) &&
-					'active' === $settings['status'] &&
-					$settings['domain'] === $_SERVER['SERVER_NAME'] &&
-					true === $is_licensed
+					! empty( $the_key ) &&
+					! empty( $status ) &&
+					'active' === $status &&
+					( ( $_SERVER['SERVER_NAME'] ?? '' ) === $domain )
 				);
+				$this->utils->log( "Active: '{$is_active}', key: {$the_key}, status: {$status}, domain: {$domain}" );
 			} else {
 				$this->utils->log( 'Neither old nor new Licensing plugin selected!!!' );
-
 				return false;
 			}
 
-			if ( $this->log_debug ) {
-				$this->utils->log( "License status for {$product_sku}: " . ( $is_active ? 'Active' : 'Inactive' ) );
-			}
-
-			return $is_active;
+			$this->utils->log( "License status for {$product_sku}: " . ( $is_active ? 'Active' : 'Inactive' ) );
+			return $is_licensed && $is_active;
 		}
 
 		/**
