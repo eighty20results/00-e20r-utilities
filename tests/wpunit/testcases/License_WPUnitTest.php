@@ -19,18 +19,23 @@
 
 namespace E20R\Tests\WPUnit;
 
+use Codeception\AssertThrows;
 use Codeception\Test\Test;
 use Codeception\TestCase\WPTestCase;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\MissingServerURL;
+use E20R\Licensing\Exceptions\ServerConnectionError;
 use E20R\Licensing\License;
 use E20R\Licensing\LicensePage;
 use E20R\Licensing\LicenseServer;
 use E20R\Licensing\Settings\LicenseSettings;
 use E20R\Licensing\Settings\Defaults;
+use E20R\Licensing\Settings\NewLicenseSettings;
 use E20R\Utilities\Utilities;
 
 class License_WPUnitTest extends WPTestCase {
+
+	use AssertThrows;
 
 	private $server = null;
 
@@ -44,8 +49,9 @@ class License_WPUnitTest extends WPTestCase {
 	 * @param string|null $status
 	 * @param bool        $expected
 	 *
-	 * @covers \E20R\Licensing\License::is_active
+	 * @covers       \E20R\Licensing\License::is_active
 	 * @dataProvider fixture_is_active
+	 * @throws \Exception
 	 */
 	public function test_is_active( string $test_sku, ?bool $is_new_version, $is_licensed, $domain, $status, $expected ) {
 		$m_defaults = $this->makeEmpty(
@@ -146,8 +152,238 @@ class License_WPUnitTest extends WPTestCase {
 		);
 	}
 
-	public function test_activate() {
+	/**
+	 * Unit-test the License::activate() method
+	 *
+	 * @param string               $test_sku
+	 * @param bool                 $is_new_version
+	 * @param string               $store_code
+	 * @param string               $status
+	 * @param \stdClass|bool       $decoded_payload
+	 * @param string|null          $domain
+	 * @param string|null          $thrown_exception
+	 * @param string|int           $expected_status
+	 * @param LicenseSettings|null $expected_settings
+	 *
+	 * @covers \E20R\Licensing\License::activate
+	 * @dataProvider fixture_activate
+	 * @throws \Exception|\Throwable
+	 */
+	public function test_activate_license( $test_sku, $is_new_version, $store_code, $status, $decoded_payload, $domain, $thrown_exception, $expected_status, $expected_settings ) {
+		$m_defaults = $this->makeEmpty(
+			Defaults::class,
+			array(
+				'get'      => function( $param_name ) use ( $is_new_version, $store_code ) {
+					$value = null;
+					if ( 'debug_logging' === $param_name ) {
+						$value = true;
+					}
+					if ( 'version' === $param_name ) {
+						$value = $is_new_version;
+					}
+					if ( 'store_code' === $param_name ) {
+						$value = $store_code;
+					}
+					return $value;
+				},
+				'constant' => function( $constant_name ) {
+					$value = -1;
+					switch ( $constant_name ) {
+						case 'E20R_LICENSE_ERROR':
+							$value = 256;
+							break;
+						case 'E20R_LICENSE_MAX_DOMAINS':
+							$value = 2048;
+							break;
+						case 'E20R_LICENSE_REGISTERED':
+							$value = 1024;
+							break;
+						case 'E20R_LICENSE_DOMAIN_ACTIVE':
+							$value = 512;
+							break;
+						case 'E20R_LICENSE_BLOCKED':
+							$value = 128;
+							break;
+					}
 
+					return $value;
+				},
+			)
+		);
+		$m_settings = $this->makeEmpty(
+			LicenseSettings::class,
+			array(
+				'get'      => function( $parameter ) use ( $m_defaults, $status ) {
+					$value = null;
+					if ( 'plugin_defaults' === $parameter ) {
+						$value = $m_defaults;
+					}
+					if ( 'server_url' === $parameter ) {
+						$value = 'https://eighty20results.com/';
+					}
+					if ( in_array( $parameter, array( 'key', 'the_key' ), true ) ) {
+						$value = 'license_key_id';
+					}
+					if ( 'status' === $parameter ) {
+						$value = $status;
+					}
+					return $value;
+				},
+				'defaults' => array(),
+			)
+		);
+		$m_page     = $this->makeEmpty(
+			LicensePage::class,
+		);
+		$m_server   = $this->makeEmpty(
+			LicenseServer::class,
+			array(
+				'send' => function( $api_params ) use ( $decoded_payload ) {
+					return $decoded_payload;
+				},
+			)
+		);
+		$m_utils    = $this->makeEmpty(
+			Utilities::class,
+			array(
+				'log'         => function( $msg ) {
+					error_log( $msg ); // phpcs:ignore
+				},
+				'add_message' => null,
+			)
+		);
+		// Mocking parts of the License() so we can test the is_licensed() method
+		// without having to run through the other methods
+		$m_license = $this->construct(
+			License::class,
+			array( $test_sku, $m_settings, $m_server, $m_page, $m_utils ),
+			array(
+				'is_new_version' => function() use ( $is_new_version ) {
+					return $is_new_version;
+				},
+			),
+		);
+
+		if ( ! empty( $thrown_exception ) ) {
+			$this->assertThrows(
+				$thrown_exception,
+				function() use ( $m_license, $test_sku ) {
+					$m_license->activate( $test_sku );
+				}
+			);
+		} else {
+			$result = $m_license->activate( $test_sku );
+			self::assertIsArray( $result );
+			self::assertSame( $expected_status, $result['status'] );
+			if ( $expected_settings ) {
+				self::assertInstanceOf( get_class( $expected_settings ), $result['settings'] );
+			} else {
+				self::assertNull( $result['settings'] );
+			}
+		}
+	}
+
+	/**
+	 * Fixture for the License::activate() WPUnit test
+	 * @return array
+	 */
+	public function fixture_activate() {
+		// test_sku, is_new_version, store_code, status, decoded_payload, domain, thrown_exception, expected_status, expected_settings
+		$defaults = new Defaults();
+
+		return array(
+			array( 'E20R_LICENSE_TEST', false, 'dummy_store_1', 'active', null, 'localhost', ServerConnectionError::class, null, null ),
+			array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', false, 'localhost', null, $defaults->constant( 'E20R_LICENSE_BLOCKED' ), null ),
+			array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', $this->make_payload( 'error', 1 ), 'localhost', null, $defaults->constant( 'E20R_LICENSE_ERROR' ), null ),
+		);
+	}
+
+	/**
+	 * Create a (fake) decoded request response (i.e. JSON -> object)
+	 *
+	 * @param string $type
+	 * @param int    $error_status
+	 *
+	 * @return \stdClass
+	 */
+	private function make_payload( $type = 'success', $error_status = 200 ) {
+		$payload = $this->default_payload();
+
+		switch ( $type ) {
+			case 'success':
+				$payload->error   = false;
+				$payload->status  = $error_status;
+				$payload->message = 'Dummy text for successful activation';
+				break;
+			case 'error':
+				$payload->error  = true;
+				$payload->errors = $this->select_error( $error_status );
+				$payload->status = 500;
+				break;
+		}
+
+		return $payload;
+	}
+
+	/**
+	 * Return error info based on the status code supplied
+	 *
+	 * @param int $status_code
+	 *
+	 * @return array
+	 */
+	private function select_error( $status_code ) {
+		$error_list = array(
+			1   => 'The store code provided do not match the one set for the API',
+			2   => 'The license key provided do not match the license key string format established by the API',
+			3   => 'SKU provided do not match the product SKU associated with the license key',
+			4   => 'License key provided do not match the license key string format established by the API',
+			5   => 'The license key provided was not found in the database',
+			100 => 'No SKU was provided in the request',
+			101 => 'No license key code was provided in the request',
+			102 => 'No store code was provided in the request',
+			103 => 'No activation ID was provided in the request',
+			104 => 'No domain was provided in the request',
+			200 => 'The license key provided has expired',
+			201 => 'License key activation limit reached. Deactivate one of the registered activations to proceed',
+			202 => 'License key domain activation limit reached. Deactivate one or more of the registered activations to proceed',
+			203 => 'Invalid activation',
+		);
+
+		return array( $status_code => array( $error_list[ $status_code ] ) );
+	}
+
+	/**
+	 * Generate an empty (mock) object for the LicenseServer->send() method
+	 *
+	 * @return \stdClass
+	 */
+	private function default_payload(): \stdClass {
+		$defaults = new Defaults();
+		$server   = $defaults->constant( 'E20R_LICENSE_SERVER_URL' );
+
+		$new_payload                           = new \stdClass();
+		$new_payload->error                    = false;
+		$new_payload->errors                   = array();
+		$new_payload->status                   = null;
+		$new_payload->message                  = null;
+		$new_payload->data                     = new \stdClass();
+		$new_payload->data->expire             = time();
+		$new_payload->data->activation_id      = null;
+		$new_payload->data->expire_date        = date_i18n( 'Y-M-D h:s', time() );
+		$new_payload->data->timezone           = 'UTC';
+		$new_payload->data->the_key            = null;
+		$new_payload->data->url                = $server . '/my-account/view-license-key/?key=E20R_LICENSE_TEST';
+		$new_payload->data->status             = 'inactive';
+		$new_payload->data->allow_offline      = true;
+		$new_payload->data->offline_interval   = 'days';
+		$new_payload->data->offline_value      = 1;
+		$new_payload->data->ctoken             = null;
+		$new_payload->data->downloadable       = new \stdClass();
+		$new_payload->data->downloadable->name = 'pmpro-import-members-from-csv-2.0';
+		$new_payload->data->downloadable->url  = $server . '/protected-downloads/pmpro-import-members-from-csv.zip';
+
+		return $new_payload;
 	}
 
 	/**
@@ -307,6 +543,7 @@ class License_WPUnitTest extends WPTestCase {
 				'timezone'          => 'UTC',
 				'the_key'           => '',
 				'url'               => '',
+				'domain_name'       => '',
 				'has_expired'       => true,
 				'status'            => 'cancelled',
 				'allow_offline'     => false,
@@ -318,16 +555,17 @@ class License_WPUnitTest extends WPTestCase {
 
 		if ( 'old' === $type ) {
 			$settings = array(
-				'product'    => '',
-				'key'        => null,
-				'renewed'    => null,
-				'domain'     => null,
-				'expires'    => null,
-				'status'     => '',
-				'first_name' => '',
-				'last_name'  => '',
-				'email'      => '',
-				'timestamp'  => null,
+				'product'     => '',
+				'key'         => null,
+				'renewed'     => null,
+				'domain'      => null,
+				'domain_name' => '',
+				'expires'     => null,
+				'status'      => '',
+				'first_name'  => '',
+				'last_name'   => '',
+				'email'       => '',
+				'timestamp'   => null,
 			);
 		}
 		$all_settings[ $sku ] = $settings;
