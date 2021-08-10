@@ -61,9 +61,11 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 		 * @param bool   $is_active
 		 *
 		 * @return bool
+		 * @throws \Exception
 		 */
 		public static function is_active( string $product_sku, array $settings, bool $is_active ): bool {
 
+			_deprecated_function( 'Licensing::is_active()', '5.8', 'License::is_active()' );
 			try {
 				$new_settings = new LicenseSettings( $product_sku );
 			} catch ( InvalidSettingsKey | MissingServerURL $e ) {
@@ -74,7 +76,7 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 				);
 				return false;
 			}
-			$new_settings->merge( $product_sku, $settings );
+			$new_settings->merge();
 
 			$license = new License( $product_sku, $new_settings );
 
@@ -91,6 +93,7 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 		 * @throws Exceptions\MissingServerURL
 		 */
 		public static function is_expiring( $product_sku ) {
+			_deprecated_function( 'Licensing::is_expiring()', '5.8', 'License::is_expiring()' );
 			$license = new License( $product_sku );
 			return $license->is_expiring( $product_sku );
 		}
@@ -106,6 +109,7 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 		 * @throws Exceptions\MissingServerURL
 		 */
 		public static function is_licensed( ?string $product_sku = null, bool $force = false ): bool {
+			_deprecated_function( 'Licensing::is_licensed()', '5.8', 'License::is_licensed()' );
 			$license = new License( $product_sku );
 
 			return $license->is_licensed( $product_sku, $force );
@@ -121,6 +125,7 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 		 * @throws Exceptions\MissingServerURL
 		 */
 		public static function activate( $product_sku ): array {
+			_deprecated_function( 'Licensing::activate()', '5.8', 'License::activate()' );
 			$license = new License( $product_sku );
 
 			return $license->activate( $product_sku );
@@ -136,7 +141,7 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 		 * @throws NoLicenseKeyFound
 		 */
 		public static function deactivate( $product_sku, $settings = null ): bool {
-
+			_deprecated_function( 'Licensing::deactivate()', '5.8', 'License::deactivate()' );
 			try {
 				$new_settings = new LicenseSettings( $product_sku );
 
@@ -177,6 +182,7 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 		 * Compatibility function replacing the old Licensing::register()
 		 */
 		public static function register() {
+			_deprecated_function( 'Licensing::register()', '5.8', 'License::register()' );
 			$license = new License();
 			$license->register();
 		}
