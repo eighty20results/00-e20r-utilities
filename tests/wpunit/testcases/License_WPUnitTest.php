@@ -42,6 +42,8 @@ class License_WPUnitTest extends WPTestCase {
 	private $page = null;
 
 	/**
+	 * Unit test the License::is_active method
+	 *
 	 * @param string      $test_sku
 	 * @param bool|null   $is_new_version
 	 * @param bool        $is_licensed
@@ -391,7 +393,7 @@ class License_WPUnitTest extends WPTestCase {
 	}
 
 	/**
-	 * WP Unit test for the is_licensed() method
+	 * Unit test for the License::is_licensed() method
 	 *
 	 * @param bool $is_active
 	 * @param bool $license_status
