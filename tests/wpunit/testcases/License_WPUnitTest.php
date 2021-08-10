@@ -169,7 +169,7 @@ class License_WPUnitTest extends WPTestCase {
 	 * @dataProvider fixture_activate
 	 * @throws \Exception|\Throwable
 	 */
-	public function test_activate_license( $test_sku, $is_new_version, $store_code, $status, $decoded_payload, $domain, $thrown_exception, $expected_status, $expected_settings ) {
+	public function test_activate_license( $test_sku, $is_new_version, $store_code, $status, $decoded_payload, $domain, $thrown_exception, $expected_status, ?LicenseSettings $expected_settings ) {
 		$m_defaults = $this->makeEmpty(
 			Defaults::class,
 			array(
