@@ -146,7 +146,7 @@ if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
 				$new_settings = new LicenseSettings( $product_sku );
 
 				if ( ! empty( $settings ) ) {
-					$new_settings = $new_settings->merge( $product_sku, $settings );
+					$new_settings = $new_settings->merge( $settings );
 				}
 			} catch ( InvalidSettingsKey $ike ) {
 				Utilities::get_instance()->add_message(

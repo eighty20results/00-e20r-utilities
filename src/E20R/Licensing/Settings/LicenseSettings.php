@@ -612,12 +612,12 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		/**
 		 * Merge existing (or default) settings for the product with the new settings
 		 *
-		 * @param string $product_sku
 		 * @param array  $new_settings
 		 *
-		 * @return array
+		 * @return LicenseSettings
+		 * @throws \Exception
 		 */
-		public function merge( $product_sku, $new_settings ) {
+		public function merge( $new_settings ) {
 
 			$old_settings = $this->all_settings();
 
@@ -641,21 +641,42 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$this->utils->log( 'Updated settings (after merge...) ' . print_r( $old_settings, true ) );
 			}
 
-			return $old_settings;
+			// Update settings in class (TODO: Account for user's product sku/activation key)
+			foreach ( $old_settings as $key => $value ) {
+				try {
+					$this->set( $key, $value );
+				} catch ( \Exception $e ) {
+					$this->utils->log( $e->getMessage() );
+					throw $e;
+				}
+			}
+			return $this; // FIXME: Don't return self!
+		}
+
+		/**
+		 * Keep for backwards compatibility reasons
+		 *
+		 * @param string|null $sku
+		 * @param array $settings
+		 *
+		 * @return bool
+		 * @throws \Exception
+		 */
+		public function update( $sku, $settings ) {
+			_deprecated_function( 'License::update()', '5.8', 'License::save()' );
+			$this->merge( $settings );
+			return $this->save();
 		}
 
 		/**
 		 * Save the license settings
 		 *
-		 * @param string|null $product_sku
-		 * @param array  $new_settings
-		 *
-		 * @return bool|array
+		 * @return bool
 		 */
-		public function update( $product_sku, $new_settings ) {
+		public function save() {
+			// TODO: This function needs to load the existing settings from the DB and then and saves the current settings
 
 			$license_settings = $this->all_settings();
-
 			/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 			if ( $this->to_debug ) {
 				$this->utils->log( "Settings before update: " . print_r( $license_settings, true ) );
@@ -666,15 +687,14 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			// Make sure the new settings make sense
 			if ( is_array( $license_settings ) && in_array( 'fieldname', array_keys( $license_settings ), true ) ) {
 				if ( $this->to_debug ) {
-					$this->utils->log( "Unexpected settings layout while processing {$product_sku}!" );
+					$this->utils->log( "Unexpected settings layout while processing {$this->product_sku}!" );
 				}
-				$license_settings                 = $this->defaults();
-				$license_settings[ $product_sku ] = $new_settings;
+				$license_settings[ $this->product_sku ] = $this->defaults();
 			}
 
 			// Need to update the settings for a (possibly) pre-existing product
-			if ( ! is_null( $product_sku ) && ! empty( $new_settings ) && ! in_array(
-				$product_sku,
+			if ( ! is_null( $this->product_sku ) && ! empty( $new_settings ) && ! in_array(
+				$this->product_sku,
 				array(
 					'e20r_default_license',
 					'example_gateway_addon',
@@ -687,8 +707,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				if ( $this->to_debug ) {
 					$this->utils->log( "Updating license settings for {$product_sku}" );
 				}
-			} elseif ( ! is_null( $product_sku ) && empty( $new_settings ) && ( ! in_array(
-				$product_sku,
+			} elseif ( ! is_null( $this->product_sku ) && empty( $new_settings ) && ( ! in_array(
+				$this->product_sku,
 				array(
 					'e20r_default_license',
 					'example_gateway_addon',
@@ -712,9 +732,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$this->utils->log( 'Saving: ' . print_r( $license_settings, true ) );
 			}
 
-			update_option( 'e20r_license_settings', $license_settings, 'yes' );
-
-			return $license_settings;
+			return update_option( 'e20r_license_settings', $license_settings, 'yes' );
 		}
 	}
 }
