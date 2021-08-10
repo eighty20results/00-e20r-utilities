@@ -591,6 +591,7 @@ class Defaults_Test extends Unit {
 			array( 'E20R_LICENSE_REGISTERED ', 1024 ),
 			array( 'E20R_LICENSE_DOMAIN_ACTIVE', 512 ),
 			array( 'E20R_LICENSE_ERROR', 256 ),
+			array( 'E20R_LICENSE_BLOCKED', 128 ),
 		);
 	}
 
