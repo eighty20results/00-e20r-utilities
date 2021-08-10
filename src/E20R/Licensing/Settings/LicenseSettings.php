@@ -382,16 +382,21 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @return array
 		 */
 		public function all_settings() {
+			$parent_props = array();
 			$reflection   = new \ReflectionClass( $this );
+			$parent       = $reflection->getParentClass();
 			$child_props  = $reflection->getProperties(
 				\ReflectionProperty::IS_PUBLIC |
 				\ReflectionProperty::IS_PROTECTED |
 				\ReflectionProperty::IS_PRIVATE
 			);
-			$parent_props = $reflection->getParentClass()->getProperties(
-				\ReflectionProperty::IS_PUBLIC |
-				\ReflectionProperty::IS_PROTECTED
-			);
+
+			if ( ! empty( $parent ) ) {
+				$parent_props = $parent->getProperties(
+					\ReflectionProperty::IS_PUBLIC |
+					\ReflectionProperty::IS_PROTECTED
+				);
+			}
 
 			$settings = array();
 
