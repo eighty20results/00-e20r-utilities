@@ -494,10 +494,10 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 							if ( $this->to_debug ) {
 								// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-								$this->utils->log( "Status from activation {$result['status']} vs " . License::E20R_LICENSE_DOMAIN_ACTIVE . ' => ' . print_r( $result, true ) );
+								$this->utils->log( "Status from activation {$result['status']} vs " . $this->plugin_defaults->constant( 'E20R_LICENSE_DOMAIN_ACTIVE' ) . ' => ' . print_r( $result, true ) );
 							}
 
-							if ( License::E20R_LICENSE_DOMAIN_ACTIVE === intval( $result['status'] ) ) {
+							if ( $this->plugin_defaults->constant( 'E20R_LICENSE_DOMAIN_ACTIVE' ) === intval( $result['status'] ) ) {
 
 								if ( $this->to_debug ) {
 									$this->utils->log( 'This license & server combination is already active on the Licensing server' );
@@ -662,9 +662,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @return bool
 		 * @throws \Exception
 		 */
-		public function update( $sku, $settings ) {
+		public function update( $sku = null, $settings = null ) {
 			_deprecated_function( 'License::update()', '5.8', 'License::save()' );
-			$this->merge( $settings );
+			if ( empty( $settings ) ) {
+				$this->merge( $settings );
+			}
 			return $this->save();
 		}
 
