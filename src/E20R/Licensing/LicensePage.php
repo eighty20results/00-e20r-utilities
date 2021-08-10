@@ -419,7 +419,7 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 								// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
 								sprintf(
 									'on or before: %1$s',
-									date_i18n(
+									wp_date(
 										get_option( 'date_format' ),
 										$args['expiration_ts']
 									)

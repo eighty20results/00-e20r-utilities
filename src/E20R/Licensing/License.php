@@ -416,7 +416,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			if ( $this->log_debug ) {
 				$this->utils->log(
 					"Expiration date for {$product_sku}: " .
-					date_i18n( 'Y-m-d H:i:s', $expires )
+					wp_date( 'Y-m-d H:i:s', $expires )
 				);
 			}
 
@@ -509,7 +509,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				$this->utils->log( 'New Licensing server returned error...' );
 
 				$state          = $plugin_defaults->constant( 'E20R_LICENSE_ERROR' );
-				$this->settings = new LicenseSettings();
+				$this->settings = new LicenseSettings( $product_sku );
 
 				// translators: The substitution values come from the error object
 				$msg = esc_attr__( 'Activation error: %1$s -> %2$s', '00-e20r-utilities' );

@@ -611,7 +611,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				if ( ! empty( $user_level->cycle_number ) && ! empty( $user_level->trial_limit ) ) {
 
 					$trial_duration = $user_level->cycle_number * $user_level->trial_limit;
-					$start_date     = date_i18n( 'Y-m-d H:i:s', $start_ts );
+					$start_date     = wp_date( 'Y-m-d H:i:s', $start_ts );
 					$trial_ends_ts  = strtotime(
 						sprintf( '%1$s +%2$s %3$s', $start_date, $trial_duration, $user_level->cycle_period ) // @phpstan-ignore-line
 					);
@@ -680,7 +680,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			$log_file = sprintf(
 				'debug_%1$s.log',
-				date_i18n( 'Y_M_D', time() )
+				wp_date( 'Y_M_D', time() )
 			);
 
 			$upload_dir_info = wp_upload_dir();
