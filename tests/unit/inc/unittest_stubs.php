@@ -50,6 +50,13 @@ function e20r_unittest_stubs() {
 			}
 		);
 
+	Functions\when( 'wp_date' )
+		->justReturn(
+			function( $date_string, $time ) {
+				return date( $date_string, $time ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
+			}
+		);
+
 	try {
 		Functions\expect( 'get_option' )
 			->with( 'home' )
