@@ -524,7 +524,16 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 					$this->utils->log( $msg );
 				}
 
-				$this->settings->update( $this->product_sku );
+				try {
+					$this->settings->update();
+				} catch ( \Exception $exception ) {
+					$this->utils->add_message(
+						$exception->getMessage(),
+						'error',
+						'backend'
+					);
+					$state = $plugin_defaults->constant( 'E20R_LICENSE_BLOCKED' );
+				}
 
 				return array(
 					'status'   => $state,
@@ -545,14 +554,17 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				}
 
 				$new_settings = (array) $decoded->data;
-				$this->settings->merge( $product_sku, $new_settings );
-				//              foreach ( $new_settings as $key => $value ) {
-				//                  $existing_settings[ $key ] = $value;
-				//              }
+				try {
+					$this->settings->merge( $new_settings );
+				} catch ( \Exception $e ) {
+					$this->utils->add_message( $e->getMessage(), 'error', 'background' );
+					return array(
+						'status'   => $plugin_defaults->constant( 'E20R_LICENSE_BLOCKED' ),
+						'settings' => $this->settings,
+					);
+				}
 
 				$this->utils->add_message( $decoded->message, 'notice', 'backend' );
-
-				//              $settings = $existing_settings;
 				$state = $plugin_defaults->constant( 'E20R_LICENSE_DOMAIN_ACTIVE' );
 			}
 
@@ -620,7 +632,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 					'store_code'    => $this->settings->get( 'plugin_defaults' )->get( 'store_code' ),
 					'sku'           => $this->settings->get( 'product_sku' ),
 					'license_key'   => $this->settings->get( 'license_key' ),
-					'domain'        => isset( $_SERVER['SERVER_NAME'] ) ? $_SERVER['SERVER_NAME'] : 'localhost',
+					'domain'        => $_SERVER['SERVER_NAME'] ?? 'localhost',
 					'activation_id' => $this->settings->get( 'activation_id' ),
 				);
 			}
