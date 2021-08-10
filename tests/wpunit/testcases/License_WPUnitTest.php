@@ -275,8 +275,8 @@ class License_WPUnitTest extends WPTestCase {
 			$result = $m_license->activate( $test_sku );
 			self::assertIsArray( $result );
 			self::assertSame( $expected_status, $result['status'] );
-			if ( $expected_settings ) {
-				self::assertInstanceOf( get_class( $expected_settings ), $result['settings'] );
+			if ( ! empty( $expected_settings ) ) {
+				self::assertSame( $expected_settings, get_class( $result['settings'] ) );
 			} else {
 				self::assertNull( $result['settings'] );
 			}
@@ -288,13 +288,17 @@ class License_WPUnitTest extends WPTestCase {
 	 * @return array
 	 */
 	public function fixture_activate() {
-		// test_sku, is_new_version, store_code, status, decoded_payload, domain, thrown_exception, expected_status, expected_settings
+		$lsc      = LicenseSettings::class;
 		$defaults = new Defaults();
+		$active   = $defaults->constant( 'E20R_LICENSE_DOMAIN_ACTIVE' );
+		$blocked  = $defaults->constant( 'E20R_LICENSE_BLOCKED' );
+		$error    = $defaults->constant( 'E20R_LICENSE_ERROR' );
 
+		// test_sku, is_new_version, store_code, status, decoded_payload, domain, thrown_exception, expected_status, expected_settings
 		return array(
 			array( 'E20R_LICENSE_TEST', false, 'dummy_store_1', 'active', null, 'localhost', ServerConnectionError::class, null, null ),
-			array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', false, 'localhost', null, $defaults->constant( 'E20R_LICENSE_BLOCKED' ), null ),
-			array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', $this->make_payload( 'error', 1 ), 'localhost', null, $defaults->constant( 'E20R_LICENSE_ERROR' ), null ),
+			array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', false, 'localhost', null, $blocked, null ),
+			array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', $this->make_payload( 'error', 1 ), 'localhost', null, $blocked, $lsc ),
 		);
 	}
 
