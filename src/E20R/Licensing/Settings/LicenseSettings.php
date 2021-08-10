@@ -490,14 +490,15 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 								$this->utils->log( "Attempting remote activation for {$product} " );
 							}
 
-							$result = $licensing->activate( $product );
+							$result          = $licensing->activate( $product );
+							$active_constant = $this->plugin_defaults->constant( 'E20R_LICENSE_DOMAIN_ACTIVE' );
 
 							if ( $this->to_debug ) {
 								// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-								$this->utils->log( "Status from activation {$result['status']} vs " . $this->plugin_defaults->constant( 'E20R_LICENSE_DOMAIN_ACTIVE' ) . ' => ' . print_r( $result, true ) );
+								$this->utils->log( "Status from activation {$result['status']} vs " . $active_constant . ' => ' . print_r( $result, true ) );
 							}
 
-							if ( $this->plugin_defaults->constant( 'E20R_LICENSE_DOMAIN_ACTIVE' ) === intval( $result['status'] ) ) {
+							if ( intval( $result['status'] ) === $active_constant ) {
 
 								if ( $this->to_debug ) {
 									$this->utils->log( 'This license & server combination is already active on the Licensing server' );
