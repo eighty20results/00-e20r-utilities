@@ -142,7 +142,7 @@ class OldLicenseSettings extends LicenseSettings {
 				$current_user->last_name;
 			$this->email      = $current_user->user_email;
 		}
-		$this->expires = gmdate( 'dd-mm-yy\Th:i:s' );
+		$this->expires = gmdate( 'D-M-Y\Th:i:s' );
 		$this->status  = 'expired';
 
 		$this->product     = $product_sku;
