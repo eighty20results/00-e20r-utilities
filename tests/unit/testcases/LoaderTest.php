@@ -30,6 +30,8 @@ use Brain\Monkey\Functions;
 use Brain\Monkey\Filters;
 use Brain\Monkey\Actions;
 
+use function E20R\Tests\Unit\Fixtures\e20r_unittest_stubs;
+
 
 class LoaderTest extends Unit {
 
@@ -42,9 +44,9 @@ class LoaderTest extends Unit {
 		parent::setUp();
 		Monkey\setUp();
 
-		$this->loadMocks();
 		$this->loadFiles();
 		e20r_unittest_stubs();
+		$this->loadStubbedClasses();
 	}
 
 	protected function tearDown(): void {
@@ -55,7 +57,7 @@ class LoaderTest extends Unit {
 	/**
 	 * Classes that can be mocked for the entire test
 	 */
-	public function loadMocks() {
+	public function loadStubbedClasses() {
 		$this->m_utils = $this->makeEmpty(
 			Utilities::class,
 			array(

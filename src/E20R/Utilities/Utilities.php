@@ -21,6 +21,7 @@ namespace E20R\Utilities;
 
 // Disallow direct access to the class definition
 
+use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Settings\Defaults;
 use Exception;
@@ -735,7 +736,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$req_time         = isset( $_SERVER['REQUEST_TIME'] ) ? $_SERVER['REQUEST_TIME'] : time();
 			$thread_id        = sprintf( '%08x', abs( crc32( $remote_addr . $req_time ) ) );
 			$tz_string        = get_option( 'timezone_string' );
-			$timestamp        = gmdate( 'H:m:s', strtotime( $tz_string ) );
+			$timestamp        = wp_date( 'H:m:s', strtotime( $tz_string ) );
 			$calling_function = $this->who_called_me();
 
 			// Log the message to the custom E20R debug log
@@ -1223,6 +1224,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * @param string|null $url - The URL to check the license server name against
 		 *
 		 * @return bool
+		 * @throws InvalidSettingsKey|BadOperation
 		 */
 		public function is_license_server( ?string $url = null, $defaults = null ): bool {
 
@@ -1234,18 +1236,10 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				$url = home_url();
 			}
 
-			try {
-				return (
-					false !== stripos( $url, $defaults->constant( 'E20R_LICENSE_SERVER' ) ) ||
-					false !== stripos( $url, $defaults->constant( 'E20R_LICENSE_SERVER_URL' ) )
-				);
-				// @codeCoverageIgnoreStart
-			} catch ( InvalidSettingsKey $e ) {
-				$me = self::$instance;
-				$me->log( $e->getMessage() );
-				return false;
-			}
-			// @codeCoverageIgnoreEnd
+			return (
+				false !== stripos( $url, $defaults->constant( 'E20R_LICENSE_SERVER' ) ) ||
+				false !== stripos( $url, $defaults->constant( 'E20R_LICENSE_SERVER_URL' ) )
+			);
 		}
 
 		/**

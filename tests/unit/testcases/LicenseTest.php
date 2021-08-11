@@ -40,6 +40,8 @@ use Brain\Monkey\Filters;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use function Brain\Monkey\setUp;
 use function Brain\Monkey\tearDown;
+use function E20R\Tests\Unit\Fixtures\e20r_unittest_stubs;
+use function E20R\Tests\Unit\Fixtures\fixture_upload_dir;
 
 class LicenseTest extends Unit {
 
@@ -79,10 +81,11 @@ class LicenseTest extends Unit {
 		parent::setUp();
 		setUp();
 
-		$this->loadStubs();
-		$this->loadDefaultMocks();
 		$this->loadFiles();
 		e20r_unittest_stubs();
+
+		$this->loadStubs();
+		$this->loadStubbedClasses();
 	}
 
 	/**
@@ -108,7 +111,7 @@ class LicenseTest extends Unit {
 	 *
 	 * @throws \Exception
 	 */
-	protected function loadDefaultMocks() {
+	protected function loadStubbedClasses() {
 
 		$defaults_mock = $this->makeEmpty(
 			Defaults::class,
@@ -168,8 +171,8 @@ class LicenseTest extends Unit {
 	 * Load source files for the Unit Test to execute
 	 */
 	public function loadFiles() {
-		require_once __DIR__ . '/../../../inc/autoload.php';
 		require_once __DIR__ . '/../inc/unittest_stubs.php';
+		require_once __DIR__ . '/../../../inc/autoload.php';
 	}
 
 	public function test_ajax_handler_verify_license() {
@@ -216,13 +219,6 @@ class LicenseTest extends Unit {
 	 * @covers \E20R\Licensing\License::get_license_page_url()
 	 */
 	public function test_get_license_page_url( string $stub, string $expected ) {
-
-		try {
-			Functions\expect( 'esc_url_raw' )
-				->andReturnFirstArg();
-		} catch ( \Exception $e ) {
-			self::assertFalse( true, 'Error: ' . $e->getMessage() );
-		}
 
 		try {
 			Functions\expect( 'add_query_arg' )
@@ -533,6 +529,13 @@ class LicenseTest extends Unit {
 	 * @throws \Exception|\Throwable
 	 */
 	public function test_activate_license( $test_sku, $is_new_version, $store_code, $status, $decoded_payload, $domain, $thrown_exception, $expected_status, ?string $expected_settings ) {
+		Functions\expect( 'wp_upload_dir' )
+			->zeroOrMoreTimes()
+			->andReturnUsing(
+				function() {
+					return fixture_upload_dir();
+				}
+			);
 		$m_defaults = $this->makeEmpty(
 			Defaults::class,
 			array(
@@ -610,9 +613,14 @@ class LicenseTest extends Unit {
 			Utilities::class,
 			array(
 				'log'         => function( $msg ) {
-					error_log( $msg ); // phpcs:ignore
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( "Stubbed log(): {$msg}" );
 				},
-				'add_message' => null,
+				'add_message' => function( $msg, $type, $location ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( "Stubbed WP notice: {$msg}, type: {$type}, location: {$location}" );
+					self::assertSame( 'backend', $location );
+				},
 			)
 		);
 		// Mocking parts of the License() so we can test the is_licensed() method
