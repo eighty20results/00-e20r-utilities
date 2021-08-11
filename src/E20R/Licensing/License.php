@@ -22,6 +22,8 @@
 
 namespace E20R\Licensing;
 
+use E20R\Licensing\Exceptions\ErrorSavingSettings;
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Exceptions\ServerConnectionError;
 use E20R\Licensing\Settings\Defaults;
@@ -526,7 +528,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 
 				try {
 					$this->settings->update();
-				} catch ( \Exception $exception ) {
+				} catch ( InvalidSettingsKey | \Exception $exception ) {
 					$this->utils->add_message(
 						$exception->getMessage(),
 						'error',
@@ -556,8 +558,16 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				$new_settings = (array) $decoded->data;
 				try {
 					$this->settings->merge( $new_settings );
-				} catch ( \Exception $e ) {
-					$this->utils->add_message( $e->getMessage(), 'error', 'background' );
+				} catch ( ErrorSavingSettings $e ) {
+					$this->utils->add_message(
+						sprintf(
+							// translators: %1$s - Error message from the LicenseSettings::merge() operation
+							esc_attr__( 'Error merging settings: %1$s', '00-e20r-utilities' ),
+							$e->getMessage()
+						),
+						'error',
+						'background'
+					);
 					return array(
 						'status'   => $plugin_defaults->constant( 'E20R_LICENSE_BLOCKED' ),
 						'settings' => $this->settings,
