@@ -16,8 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+namespace E20R\Tests\Unit\Fixtures;
 
 use Brain\Monkey\Functions;
+use Mockery;
 
 function e20r_unittest_stubs() {
 	Functions\when( 'wp_die' )
@@ -50,8 +52,9 @@ function e20r_unittest_stubs() {
 			}
 		);
 
-	Functions\when( 'wp_date' )
-		->justReturn(
+	Functions\expect( 'wp_date' )
+		->with( Mockery::contains( 'Y_M_D' ) )
+		->andReturnUsing(
 			function( $date_string, $time ) {
 				return date( $date_string, $time ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
 			}
@@ -65,9 +68,6 @@ function e20r_unittest_stubs() {
 		echo 'Error: ' . $e->getMessage(); // phpcs:ignore
 	}
 
-	Functions\expect( 'home_url' )
-		->andReturn( 'https://localhost:7254/' );
-
 	Functions\expect( 'plugins_url' )
 		->andReturn( 'https://localhost:7254/wp-content/plugins/' );
 
@@ -78,5 +78,36 @@ function e20r_unittest_stubs() {
 	} catch ( \Exception $e ) {
 		echo 'Error: ' . $e->getMessage(); // phpcs:ignore
 	}
+
+	try {
+		Functions\expect( 'esc_url_raw' )
+			->zeroOrMoreTimes()
+			->andReturnFirstArg();
+	} catch ( \Exception $e ) {
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		error_log( 'esc_url_raw() mock error: ' . esc_attr( $e->getMessage() ) );
+	}
+
+	Functions\when( '_deprecated_function' )
+		->alias(
+			function( $depr_function, $wp_version, $new_function ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( "{$depr_function} is deprecated as of WordPress v{$wp_version}. Please use {$new_function} instead" );
+			}
+		);
 }
 
+/**
+ * Returns the WP_UPLOAD_DIR structure
+ *
+ * @return array
+ */
+function fixture_upload_dir() {
+	return array(
+		'path'    => __DIR__ . '/../../_output/2021/08/',
+		'url'     => 'https://localhost:7254/wp-content/uploads/2021/08/',
+		'subdir'  => '2021/08/',
+		'basedir' => __DIR__ . '/../../_output/',
+		'error'   => false,
+	);
+}
