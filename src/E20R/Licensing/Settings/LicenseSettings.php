@@ -21,6 +21,7 @@
 
 namespace E20R\Licensing\Settings;
 
+use E20R\Licensing\Exceptions\ErrorSavingSettings;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Exceptions\NoLicenseKeyFound;
@@ -251,7 +252,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			$settings = get_option( 'e20r_license_settings', $defaults );
 
 			if ( empty( $this->all_settings ) || (
-					1 <= count( $this->all_settings ) && 'e20r_default_license' === $product_sku )
+				( ! empty( $this->all_settings ) && 1 <= count( $this->all_settings ) && 'e20r_default_license' === $product_sku ) )
 			) {
 				$this->utils->log( 'Overwriting license settings with defaults' );
 				$settings = $defaults;
@@ -295,7 +296,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @return bool
 		 *
-		 * @throws \Exception
+		 * @throws InvalidSettingsKey
 		 */
 		public function set( string $key, $value = null ): bool {
 
@@ -618,12 +619,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		/**
 		 * Merge existing (or default) settings for the product with the new settings
 		 *
-		 * @param array  $new_settings
+		 * @param array $new_settings
 		 *
 		 * @return LicenseSettings
-		 * @throws \Exception
+		 *
+		 * @throws ErrorSavingSettings
 		 */
-		public function merge( $new_settings ) {
+		public function merge( $new_settings ): LicenseSettings {
 
 			$old_settings = $this->all_settings();
 
@@ -638,8 +640,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$old_settings = $this->defaults();
 			}
 
-			foreach ( $new_settings as $key => $value ) {
-				$old_settings[ $key ] = $value;
+			// Assign new settings to
+			if ( is_array( $new_settings ) ) {
+				foreach ( $new_settings as $key => $value ) {
+					$old_settings[ $key ] = $value;
+				}
 			}
 
 			if ( $this->to_debug ) {
@@ -651,9 +656,9 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			foreach ( $old_settings as $key => $value ) {
 				try {
 					$this->set( $key, $value );
-				} catch ( \Exception $e ) {
+				} catch ( InvalidSettingsKey $e ) {
 					$this->utils->log( $e->getMessage() );
-					throw $e;
+					throw new ErrorSavingSettings( $e->getMessage() );
 				}
 			}
 			return $this; // FIXME: Don't return self!
@@ -666,7 +671,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @param array $settings
 		 *
 		 * @return bool
-		 * @throws \Exception
 		 */
 		public function update( $sku = null, $settings = null ) {
 			_deprecated_function( 'License::update()', '5.8', 'License::save()' );
