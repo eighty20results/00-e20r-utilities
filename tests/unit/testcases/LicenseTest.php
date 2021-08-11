@@ -516,6 +516,7 @@ class LicenseTest extends Unit {
 	 * @param \stdClass|bool       $decoded_payload
 	 * @param string|null          $domain
 	 * @param string|null          $thrown_exception
+	 * @param bool                 $update_status
 	 * @param string|int           $expected_status
 	 * @param string|null          $expected_settings
 	 *
@@ -523,7 +524,7 @@ class LicenseTest extends Unit {
 	 * @dataProvider fixture_activate
 	 * @throws \Exception|\Throwable
 	 */
-	public function test_activate_license( $test_sku, $is_new_version, $store_code, $status, $decoded_payload, $domain, $thrown_exception, $expected_status, ?string $expected_settings ) {
+	public function test_activate_license( $test_sku, $is_new_version, $store_code, $status, $decoded_payload, $domain, $thrown_exception, $update_status, $expected_status, ?string $expected_settings ) {
 		Functions\expect( 'wp_upload_dir' )
 			->zeroOrMoreTimes()
 			->andReturnUsing(
@@ -591,6 +592,10 @@ class LicenseTest extends Unit {
 					return $value;
 				},
 				'defaults' => array(),
+				'set'      => true,
+				'update'   => function() use ( $update_status ) {
+					return $update_status;
+				},
 			)
 		);
 		$m_page     = $this->makeEmpty(
@@ -647,11 +652,12 @@ class LicenseTest extends Unit {
 		$blocked  = $defaults->constant( 'E20R_LICENSE_BLOCKED' );
 		$error    = $defaults->constant( 'E20R_LICENSE_ERROR' );
 
-		// test_sku, is_new_version, store_code, status, decoded_payload, domain, thrown_exception, expected_status, expected_settings
+		// test_sku, is_new_version, store_code, status, decoded_payload, domain, thrown_exception, update_status, expected_status, expected_settings
 		return array(
-			array( 'E20R_LICENSE_TEST', false, 'dummy_store_1', 'active', null, 'localhost', ServerConnectionError::class, null, null ),
-			array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', false, 'localhost', null, $blocked, null ),
-			array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', $this->make_payload( 'error', 1 ), 'localhost', null, $blocked, $lsc ),
+			array( 'E20R_LICENSE_TEST', false, 'dummy_store_1', 'active', null, 'localhost', ServerConnectionError::class, true, null, null ),
+			array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', false, 'localhost', null, true, $blocked, null ),
+			array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', $this->make_payload( 'error', 1 ), 'localhost', null, true, $blocked, $lsc ),
+			// array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', false, 'localhost', null, false, $blocked, null ),
 		);
 	}
 
