@@ -148,11 +148,14 @@ class LicenseTest extends Unit {
 		$this->utils_mock = $this->makeEmpty(
 			Utilities::class,
 			array(
-				'is_license_server' => false,
-				'log'               => function( $text ) {
+				'log'         => function( $msg ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( $text );
-					return null;
+					error_log( "Stubbed log(): {$msg}" );
+				},
+				'add_message' => function( $msg, $type, $location ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( "Stubbed WP notice: {$msg}, type: {$type}, location: {$location}" );
+					self::assertSame( 'backend', $location );
 				},
 			)
 		);
@@ -459,17 +462,9 @@ class LicenseTest extends Unit {
 		$m_server   = $this->makeEmpty(
 			LicenseServer::class,
 		);
-		$m_utils    = $this->makeEmpty(
-			Utilities::class,
-			array(
-				'log' => function( $msg ) {
-					error_log( $msg ); // phpcs:ignore
-				},
-			)
-		);
 
 		if ( ! empty( $domain ) ) {
-			$m_utils->log( "Setting the SERVER_NAME to {$domain}" );
+			$this->utils_mock->log( "Setting the SERVER_NAME to {$domain}" );
 			$_SERVER['SERVER_NAME'] = $domain;
 		} else {
 			$_SERVER['SERVER_NAME'] = 'example.com';
@@ -479,7 +474,7 @@ class LicenseTest extends Unit {
 		// without having to run through the other methods
 		$m_license = $this->construct(
 			License::class,
-			array( $test_sku, $m_settings, $m_server, $m_page, $m_utils ),
+			array( $test_sku, $m_settings, $m_server, $m_page, $this->utils_mock ),
 			array(
 				'is_new_version' => function() use ( $is_new_version ) {
 					return $is_new_version;
@@ -609,25 +604,12 @@ class LicenseTest extends Unit {
 				},
 			)
 		);
-		$m_utils    = $this->makeEmpty(
-			Utilities::class,
-			array(
-				'log'         => function( $msg ) {
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( "Stubbed log(): {$msg}" );
-				},
-				'add_message' => function( $msg, $type, $location ) {
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( "Stubbed WP notice: {$msg}, type: {$type}, location: {$location}" );
-					self::assertSame( 'backend', $location );
-				},
-			)
-		);
+
 		// Mocking parts of the License() so we can test the is_licensed() method
 		// without having to run through the other methods
 		$m_license = $this->construct(
 			License::class,
-			array( $test_sku, $m_settings, $m_server, $m_page, $m_utils ),
+			array( $test_sku, $m_settings, $m_server, $m_page, $this->utils_mock ),
 			array(
 				'is_new_version' => function() use ( $is_new_version ) {
 					return $is_new_version;
@@ -825,12 +807,19 @@ class LicenseTest extends Unit {
 				'status' => $license_status,
 			)
 		);
-		$m_utils    = $this->makeEmpty(
+
+		$m_utils = $this->makeEmpty(
 			Utilities::class,
 			array(
 				'is_license_server' => $is_local_server,
 				'log'               => function( $msg ) {
-					error_log( $msg ); // phpcs:ignore
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( "Stubbed log(): {$msg}" );
+				},
+				'add_message'       => function( $msg, $type, $location ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( "Stubbed WP notice: {$msg}, type: {$type}, location: {$location}" );
+					self::assertSame( 'backend', $location );
 				},
 			)
 		);
