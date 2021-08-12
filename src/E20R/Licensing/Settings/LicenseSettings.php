@@ -312,7 +312,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				throw new InvalidSettingsKey(
 					sprintf(
 						// translators: %1$s - Key name for the failed setting update
-						esc_attr__( 'Error: The property \'%1$s\' is not valid', '00-e20r-utilities' ),
+						esc_attr__( 'Error: The property - %1$s - is not valid', '00-e20r-utilities' ),
 						$key
 					)
 				);
