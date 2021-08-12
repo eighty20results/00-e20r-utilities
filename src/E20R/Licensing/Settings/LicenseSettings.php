@@ -252,7 +252,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			$settings = get_option( 'e20r_license_settings', $defaults );
 
 			if ( empty( $this->all_settings ) || (
-				( ! empty( $this->all_settings ) && 1 <= count( $this->all_settings ) && 'e20r_default_license' === $product_sku ) )
+				( 1 <= count( $this->all_settings ) && 'e20r_default_license' === $product_sku ) )
 			) {
 				$this->utils->log( 'Overwriting license settings with defaults' );
 				$settings = $defaults;
@@ -312,7 +312,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				throw new InvalidSettingsKey(
 					sprintf(
 						// translators: %1$s - Key name for the failed setting update
-						esc_attr__( 'Error: The %1$s property is not valid', '00-e20r-utilities' ),
+						esc_attr__( 'Error: The property \'%1$s\' is not valid', '00-e20r-utilities' ),
 						$key
 					)
 				);
