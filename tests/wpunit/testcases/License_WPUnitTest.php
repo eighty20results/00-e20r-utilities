@@ -31,6 +31,7 @@ use E20R\Licensing\LicenseServer;
 use E20R\Licensing\Settings\LicenseSettings;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Settings\NewLicenseSettings;
+use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 
 class License_WPUnitTest extends WPTestCase {
@@ -56,81 +57,39 @@ class License_WPUnitTest extends WPTestCase {
 	 * @throws \Exception
 	 */
 	public function test_is_active( string $test_sku, ?bool $is_new_version, $is_licensed, $domain, $status, $expected ) {
-		$m_defaults = $this->makeEmpty(
-			Defaults::class,
-			array(
-				'get' => function( $param_name ) use ( $is_new_version ) {
-					$value = null;
-					if ( 'debug_logging' === $param_name ) {
-						$value = true;
-					}
-					if ( 'version' === $param_name ) {
-						$value = $is_new_version;
-					}
-					return $value;
-				},
-			)
-		);
-		$m_settings = $this->makeEmpty(
-			LicenseSettings::class,
-			array(
-				'get'      => function( $parameter ) use ( $m_defaults, $domain, $status ) {
-					$value = null;
-					if ( 'plugin_defaults' === $parameter ) {
-						$value = $m_defaults;
-					}
-					if ( 'server_url' === $parameter ) {
-						$value = 'https://eighty20results.com/';
-					}
-					if ( 'domain' === $parameter ) {
-						$value = $domain;
-					}
-					if ( in_array( $parameter, array( 'key', 'the_key' ), true ) ) {
-						$value = 'license_key_id';
-					}
-					if ( 'status' === $parameter ) {
-						$value = $status;
-					}
-					return $value;
-				},
-				'defaults' => array(),
-			)
-		);
-		$m_page     = $this->makeEmpty(
-			LicensePage::class,
-		);
-		$m_server   = $this->makeEmpty(
+		$message  = new Message();
+		$utils    = new Utilities( $message );
+		$defaults = new Defaults( true, $utils );
+		$defaults->set( 'debug_logging', true );
+
+		if ( true === $is_new_version ) {
+			$defaults->set( 'version', '3.2' );
+		}
+
+		$settings = new LicenseSettings( $test_sku, $defaults, $utils );
+		$settings->set( 'domain_name', $domain );
+
+		if ( true === $is_new_version ) {
+			$settings->set( 'status', $status );
+			$settings->set( 'the_key', 'license_key_id' );
+		} else {
+			$settings->set( 'key', 'license_key_id' );
+		}
+		$page   = new LicensePage( $settings, $utils );
+		$server = $this->makeEmpty(
 			LicenseServer::class,
-		);
-		$m_utils    = $this->makeEmpty(
-			Utilities::class,
-			array(
-				'log' => function( $msg ) {
-					error_log( $msg ); // phpcs:ignore
-				},
-			)
 		);
 
 		if ( ! empty( $domain ) ) {
-			$m_utils->log( "Setting the SERVER_NAME to {$domain}" );
+			$utils->log( "Setting the SERVER_NAME to {$domain}" );
 			$_SERVER['SERVER_NAME'] = $domain;
 		} else {
 			$_SERVER['SERVER_NAME'] = 'example.com';
 		}
 
-		// Mocking parts of the License() so we can test the is_active() method
-		// without having to run through the other methods
-		$m_license = $this->construct(
-			License::class,
-			array( $test_sku, $m_settings, $m_server, $m_page, $m_utils ),
-			array(
-				'is_new_version' => function() use ( $is_new_version ) {
-					return $is_new_version;
-				},
-			),
-		);
+		$license = new License( $test_sku, $settings, $server, $page, $utils );
 
-		$result = $m_license->is_active( $test_sku, $is_licensed );
+		$result = $license->is_active( $test_sku, $is_licensed );
 		self::assertSame( $expected, $result, "Error: Incorrect value returned from Licensing::is_active(). Expected '{$expected}', received: '{$result}'" );
 	}
 
@@ -157,21 +116,21 @@ class License_WPUnitTest extends WPTestCase {
 	/**
 	 * Unit-test the License::activate() method
 	 *
-	 * @param string               $test_sku
-	 * @param bool                 $is_new_version
-	 * @param string               $store_code
-	 * @param string               $status
-	 * @param \stdClass|bool       $decoded_payload
-	 * @param string|null          $domain
-	 * @param string|null          $thrown_exception
-	 * @param string|int           $expected_status
-	 * @param LicenseSettings|null $expected_settings
+	 * @param string         $test_sku
+	 * @param bool           $is_new_version
+	 * @param string         $store_code
+	 * @param string         $status
+	 * @param \stdClass|bool $decoded_payload
+	 * @param string|null    $domain
+	 * @param string|null    $thrown_exception
+	 * @param string|int     $expected_status
+	 * @param string|null    $expected_settings
 	 *
 	 * @covers \E20R\Licensing\License::activate
 	 * @dataProvider fixture_activate
 	 * @throws \Exception|\Throwable
 	 */
-	public function test_activate_license( $test_sku, $is_new_version, $store_code, $status, $decoded_payload, $domain, $thrown_exception, $expected_status, ?LicenseSettings $expected_settings ) {
+	public function test_activate_license( $test_sku, $is_new_version, $store_code, $status, $decoded_payload, $domain, $thrown_exception, $expected_status, ?string $expected_settings ) {
 		$m_defaults = $this->makeEmpty(
 			Defaults::class,
 			array(
