@@ -63,12 +63,6 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		protected static $instance = null;
 
 		/**
-		 * Should the E20R_LICENSE_SERVER_URL be locked
-		 * @var bool $server_url_locked
-		 */
-		private $server_url_locked = false;
-
-		/**
 		 * The version number for this plugin (E20R Licensing module)
 		 * @var string $version
 		 */
@@ -88,22 +82,42 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		protected $server_url = 'https://eighty20results.com';
 
 		/**
+		 * Should the E20R_LICENSE_SERVER_URL be locked
+		 * @var bool $server_url_locked
+		 */
+		protected $server_url_locked = false;
+
+		/**
 		 * Rest end-point for the license server plugin
 		 * @var string $rest_url
 		 */
 		protected $rest_url = '/wp-json/woo-license-server/v1';
 
 		/**
+		 * Lock the "default" rest_url setting
+		 * @var bool $rest_url_locked
+		 */
+		protected $rest_url_locked = true;
+		/**
 		 * AJAX end-point for the license server plugin
 		 * @var string $ajax_url
 		 */
 		protected $ajax_url = '/wp-admin/wp-ajax.php';
-
+		/**
+		 * Lock the "default" ajax_url setting
+		 * @var bool $ajax_url_locked
+		 */
+		protected $ajax_url_locked = true;
 		/**
 		 * Whether to use the REST or AJAX API
 		 * @var bool $use_rest
 		 */
 		protected $use_rest = true;
+		/**
+		 * Lock the "default" use_rest setting
+		 * @var bool $use_rest_locked
+		 */
+		protected $use_rest_locked = true;
 
 		/**
 		 * Whether to add verbose license operations debug logging to the error_log() destination
@@ -113,9 +127,9 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 
 		/**
 		 * Whether to lock the E20R_LICENSING_DEBUG constant for updates
-		 * @var bool $debug_locked
+		 * @var bool $debug_logging_locked
 		 */
-		private $debug_locked = false;
+		protected $debug_logging_locked = false;
 
 		/**
 		 * The WooCommerce store code to use
@@ -123,6 +137,11 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		 * @var string|null
 		 */
 		protected $store_code = null;
+		/**
+		 * Lock the "default" use_rest setting
+		 * @var bool $store_code_locked
+		 */
+		protected $store_code_locked = true;
 
 		/**
 		 * The connection URI for the license client
@@ -194,7 +213,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 			// Remove the constant if possible and use the Defaults::constant() approach instead (code coverage not needed)
 			if ( false === $ignore_constants && defined( 'E20R_LICENSING_DEBUG' ) ) {
 				$this->constant( 'E20R_LICENSING_DEBUG', self::UPDATE_CONSTANT, E20R_LICENSING_DEBUG );
-				$this->lock( 'debug' ); // Lock for updates since it's set as a constant by the user
+				$this->lock( 'debug_logging' );
 				if ( extension_loaded( 'runkit' ) ) {
 					runkit_constant_remove( 'E20R_LICENSE_SERVER_URL' );
 				}
@@ -203,7 +222,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 			if ( false === $ignore_constants && defined( 'E20R_LICENSE_SERVER_URL' ) && ! empty( E20R_LICENSE_SERVER_URL ) ) {
 				// Update the server URL and set lock it for others
 				$this->constant( 'E20R_LICENSE_SERVER_URL', self::UPDATE_CONSTANT, E20R_LICENSE_SERVER_URL );
-				$this->lock( 'server' ); // Lock for updates since it's set as a constant by the user
+				$this->lock( 'server_url' ); // Lock for updates since it's set as a constant by the user
 
 				// Attempt to remove the constant (if possible)
 				if ( extension_loaded( 'runkit' ) ) {
@@ -268,7 +287,20 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 			$settings = array_map( 'trim', $settings );
 			foreach ( $settings as $key => $value ) {
 				try {
+					// As part of the configuration update, we need to be able to unlock default variables
+					// so they can be updated per the requested configuration
+					$is_locked_param = "{$key}_locked";
+					$was_unlocked    = false;
+					// Unlock pre-locked variables so we can read and set our configuration
+					if ( true === $this->{$is_locked_param} ) {
+						$this->unlock( $key );
+						$was_unlocked = true;
+					}
+					// We update the default value for the specified key
 					$this->set( $key, $value );
+					if ( $was_unlocked ) {
+						$this->unlock( $key );
+					}
 				} catch ( InvalidSettingsKey | \Exception $e ) {
 					$this->utils->log( 'Error: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
@@ -277,41 +309,45 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		}
 
 		/**
-		 * Lock the either the E20R_LICENSE_SERVER_URL or E20R_LICENSING_DEBUG 'constants'
+		 * Lock the default setting (so it cannot be updated)
 		 *
-		 * @param string $constant_name
+		 * @param string $setting_name
+		 *
+		 * @throws BadOperation
 		 */
-		public function lock( string $constant_name = 'server' ) {
-			switch ( $constant_name ) {
-				case 'server':
-					$this->server_url_locked = true;
-					break;
-				case 'debug':
-					$this->debug_locked = true;
-					break;
-				case 'version':
-					$this->version_locked = true;
-					break;
+		public function lock( string $setting_name = 'server_url' ) {
+			$parameter = "{$setting_name}_locked";
+			if ( ! isset( $this->{$parameter} ) ) {
+				throw new BadOperation(
+					sprintf(
+						// translators: %1$s - the parameter name provided by the caller
+						esc_attr__( 'Error: Cannot lock \'%1$s\'. Invalid parameter name', '00-e20r-utilities' ),
+						$setting_name
+					)
+				);
 			}
+			$this->{$parameter} = true;
 		}
 
 		/**
-		 * Unlock the either the E20R_LICENSE_SERVER_URL or E20R_LICENSING_DEBUG 'constants'
+		 * Unlock the default setting (so it can be updated)
 		 *
-		 * @param string $constant_name
+		 * @param string $setting_name
+		 *
+		 * @throws BadOperation
 		 */
-		public function unlock( string $constant_name = 'server' ) {
-			switch ( $constant_name ) {
-				case 'server':
-					$this->server_url_locked = false;
-					break;
-				case 'debug':
-					$this->debug_locked = false;
-					break;
-				case 'version':
-					$this->version_locked = false;
-					break;
+		public function unlock( string $setting_name = 'server_url' ) {
+			$parameter = "{$setting_name}_locked";
+			if ( ! isset( $this->{$parameter} ) ) {
+				throw new BadOperation(
+					sprintf(
+						// translators: %1$s - the parameter name provided by the caller
+						esc_attr__( 'Error: Cannot unlock \'%1$s\'. Invalid parameter name', '00-e20r-utilities' ),
+						$setting_name
+					)
+				);
 			}
+			$this->{$parameter} = false;
 		}
 
 		/**
@@ -330,7 +366,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 				throw new InvalidSettingsKey(
 					sprintf(
 					// translators: %1$s - Name of requested constant
-						esc_attr__( '%1$s is not a valid Defaults() constant!', '00-e20r-utilities' ),
+						esc_attr__( '\'%1$s\' is not a valid Defaults() constant!', '00-e20r-utilities' ),
 						$name
 					)
 				);
@@ -369,38 +405,36 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		public function set( string $name, $value ) : bool {
 
 			$this->exists( $name );
+			$lock_param = "{$name}_locked";
+
+			if ( true === $this->{$lock_param} ) {
+				throw new BadOperation(
+					sprintf(
+						esc_attr__(
+							// translators: %1$s - the supplied setting name
+							"'%1\$s' is a default setting and cannot be updated",
+							'00-e20r-utilities'
+						),
+						esc_attr( $name )
+					)
+				);
+			}
 
 			// Exit if the constant has been set for DEBUG
 			if ( 'debug_logging' === $name ) {
-				if ( ! $this->debug_locked ) {
-					$this->constant( 'E20R_LICENSING_DEBUG', self::UPDATE_CONSTANT, $value );
-				}
+				$this->constant( 'E20R_LICENSING_DEBUG', self::UPDATE_CONSTANT, $value );
 				$this->debug_logging = $this->constant( 'E20R_LICENSING_DEBUG' );
 				return true;
 			}
 
 			// Set and exit if we're looking for the server_url
 			if ( 'server_url' === $name ) {
-				if ( ! $this->server_url_locked ) {
-					$this->constant( 'E20R_LICENSE_SERVER_URL', self::UPDATE_CONSTANT, $value );
-				}
+				$this->constant( 'E20R_LICENSE_SERVER_URL', self::UPDATE_CONSTANT, $value );
 				$this->server_url = $this->constant( 'E20R_LICENSE_SERVER_URL' );
 				$this->build_connection_uri();
 				return true;
 			}
 
-			if ( 'version' === $name ) {
-				if ( $this->version_locked ) {
-					throw new BadOperation(
-						esc_attr__(
-							"Error: 'version' is a default setting and cannot be updated",
-							'00-e20r-utilities'
-						)
-					);
-				} else {
-					$this->set( 'version', $value );
-				}
-			}
 			// Do we need to change the value?
 			$default = $this->get_default( $name );
 
