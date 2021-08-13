@@ -75,6 +75,13 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		protected $version = '3.2';
 
 		/**
+		 * Should the version number set be locked
+		 *
+		 * @var bool $version_locked
+		 */
+		protected $version_locked = true;
+
+		/**
 		 * Default server URL for this plugin
 		 * @var string $server_url
 		 */
@@ -282,6 +289,9 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 				case 'debug':
 					$this->debug_locked = true;
 					break;
+				case 'version':
+					$this->version_locked = true;
+					break;
 			}
 		}
 
@@ -297,6 +307,9 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 					break;
 				case 'debug':
 					$this->debug_locked = false;
+					break;
+				case 'version':
+					$this->version_locked = false;
 					break;
 			}
 		}
@@ -376,6 +389,18 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 				return true;
 			}
 
+			if ( 'version' === $name ) {
+				if ( $this->version_locked ) {
+					throw new BadOperation(
+						esc_attr__(
+							"Error: 'version' is a default setting and cannot be updated",
+							'00-e20r-utilities'
+						)
+					);
+				} else {
+					$this->set( 'version', $value );
+				}
+			}
 			// Do we need to change the value?
 			$default = $this->get_default( $name );
 
