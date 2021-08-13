@@ -5,7 +5,7 @@ services:
     container_name: codecep-wp-${E20R_PLUGIN_NAME}
     build:
       context: .
-      dockerfile: tests/docker/Dockerfile.unittest
+      dockerfile: tests/_docker/Dockerfile.unittest
       args:
         WP_RELEASE: ${WP_RELEASE}
     restart: always
