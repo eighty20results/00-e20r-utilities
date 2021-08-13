@@ -148,7 +148,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			// By locking the defaults here we make sure it's possible to test with different default settings
 			$this->plugin_defaults->lock( 'debug_logging' );
-			$this->plugin_defaults->lock( 'server' );
+			$this->plugin_defaults->lock( 'server_url' );
 			$this->plugin_defaults->lock( 'version' );
 
 			$this->excluded = array(
