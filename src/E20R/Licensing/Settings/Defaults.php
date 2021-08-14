@@ -387,6 +387,16 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 					return $this->{$name};
 				case self::UPDATE_CONSTANT:
 					$this->{$name} = $value;
+					// Need to make sure the parameters are
+					// the same as the constant value(s)
+					switch ( $name ) {
+						case 'E20R_LICENSE_SERVER_URL':
+							$this->server_url = $value;
+							break;
+						case 'E20R_LICENSING_DEBUG':
+							$this->debug_logging = $value;
+							break;
+					}
 					return true;
 			}
 			return false;
