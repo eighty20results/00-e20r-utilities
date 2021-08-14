@@ -321,7 +321,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 				throw new BadOperation(
 					sprintf(
 						// translators: %1$s - the parameter name provided by the caller
-						esc_attr__( 'Error: Cannot lock \'%1$s\'. Invalid parameter name', '00-e20r-utilities' ),
+						esc_attr__( 'Error: Cannot lock "%1$s". Invalid parameter name', '00-e20r-utilities' ),
 						$setting_name
 					)
 				);
@@ -342,7 +342,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 				throw new BadOperation(
 					sprintf(
 						// translators: %1$s - the parameter name provided by the caller
-						esc_attr__( 'Error: Cannot unlock \'%1$s\'. Invalid parameter name', '00-e20r-utilities' ),
+						esc_attr__( 'Error: Cannot unlock "%1$s". Invalid parameter name', '00-e20r-utilities' ),
 						$setting_name
 					)
 				);
@@ -366,7 +366,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 				throw new InvalidSettingsKey(
 					sprintf(
 					// translators: %1$s - Name of requested constant
-						esc_attr__( '\'%1$s\' is not a valid Defaults() constant!', '00-e20r-utilities' ),
+						esc_attr__( '"%1$s" is not a valid Defaults() constant!', '00-e20r-utilities' ),
 						$name
 					)
 				);
@@ -420,9 +420,9 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 			if ( true === $this->{$lock_param} ) {
 				throw new BadOperation(
 					sprintf(
+						// translators: %1$s - the supplied setting name
 						esc_attr__(
-							// translators: %1$s - the supplied setting name
-							"'%1\$s' is a default setting and cannot be updated",
+							'"%1$s" is a default setting and cannot be updated',
 							'00-e20r-utilities'
 						),
 						esc_attr( $name )
@@ -479,7 +479,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 				throw new InvalidSettingsKey(
 					sprintf(
 					// translators: %1$s - Supplied parameter name
-						esc_attr__( '%1$s is not a valid default setting', '00-e20r-utilities' ),
+						esc_attr__( '"%1$s" is not a valid default setting', '00-e20r-utilities' ),
 						$name
 					)
 				);
@@ -516,7 +516,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 				throw new InvalidSettingsKey(
 					sprintf(
 					// translators: %s - The parameter given by the calling function
-						esc_attr__( 'Error: %s is not a valid parameter', '00-e20r-utilities' ),
+						esc_attr__( 'Error: "%1$s" is not a valid parameter', '00-e20r-utilities' ),
 						$param_name
 					)
 				);
