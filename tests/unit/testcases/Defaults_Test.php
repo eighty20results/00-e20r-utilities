@@ -127,7 +127,7 @@ class Defaults_Test extends Unit {
 			array(
 				'log' => function( $text ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( $text );
+					error_log( "Mocked log: {$text}" );
 					return null;
 				},
 			)
@@ -178,12 +178,12 @@ class Defaults_Test extends Unit {
 
 			if ( null !== $const_for_debug_logging ) {
 				$settings->constant( 'E20R_LICENSING_DEBUG', $settings::UPDATE_CONSTANT, $const_for_debug_logging );
-				$settings->lock( 'debug' );
+				$settings->lock( 'debug_logging' );
 			}
 
 			if ( null !== $const_server_url ) {
 				$settings->constant( 'E20R_LICENSE_SERVER_URL', $settings::UPDATE_CONSTANT, $const_server_url );
-				$settings->lock( 'server' );
+				$settings->lock( 'server_url' );
 			}
 		}
 
@@ -197,7 +197,9 @@ class Defaults_Test extends Unit {
 		$this->assertDoesNotThrow(
 			InvalidSettingsKey::class,
 			function() use ( $settings, $version ) {
+				$settings->unlock( 'version' );
 				$settings->set( 'version', $version );
+				$settings->lock( 'version' );
 			}
 		);
 
@@ -216,7 +218,9 @@ class Defaults_Test extends Unit {
 		self::assertSame( $expected['store_code'], $settings->get( 'store_code' ), 'Didn\'t return the expected WooCommerce Store Code!' );
 
 		// Test the inverted rest/ajax flag
+		$settings->unlock( 'use_rest' );
 		$settings->set( 'use_rest', ( ! $use_rest ) );
+		$settings->lock( 'use_rest' );
 		self::assertSame( ( ! $expected['use_rest'] ), $settings->get( 'use_rest' ) );
 
 		// And that should result in the connection URI changing
@@ -651,6 +655,51 @@ class Defaults_Test extends Unit {
 			array( 10, 'E20R_LICENSE_SERVER', 'example.com', false, BadOperation::class ),
 			array( Defaults::UPDATE_CONSTANT, 'E20R_SERVER_URL', 'https://example.com', false, InvalidSettingsKey::class ),
 			array( Defaults::UPDATE_CONSTANT, 'E20R_LICENSE', true, false, InvalidSettingsKey::class ),
+		);
+	}
+
+	/**
+	 * Test that the unlock() logic works as expected (when setting unlocked parameters, no exception should be raised)
+	 *
+	 * @param string      $parameter_name
+	 * @param mixed       $value
+	 * @param mixed       $expected_value
+	 * @param null|string $expected_exception
+	 *
+	 * @throws ConfigDataNotFound|InvalidSettingsKey|BadOperation
+	 *
+	 * @covers \E20R\Licensing\Settings\Defaults::set
+	 *
+	 * @dataProvider fixture_parameter_value_unlocked
+	 */
+	public function test_update_for_valid_unlocked_parameter( $parameter_name, $value, $expected_value, $expected_exception ) {
+		$defaults = new Defaults( true, $this->mock_utils );
+		$defaults->unlock( $parameter_name );
+
+		$this->assertDoesNotThrow(
+			$expected_exception,
+			function() use ( $defaults, $parameter_name, $value, $expected_exception, $expected_value ) {
+				self::assertTrue( $defaults->set( $parameter_name, $value ) );
+				self::assertSame( $expected_value, $defaults->get( $parameter_name ) );
+			}
+		);
+	}
+
+	/**
+	 * Fixture for Defaults_Test::test_parameter_locking()
+	 *
+	 * @return array[]
+	 */
+	public function fixture_parameter_value_unlocked() {
+		return array(
+			array( 'version', '2.0', '2.0', BadOperation::class ),
+			array( 'version', '2.0', '2.0', BadOperation::class ),
+			array( 'server_url', 'https://example.com', 'https://example.com', BadOperation::class ),
+			array( 'rest_url', '/rest-api/v1/do-something/', '/rest-api/v1/do-something/', BadOperation::class ),
+			array( 'ajax_url', '/wp-admin/admin-ajax.php', '/wp-admin/admin-ajax.php', BadOperation::class ),
+			array( 'use_rest', false, false, BadOperation::class ),
+			array( 'debug_logging', true, true, BadOperation::class ),
+			array( 'store_code', '12345678', '12345678', BadOperation::class ),
 		);
 	}
 }
