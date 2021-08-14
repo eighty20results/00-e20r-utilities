@@ -25,7 +25,7 @@ use E20R\Utilities\Utilities;
  * Class NewLicenseSettings
  * @package E20R\Licensing\Settings
  */
-class NewLicenseSettings extends LicenseSettings {
+class NewLicenseSettings extends OldLicenseSettings {
 
 	/**
 	 * The timestamp for when the license expires
@@ -115,12 +115,12 @@ class NewLicenseSettings extends LicenseSettings {
 	/**
 	 * newLicenseSettings constructor.
 	 *
-	 * @param null|string $product_sku
-	 * @param Defaults $plugin_defaults
-	 * @param Utilities $utils
-	 *
+	 * @param null|string    $product_sku
+	 * @param Defaults|null  $plugin_defaults
+	 * @param Utilities|null $utils
 	 */
-	public function __construct( $product_sku = 'e20r_default_license', $plugin_defaults = null, $utils = null ) {
+	public function __construct( ?string $product_sku = 'e20r_default_license', ?Defaults $plugin_defaults = null, ?Utilities $utils = null ) {
 		$this->product_sku = $product_sku;
+		parent::__construct( $product_sku, $plugin_defaults, $utils );
 	}
 }

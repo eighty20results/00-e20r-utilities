@@ -25,6 +25,8 @@ use E20R\Licensing\Exceptions\ErrorSavingSettings;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Exceptions\NoLicenseKeyFound;
+use E20R\Licensing\Exceptions\ServerConnectionError;
+use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\LicenseServer;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\License;
@@ -41,7 +43,7 @@ if ( ! defined( 'E20R_MISSING_SETTING' ) ) {
 }
 
 if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
-	class LicenseSettings {
+	class LicenseSettings extends NewLicenseSettings {
 
 		/**
 		 * All settings for all processed licenses
@@ -49,13 +51,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @var array|false|void $all_settings
 		 */
 		protected $all_settings = array();
-
-		/**
-		 * Current instance of the settings
-		 *
-		 * @var LicenseSettings|NewLicenseSettings|OldLicenseSettings|null
-		 */
-		protected $settings = null;
 
 		/**
 		 * @var null|Utilities
@@ -105,13 +100,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		protected $to_debug = false;
 
 		/**
-		 * The default settings for the plugin
-		 *
-		 * @var Defaults|null $plugin_defaults
-		 */
-		protected $plugin_defaults = null;
-
-		/**
 		 * The Domain name of the server where we're running
 		 *
 		 * @var string $domain_name
@@ -123,9 +111,10 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @param string|null $product_sku
 		 *
-		 * @throws InvalidSettingsKey|MissingServerURL
+		 * @throws InvalidSettingsKey|MissingServerURL|BadOperation
 		 */
 		public function __construct( $product_sku = 'e20r_default_license', $plugin_defaults = null, $utils = null ) {
+			parent::__construct( $product_sku, $plugin_defaults, $utils );
 
 			if ( empty( $product_sku ) ) {
 				$product_sku = 'e20r_default_license';
@@ -163,10 +152,40 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				// 'plugin_defaults',
 			);
 
-			if ( ! $this->new_version ) {
-				$this->settings = new NewLicenseSettings( $product_sku, $this->plugin_defaults, $this->utils );
+			// Exclude the unused properties if we're running in the other environment (new or old)
+			if ( $this->new_version ) {
+				$this->excluded = array_merge(
+					$this->excluded,
+					// Exclude properties of the OldLicenseSettings model
+					array(
+						'email',
+						'last_name',
+						'first_name',
+						'expires',
+						'key',
+						'product',
+						'domain',
+						'renewed',
+					)
+				);
 			} else {
-				$this->settings = new OldLicenseSettings( $product_sku, $this->plugin_defaults, $this->utils );
+				$this->excluded = array_merge(
+					$this->excluded,
+					// Exclude properties of the NewLicenseSettings model
+					array(
+						'expire',
+						'activation_id',
+						'expire_date',
+						'timezone',
+						'the_key',
+						'url',
+						'has_expired',
+						'allow_offline',
+						'offline_interval',
+						'offline_value',
+						'product_sku',
+					)
+				);
 			}
 
 			$server_url = $this->plugin_defaults->get( 'server_url' );
@@ -237,7 +256,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @throws \Exception
 		 */
-		public function load_settings( string $product_sku = null ) {
+		public function load_settings( string $product_sku = null ): ?array {
 
 			if ( empty( $product_sku ) && empty( $this->product_sku ) ) {
 				if ( $this->to_debug ) {
@@ -264,7 +283,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			}
 
 			foreach ( $settings as $setting_key => $value ) {
-				$this->settings->set( $setting_key, $value );
+				$this->{$setting_key} = $value;
 			}
 
 			if ( $this->to_debug ) {
@@ -286,11 +305,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$this->utils->log( "Requested and returning settings for {$product_sku}" );
 			}
 
-			if ( empty( $this->settings->get( 'product_sku' ) ) ) {
+			if ( empty( $this->get( 'product_sku' ) ) ) {
 				return null;
 			}
 
-			return $this->settings->all_settings();
+			return $this->all_settings();
 		}
 
 		/**
@@ -312,21 +331,19 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				return true;
 			}
 
-			if ( ! isset( $this->{$key} ) ) {
-				$this->utils->log( "Error: '{$key}' does not exist!" );
+			if ( in_array( $key, $this->excluded, true ) ) {
 				throw new InvalidSettingsKey(
 					sprintf(
-						// translators: %1$s - Key name for the failed setting update
-						esc_attr__( 'Error: The %1$s property is not valid', '00-e20r-utilities' ),
-						$key
+					// translators: %1$s - Key name for the failed setting update, %2$s - Class name
+						esc_attr__( '"%1$s" is not a valid property for %2$s', '00-e20r-utilities' ),
+						$key,
+						__CLASS__
 					)
 				);
 			}
-
-			$this->{$key} = $value;
-
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 			$this->utils->log( "Set '{$key}' to " . print_r( $value, true ) );
+			$this->{$key} = $value;
 
 			// (Re)Load the settings for the specified sku
 			if ( 'product_sku' === $key ) {
@@ -359,11 +376,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				return array();
 			}
 
-			if ( ! isset( $this->settings[ $sku ] ) ) {
+			if ( ! isset( $this->all_settings[ $sku ] ) ) {
 				throw new NoLicenseKeyFound( $sku );
 			}
 
-			return $this->settings[ $sku ];
+			return $this->all_settings[ $sku ];
 		}
 
 		/**
@@ -440,6 +457,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @param array $input
 		 *
 		 * @return array
+		 * @throws NoLicenseKeyFound|ErrorSavingSettings|MissingServerURL|InvalidSettingsKey|ServerConnectionError|BadOperation
 		 */
 		public function validate( $input ) {
 
@@ -486,7 +504,12 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 						$license_settings[ $product ]['fulltext_name'] = $input['fulltext_name'][ $nk ];
 						$license_settings[ $product ]['product_sku']   = $input['product_sku'][ $nk ];
 
-						$licensing = new License( $license_settings[ $product ]['product_sku'] );
+						try {
+							$licensing = new License( $license_settings[ $product ]['product_sku'] );
+						} catch ( InvalidSettingsKey | MissingServerURL $e ) {
+							$this->utils->log( $e->getMessage() );
+							throw $e;
+						}
 
 						if ( ! empty( $license_email ) && ! empty( $license_key ) ) {
 
@@ -520,9 +543,12 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 									if ( $this->to_debug ) {
 										$this->utils->log( 'Was able to deactivate this license/host combination' );
 									}
-
-									$result = $licensing->activate( $product );
-
+									try {
+										$result = $licensing->activate( $product );
+									} catch ( InvalidSettingsKey | MissingServerURL | ServerConnectionError $e ) {
+										$this->utils->log( $e->getMessage() );
+										throw $e;
+									}
 								}
 							}
 
@@ -532,8 +558,19 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 							$server = new LicenseServer( $this );
 
-							if ( true === $server->status( $product, $license_settings[ $product ], true ) ) {
-								$result['settings'] = $this->merge( $product, $license_settings[ $product ] );
+							if ( true === $server->status( $product, true ) ) {
+								try {
+									$settings_obj = $this->merge( $license_settings[ $product ] );
+								} catch ( ErrorSavingSettings $e ) {
+									$this->utils->log( $e->getMessage() );
+									throw $e;
+								}
+								try {
+									$results['settings'] = $settings_obj->get_settings( $product );
+								} catch ( NoLicenseKeyFound $e ) {
+									$this->utils->log( $e->getMessage() );
+									throw $e;
+								}
 							}
 
 							if ( isset( $result['settings']['status'] ) && 'active' !== $result['settings']['status'] ) {

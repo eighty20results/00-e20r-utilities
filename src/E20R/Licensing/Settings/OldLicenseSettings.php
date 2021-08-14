@@ -17,30 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * *
- *   * Copyright (c) 2021. - Eighty / 20 Results by Wicked Strong Chicks.
- *   * ALL RIGHTS RESERVED
- *   *
- *   * This program is free software: you can redistribute it and/or modify
- *   * it under the terms of the GNU General Public License as published by
- *   * the Free Software Foundation, either version 3 of the License, or
- *   * (at your option) any later version.
- *   *
- *   * This program is distributed in the hope that it will be useful,
- *   * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   * GNU General Public License for more details.
- *   *
- *   * You should have received a copy of the GNU General Public License
- *   * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
-
 namespace E20R\Licensing\Settings;
 
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
-use E20R\Licensing\Exceptions\MissingServerURL;
+use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 
 /**
@@ -49,7 +28,7 @@ use E20R\Utilities\Utilities;
  *
  * @deprecated
  */
-class OldLicenseSettings extends LicenseSettings {
+class OldLicenseSettings {
 
 	/**
 	 * The product key (SKU) for the license
@@ -120,17 +99,38 @@ class OldLicenseSettings extends LicenseSettings {
 	 */
 	protected $timestamp = 0;
 
+	/**
+	 * Utilities class
+	 *
+	 * @var Utilities $utils
+	 */
+	protected $utils;
 
 	/**
-	 * oldLicenseSettings constructor.
+	 * The default settings for the plugin
 	 *
-	 * @param string|null $product_sku
-	 * @param Defaults|null $plugin_defaults
-	 * @param Utilities|null $utils
-	 *
-	 * @throws InvalidSettingsKey|MissingServerURL
+	 * @var Defaults|null $plugin_defaults
 	 */
-	public function __construct( $product_sku = 'e20r_default_license', $plugin_defaults = null, $utils = null ) {
+	protected $plugin_defaults = null;
+
+	/**
+	 * OldLicenseSettings constructor.
+	 *
+	 * @param string|null    $product_sku
+	 * @param Defaults|null  $plugin_defaults
+	 * @param Utilities|null $utils
+	 */
+	public function __construct( ?string $product_sku = 'e20r_default_license', ?Defaults $plugin_defaults = null, ?Utilities $utils = null ) {
+
+		if ( empty( $plugin_defaults ) ) {
+			$plugin_defaults = new Defaults();
+		}
+
+		if ( empty( $utils ) ) {
+			$message = new Message();
+			$utils   = new Utilities( $message );
+		}
+
 		global $current_user;
 
 		if ( ! empty( $current_user ) ) {
@@ -142,16 +142,12 @@ class OldLicenseSettings extends LicenseSettings {
 				$current_user->last_name;
 			$this->email      = $current_user->user_email;
 		}
-		$this->expires = gmdate( 'D-M-Y\Th:i:s' );
-		$this->status  = 'expired';
-
-		$this->product     = $product_sku;
-		$this->product_sku = $product_sku;
-
-		// Add the product_sku member variable since we use 'product'
-		$this->excluded[] = 'product_sku';
-
-		$this->domain    = $_SERVER['HTTP_HOST'] ?? 'localhost.local';
-		$this->timestamp = time();
+		$this->utils           = $utils;
+		$this->plugin_defaults = $plugin_defaults;
+		$this->expires         = gmdate( 'D-M-Y\Th:i:s' );
+		$this->status          = 'expired';
+		$this->product         = $product_sku;
+		$this->domain          = $_SERVER['HTTP_HOST'] ?? 'localhost.local';
+		$this->timestamp       = time();
 	}
 }
