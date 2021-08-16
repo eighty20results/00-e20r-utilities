@@ -194,7 +194,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				empty( $server_url ) ||
 				1 !== preg_match( '/^https?:\/\/([0-9a-zA-Z].*)\.([0-9a-zA-Z].*)\/?/', $server_url )
 			) {
-				$msg = "Error: Haven't configured the Eighty/20 Results server URL, or the URL is malformed. Can be configured in the wp-config.php file.";
+				$msg = "Error: Haven't configured the license server URL, or the URL is malformed. Can be configured in the wp-config.php file.";
 				$this->utils->log( $msg );
 				$this->utils->add_message(
 					esc_html__(
