@@ -152,40 +152,10 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				// 'plugin_defaults',
 			);
 
-			// Exclude the unused properties if we're running in the other environment (new or old)
-			if ( $this->new_version ) {
-				$this->excluded = array_merge(
-					$this->excluded,
-					// Exclude properties of the OldLicenseSettings model
-					array(
-						'email',
-						'last_name',
-						'first_name',
-						'expires',
-						'key',
-						'product',
-						'domain',
-						'renewed',
-					)
-				);
+			if ( ! $this->new_version ) {
+				$this->settings = new NewLicenseSettings( $product_sku, $this->plugin_defaults, $this->utils );
 			} else {
-				$this->excluded = array_merge(
-					$this->excluded,
-					// Exclude properties of the NewLicenseSettings model
-					array(
-						'expire',
-						'activation_id',
-						'expire_date',
-						'timezone',
-						'the_key',
-						'url',
-						'has_expired',
-						'allow_offline',
-						'offline_interval',
-						'offline_value',
-						'product_sku',
-					)
-				);
+				$this->settings = new OldLicenseSettings( $product_sku, $this->plugin_defaults, $this->utils );
 			}
 
 			$server_url = $this->plugin_defaults->get( 'server_url' );
@@ -256,7 +226,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @throws \Exception
 		 */
-		public function load_settings( string $product_sku = null ): ?array {
+		public function load_settings( string $product_sku = null ) {
 
 			if ( empty( $product_sku ) && empty( $this->product_sku ) ) {
 				if ( $this->to_debug ) {
@@ -276,14 +246,14 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			$settings = get_option( 'e20r_license_settings', $defaults );
 
 			if ( empty( $this->all_settings ) || (
-				( ! empty( $this->all_settings ) && 1 <= count( $this->all_settings ) && 'e20r_default_license' === $product_sku ) )
+				( 1 <= count( $this->all_settings ) && 'e20r_default_license' === $product_sku ) )
 			) {
 				$this->utils->log( 'Overwriting license settings with defaults' );
 				$settings = $defaults;
 			}
 
 			foreach ( $settings as $setting_key => $value ) {
-				$this->{$setting_key} = $value;
+				$this->settings->set( $setting_key, $value );
 			}
 
 			if ( $this->to_debug ) {
