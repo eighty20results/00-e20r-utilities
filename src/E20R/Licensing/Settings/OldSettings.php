@@ -19,16 +19,17 @@
 
 namespace E20R\Licensing\Settings;
 
+use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 
 /**
- * Class OldLicenseSettings
+ * Class OldSettings
  * @package E20R\Utilities\Licensing
  *
  * @deprecated
  */
-class OldLicenseSettings {
+class OldSettings extends BaseSettings {
 
 	/**
 	 * The product key (SKU) for the license
@@ -69,7 +70,7 @@ class OldLicenseSettings {
 	 *
 	 * @var string $status
 	 */
-	protected $status = '';
+	protected $status = 'cancelled';
 
 	/**
 	 * The name of the license owner (first name)
@@ -100,36 +101,33 @@ class OldLicenseSettings {
 	protected $timestamp = 0;
 
 	/**
-	 * Utilities class
+	 * The properties to exclude (not included in the REST API request)
 	 *
-	 * @var Utilities $utils
+	 * @var array
 	 */
-	protected $utils;
+	protected $excluded = array( 'excluded', 'all_settings', 'defaults' );
 
 	/**
-	 * The default settings for the plugin
+	 * OldSettings constructor.
 	 *
-	 * @var Defaults|null $plugin_defaults
-	 */
-	protected $plugin_defaults = null;
-
-	/**
-	 * OldLicenseSettings constructor.
+	 * @param string|null $product_sku
+	 * @param null|array  $settings
 	 *
-	 * @param string|null    $product_sku
-	 * @param Defaults|null  $plugin_defaults
-	 * @param Utilities|null $utils
+	 * @throws InvalidSettingsVersion
 	 */
-	public function __construct( ?string $product_sku = 'e20r_default_license', ?Defaults $plugin_defaults = null, ?Utilities $utils = null ) {
-
-		if ( empty( $plugin_defaults ) ) {
-			$plugin_defaults = new Defaults();
+	public function __construct( ?string $product_sku = 'e20r_default_license', $settings = null ) {
+		$this->product_sku = ( ! empty( $product_sku ) ? $product_sku : 'e20r_default_license' );
+		$this->product     = $this->product_sku;
+		if ( empty( $settings ) ) {
+			$settings      = $this->defaults();
+			$this->expires = gmdate( 'Y-m-d\TH:i:s' );
+			$this->status  = 'expired';
+			$this->product = $this->product_sku;
+			$this->domain  = $_SERVER['HTTP_HOST'] ?? 'localhost.local';
 		}
 
-		if ( empty( $utils ) ) {
-			$message = new Message();
-			$utils   = new Utilities( $message );
-		}
+		$this->all_settings[ $product_sku ] = $settings;
+		parent::__construct( $product_sku, $this->all_settings[ $product_sku ] );
 
 		global $current_user;
 
@@ -142,12 +140,37 @@ class OldLicenseSettings {
 				$current_user->last_name;
 			$this->email      = $current_user->user_email;
 		}
-		$this->utils           = $utils;
-		$this->plugin_defaults = $plugin_defaults;
-		$this->expires         = gmdate( 'D-M-Y\Th:i:s' );
-		$this->status          = 'expired';
-		$this->product         = $product_sku;
-		$this->domain          = $_SERVER['HTTP_HOST'] ?? 'localhost.local';
-		$this->timestamp       = time();
+
+		// Loading settings from the supplied array
+		foreach ( $this->all_settings[ $product_sku ] as $key => $value ) {
+			if ( ! property_exists( $this, $key ) ) {
+				throw new InvalidSettingsVersion(
+					esc_attr__(
+						'The supplied settings are not the correct settings for the current license management version',
+						'00-e20r-utilities'
+					)
+				);
+			}
+		}
+	}
+
+	/**
+	 * Return all properties from the class with its default values
+	 *
+	 * @return array
+	 */
+	public function defaults() {
+		return array(
+			'product'    => '',
+			'key'        => null,
+			'renewed'    => null,
+			'domain'     => '',
+			'expires'    => null,
+			'status'     => 'cancelled',
+			'first_name' => '',
+			'last_name'  => '',
+			'email'      => '',
+			'timestamp'  => time(),
+		);
 	}
 }

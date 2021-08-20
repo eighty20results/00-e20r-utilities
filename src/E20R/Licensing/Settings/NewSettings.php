@@ -19,20 +19,20 @@
 
 namespace E20R\Licensing\Settings;
 
-use E20R\Utilities\Utilities;
+use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 
 /**
- * Class NewLicenseSettings
+ * Class NewSettings
  * @package E20R\Licensing\Settings
  */
-class NewLicenseSettings extends OldLicenseSettings {
+class NewSettings extends BaseSettings {
 
 	/**
 	 * The timestamp for when the license expires
 	 *
 	 * @var int $expire
 	 */
-	protected $expire = 0; // Timestamp
+	protected $expire = -1; // Timestamp
 
 	/**
 	 * The License activation ID string
@@ -106,21 +106,61 @@ class NewLicenseSettings extends OldLicenseSettings {
 	protected $offline_value = 0;
 
 	/**
-	 * The license SKU in the shop
+	 * The properties to exclude in a REST API request for this class
 	 *
-	 * @var null|string $product_sku
+	 * @var string[]
 	 */
-	protected $product_sku = null;
+	protected $excluded = array( 'excluded', 'all_settings', 'defaults' );
 
 	/**
 	 * newLicenseSettings constructor.
 	 *
-	 * @param null|string    $product_sku
-	 * @param Defaults|null  $plugin_defaults
-	 * @param Utilities|null $utils
+	 * @param null|string $product_sku
+	 * @param array|null  $settings
+	 *
+	 * @throws InvalidSettingsVersion
 	 */
-	public function __construct( ?string $product_sku = 'e20r_default_license', ?Defaults $plugin_defaults = null, ?Utilities $utils = null ) {
-		$this->product_sku = $product_sku;
-		parent::__construct( $product_sku, $plugin_defaults, $utils );
+	public function __construct( ?string $product_sku = 'e20r_default_license', $settings = null ) {
+		$this->product_sku = ( ! empty( $product_sku ) ? $product_sku : 'e20r_default_license' );
+		if ( empty( $settings ) ) {
+			$settings = $this->defaults();
+		}
+		$this->all_settings[ $product_sku ] = $settings;
+		parent::__construct( $product_sku, $this->all_settings[ $product_sku ] );
+
+		// Loading settings from the supplied array
+		foreach ( $this->all_settings[ $product_sku ] as $key => $value ) {
+			if ( ! property_exists( $this, $key ) ) {
+				throw new InvalidSettingsVersion(
+					esc_attr__(
+						'The supplied settings are not the correct settings for the current license management version',
+						'00-e20r-utilities'
+					)
+				);
+			}
+			// Save the supplied setting(s) for this class
+			$this->{$key} = $value;
+		}
+	}
+
+	/**
+	 * Return all properties from the class with its default values
+	 *
+	 * @return array
+	 */
+	public function defaults() {
+		return array(
+			'expire'           => -1,
+			'activation_id'    => null,
+			'expire_date'      => gmdate( 'Y-m-d\TH:i' ),
+			'timezone'         => 'UTC',
+			'the_key'          => '',
+			'url'              => '',
+			'has_expired'      => true,
+			'status'           => 'cancelled',
+			'allow_offline'    => false,
+			'offline_interval' => 'days',
+			'offline_value'    => 0,
+		);
 	}
 }
