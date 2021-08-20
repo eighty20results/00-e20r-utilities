@@ -1,4 +1,6 @@
 ARG WP_RELEASE latest
+ARG APACHE_RUN_GROUP $APACHE_RUN_GROUP
+ARG APACHE_RUN_USER $APACHE_RUN_USER
 FROM wordpress:$WP_RELEASE
 
 RUN docker-php-ext-install pdo_mysql && \
