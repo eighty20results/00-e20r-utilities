@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-\Codeception\Util\Autoload::addNamespace( 'E20R\\Utilities', __DIR__ . '/../../../src/' );
+\Codeception\Util\Autoload::addNamespace( 'E20R\\Utilities', __DIR__ . '/../src' );
 
 /**
  * The following snippets uses `PLUGIN` to prefix
@@ -37,15 +37,15 @@ if ( ! defined( 'PLUGIN_ABSPATH' ) ) {
 }
 
 if ( ! defined( 'PLUGIN_PATH' ) ) {
-	define( 'PLUGIN_PATH', __DIR__ . '/../../../' );
+	define( 'PLUGIN_PATH', __DIR__ . '/../src/E20R/Utilities/' );
 }
 
-require_once __DIR__ . '/../../../inc/autoload.php';
+require_once __DIR__ . '/../inc/autoload.php';
 
 # Load fixtures for testing
-if ( file_exists( __DIR__ . '/class-unittestfixtures.php' ) ) {
-	require_once __DIR__ . '/class-unittestfixtures.php';
+if ( file_exists( __DIR__ . '/unit/inc/class-unittestfixtures.php' ) ) {
+	require_once __DIR__ . '/unit/inc/class-unittestfixtures.php';
 }
 
 # Load the class autoloader
-require_once __DIR__ . '/../../../class-loader.php';
+require_once __DIR__ . '/../class-loader.php';
