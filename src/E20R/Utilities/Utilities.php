@@ -47,21 +47,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Version number for the Utilities class
 		 */
-		const VERSION = '3.0';
-
-		/**
-		 * URI to the library path (Utilities)
-		 *
-		 * @var string
-		 */
-		public static $library_url = '';
-
-		/**
-		 * Path to the Utilities library
-		 *
-		 * @var string
-		 */
-		public static $library_path = '';
+		const VERSION = '3.2';
 
 		/**
 		 * @var string Cache key
@@ -95,8 +81,6 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		public function __construct( $message = null ) {
 
-			self::$library_url  = function_exists( 'plugins_url' ) ? plugins_url( '', __FILE__ ) : '';
-			self::$library_path = function_exists( 'plugin_dir_path' ) ? plugin_dir_path( __FILE__ ) : __DIR__;
 			$this->plugin_slug  = function_exists( 'apply_filters' ) ? apply_filters( 'e20r_licensing_text_domain', '00-e20r-utilities' ) : '00-e20r-utilities';
 
 			if ( empty( $message ) ) {
