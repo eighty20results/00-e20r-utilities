@@ -22,6 +22,7 @@
 namespace E20R\Tests\Unit;
 
 use Codeception\AssertThrows;
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Settings\NewSettings;
@@ -39,12 +40,16 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 
 	private $m_default = null;
 
+	private $exp_date;
+
 	/**
 	 * The setup function for this Unit Test suite
 	 */
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+
+		$this->exp_date = '2021-08-20T16:49:00';
 
 		if ( ! defined( 'DAY_IN_SECONDS' ) ) {
 			define( 'DAY_IN_SECONDS', 60 * 60 * 24 );
@@ -264,6 +269,167 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 			// sku, invalid_settings, expected_exception
 			array( 'E20R_TEST_LICENSE', $new_settings, InvalidSettingsVersion::class ),
 			array( 'E20R_NEW_LICENSE', $old_settings, null ),
+		);
+	}
+
+	/**
+	 * Test the BaseSettings::set() function
+	 *
+	 * @param string $old_sku
+	 * @param string $new_sku
+	 * @param array  $new_settings
+	 * @param array  $expected
+	 *
+	 * @covers \E20R\Licensing\Settings\BaseSettings::set()
+	 * @dataProvider fixture_update_old_settings
+	 */
+	public function test_set_old_license_parameters( $old_sku, $new_sku, $new_settings, $expected ) {
+
+		$new = new OldSettings( $old_sku );
+		foreach ( $new_settings as $key => $value ) {
+			$new->set( $key, $value );
+		}
+
+		self::assertSame( $old_sku, $new->get( 'product_sku' ), 'Error: SKU is not the expected value: ' . $old_sku );
+		foreach ( $expected as $key => $value ) {
+			self::assertSame( $expected[ $key ], $new->get( $key ), "Error: Unable to set '{$key}' to '{$value}'. Actual value: '{$new->get( $key )}'" );
+		}
+		$new->set( 'product_sku', $new_sku );
+		self::assertSame( $new_sku, $new->get( 'product_sku' ), 'Error: SKU is not the expected value: ' . $old_sku );
+	}
+
+	/**
+	 * Fixture for test_set_license_parameter()
+	 *
+	 * @return array[]
+	 */
+	public function fixture_update_old_settings() {
+		$settings = $this->fixture_old_settings();
+
+		return array(
+			// Initial sku, updated sku, settings array, expected results array
+			array(
+				'E20R_DUMMY_1',
+				'E20R_DUMMY_2',
+				array(
+					'expire'           => 1629466277, // Friday, August 20, 2021 1:31:17 PM
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'activation_id'    => base64_encode( 'E20R_DUMMY_1' ),
+					'expire_date'      => $this->exp_date,
+					'timezone'         => 'CET',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				array(
+					'expire'           => 1629466277, // Friday, August 20, 2021 1:31:17 PM
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'activation_id'    => base64_encode( 'E20R_DUMMY_1' ),
+					'expire_date'      => $this->exp_date,
+					'timezone'         => 'CET',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+			),
+			array(
+				'E20R_DUMMY_1',
+				'E20R_DUMMY_2',
+				$settings,
+				array(
+					'expire'           => 1629466277, // Friday, August 20, 2021 1:31:17 PM
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'activation_id'    => base64_encode( 'E20R_DUMMY_1' ),
+					'expire_date'      => $this->exp_date,
+					'timezone'         => 'CET',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+			),
+		);
+	}
+	/**
+	 * Fixture: Matches the expected settings for the OldSettings() class
+	 *
+	 * @return array
+	 */
+	private function fixture_old_settings() {
+		return array(
+			'product'    => '',
+			'key'        => null,
+			'renewed'    => null,
+			'domain'     => '',
+			'expires'    => $this->exp_date,
+			'status'     => 'cancelled',
+			'first_name' => '',
+			'last_name'  => '',
+			'email'      => '',
+			'timestamp'  => 1629466277, // Friday, August 20, 2021 1:31:17 PM,
+		);
+	}
+
+	/**
+	 * Test the get() method
+	 *
+	 * @param string $property
+	 * @param mixed $expected_value
+	 * @param string $expected_exception
+	 *
+	 * @dataProvider fixture_properties_to_get
+	 * @covers \E20R\Licensing\Settings\BaseSettings::get()
+	 */
+	public function test_get_old_settings( $property, $expected_value, $expected_exception ) {
+		$new_settings = new OldSettings();
+		try {
+			$result = $new_settings->get( $property );
+			self::assertSame( $expected_value, $result, "Error: '{$result}' is not the expected value for '{$property}'" );
+		} catch ( InvalidSettingsKey $exception ) {
+			self::assertInstanceOf( $expected_exception, $exception );
+		}
+	}
+
+	public function fixture_properties_to_get() {
+		return array(
+			array( 'expire', -1, InvalidSettingsKey::class ),
+			array( 'activation_id', null, InvalidSettingsKey::class ),
+			array( 'expire_date', null, InvalidSettingsKey::class ),
+			array( 'timezone', 'UTC', InvalidSettingsKey::class ),
+			array( 'the_key', '', InvalidSettingsKey::class ),
+			array( 'url', '', InvalidSettingsKey::class ),
+			array( 'has_expired', true, InvalidSettingsKey::class ),
+			array( 'status', 'cancelled', InvalidSettingsKey::class ),
+			array( 'allow_offline', false, InvalidSettingsKey::class ),
+			array( 'offline_interval', 'days', InvalidSettingsKey::class ),
+			array( 'offline_value', 0, InvalidSettingsKey::class ),
+			array( '', 0, InvalidSettingsKey::class ),
+			array( null, 0, InvalidSettingsKey::class ),
+			array( false, 0, InvalidSettingsKey::class ),
+			array( 'EXPIRE', 0, InvalidSettingsKey::class ),
+			array( 'URL', 0, InvalidSettingsKey::class ),
+			array( 'product', 'e20r_default_license', null ),
+			array( 'key', null, null ),
+			array( 'renewed', null, null ),
+			array( 'domain', '', null ),
+			array( 'expires', null, null ),
+			array( 'status', 'cancelled', null ),
+			array( 'first_name', '', null ),
+			array( 'last_name', '', null ),
+			array( 'email', '', null ),
+			array( 'timestamp', null, null ),
+			array( 'product_sku', 'e20r_default_license', null ),
 		);
 	}
 }

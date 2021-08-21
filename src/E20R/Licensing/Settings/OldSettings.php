@@ -20,8 +20,6 @@
 namespace E20R\Licensing\Settings;
 
 use E20R\Licensing\Exceptions\InvalidSettingsVersion;
-use E20R\Utilities\Message;
-use E20R\Utilities\Utilities;
 
 /**
  * Class OldSettings
@@ -96,16 +94,16 @@ class OldSettings extends BaseSettings {
 	/**
 	 * The timestamp for the last update to the license (on the server?)
 	 *
-	 * @var int|string $timestamp
+	 * @var int|string|null $timestamp
 	 */
-	protected $timestamp = 0;
+	protected $timestamp = null;
 
 	/**
 	 * The properties to exclude (not included in the REST API request)
 	 *
 	 * @var array
 	 */
-	protected $excluded = array( 'excluded', 'all_settings', 'defaults' );
+	protected $excluded = array( 'excluded', 'all_settings', 'defaults', 'product_sku' );
 
 	/**
 	 * OldSettings constructor.
@@ -120,10 +118,7 @@ class OldSettings extends BaseSettings {
 		$this->product     = $this->product_sku;
 		if ( empty( $settings ) ) {
 			$settings      = $this->defaults();
-			$this->expires = gmdate( 'Y-m-d\TH:i:s' );
-			$this->status  = 'expired';
 			$this->product = $this->product_sku;
-			$this->domain  = $_SERVER['HTTP_HOST'] ?? 'localhost.local';
 		}
 
 		$this->all_settings[ $product_sku ] = $settings;
@@ -164,13 +159,13 @@ class OldSettings extends BaseSettings {
 			'product'    => '',
 			'key'        => null,
 			'renewed'    => null,
-			'domain'     => '',
+			'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
 			'expires'    => null,
 			'status'     => 'cancelled',
 			'first_name' => '',
 			'last_name'  => '',
 			'email'      => '',
-			'timestamp'  => time(),
+			'timestamp'  => null,
 		);
 	}
 }

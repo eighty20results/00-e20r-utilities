@@ -110,7 +110,7 @@ class NewSettings extends BaseSettings {
 	 *
 	 * @var string[]
 	 */
-	protected $excluded = array( 'excluded', 'all_settings', 'defaults' );
+	protected $excluded = array( 'excluded', 'all_settings', 'defaults', 'product_sku' );
 
 	/**
 	 * newLicenseSettings constructor.
@@ -152,7 +152,7 @@ class NewSettings extends BaseSettings {
 		return array(
 			'expire'           => -1,
 			'activation_id'    => null,
-			'expire_date'      => gmdate( 'Y-m-d\TH:i' ),
+			'expire_date'      => null,
 			'timezone'         => 'UTC',
 			'the_key'          => '',
 			'url'              => '',

@@ -71,7 +71,7 @@ abstract class BaseSettings {
 	 * @throws InvalidSettingsKey
 	 */
 	public function get( $key ) {
-		if ( ! isset( $this->{$key} ) ) {
+		if ( ! property_exists( $this, $key ) ) {
 			throw new InvalidSettingsKey(
 				esc_attr__(
 					'Not a valid setting for this version of the licensing solution',
