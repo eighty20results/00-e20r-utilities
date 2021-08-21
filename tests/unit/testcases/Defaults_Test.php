@@ -144,6 +144,30 @@ class Defaults_Test extends Unit {
 	}
 
 	/**
+	 * Test the instantiation of the Defaults() class
+	 *
+	 * @param bool|null $rest_setting
+	 * @param bool $expected
+	 *
+	 * @dataProvider fixture_rest_settings
+	 */
+	public function test_no_utilities( $rest_setting, $expected ) {
+		$defaults = new Defaults( $rest_setting );
+		self::assertSame( $expected, $defaults->get( 'use_rest' ) );
+	}
+
+	/**
+	 * Fixture for test_no_utilities()
+	 *
+	 * @return array
+	 */
+	public function fixture_rest_settings() {
+		return array(
+			array( false, false ),
+			array( true, true ),
+		);
+	}
+	/**
 	 * Testing instantiation of the Default() class
 	 *
 	 * @param bool        $use_rest
