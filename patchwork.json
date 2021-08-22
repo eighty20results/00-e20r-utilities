@@ -3,6 +3,7 @@
 	"function_exists",
 	"file_exists",
 	"mkdir",
-	"dirname"
+	"dirname",
+	"json_decode"
   ]
 }

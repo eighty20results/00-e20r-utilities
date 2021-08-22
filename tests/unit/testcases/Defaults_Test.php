@@ -582,6 +582,51 @@ class Defaults_Test extends Unit {
 		return $fixture;
 	}
 
+
+	/**
+	 * Test the failure (exceptions) in Defaults::read_config()
+	 *
+	 * @param string $passed_json
+	 * @param string $json_config
+	 * @param string $expected
+	 *
+	 * @throws BadOperation
+	 * @throws ConfigDataNotFound
+	 * @throws InvalidSettingsKey
+	 *
+	 * @dataProvider fixture_bad_configs
+	 * @covers \E20R\Licensing\Settings\Defaults::read_config()
+	 */
+	public function test_read_config_failure( $passed_json, $json_config, $expected ) {
+		$plugin_defaults = new Defaults( false, $this->mock_utils );
+		$plugin_defaults->constant( 'E20R_STORE_CONFIG', Defaults::UPDATE_CONSTANT, $json_config );
+
+		if ( '{}' === $json_config ) {
+			$this->mock_utils->log( 'Mocking json_decode()' );
+			Functions\expect( 'json_decode' )
+				->andReturn( null );
+		}
+
+		try {
+			$plugin_defaults->read_config( $passed_json );
+			self::assertSame( $expected, null );
+		} catch ( \Exception | ConfigDataNotFound | InvalidSettingsKey $exception ) {
+			self::assertInstanceOf( $expected, $exception );
+		}
+	}
+
+	/**
+	 * Fixture for the test_read_config_failure()
+	 *
+	 * @return array[]
+	 */
+	public function fixture_bad_configs() {
+		return array(
+			array( null, null, ConfigDataNotFound::class ),
+			array( '{}', '{}', ConfigDataNotFound::class ),
+			array( '{"store_code":"123456789010","server_url":"https://eighty20results.com"}', null, null ),
+		);
+	}
 	/**
 	 * Test default constant settings
 	 * @param string $constant_name
@@ -724,6 +769,154 @@ class Defaults_Test extends Unit {
 			array( 'use_rest', false, false, BadOperation::class ),
 			array( 'debug_logging', true, true, BadOperation::class ),
 			array( 'store_code', '12345678', '12345678', BadOperation::class ),
+		);
+	}
+
+	/**
+	 * Test(s) for the Defaults::get_default() values, including error testing
+	 *
+	 * @param $parameter
+	 * @param $expected_value
+	 * @param $expected_exception
+	 *
+	 * @dataProvider fixture_get_default_errors
+	 * @covers \E20R\Licensing\Settings\Defaults::get_default()
+	 */
+	public function test_get_default_with_errors( $parameter, $expected_value, $expected_exception ) {
+		$defaults = new Defaults( true );
+		try {
+			$result = $defaults->get_default( $parameter );
+			self::assertSame( $expected_value, $result );
+		} catch ( InvalidSettingsKey $e ) {
+			self::assertInstanceOf( $expected_exception, $e );
+		}
+	}
+
+	/**
+	 * Fixture for the test_get_default_with_errors
+	 * @return array[]
+	 */
+	public function fixture_get_default_errors() {
+		return array(
+			// key, value, exception
+			array( 'version', '3.2', null ),
+			array( 'dummy', null, InvalidSettingsKey::class ),
+		);
+	}
+
+	/**
+	 * Test the 'exists()' function used to validate that a given default parameter is defined
+	 *
+	 * @param string                  $parameter
+	 * @param bool                    $expected
+	 * @param InvalidSettingsKey|null $exception
+	 *
+	 * @covers \E20R\Licensing\Settings\Defaults::exists()
+	 * @dataProvider fixture_exists
+	 */
+	public function test_exists( $parameter, $expected, $exception ) {
+		$defaults = new Defaults( true );
+		try {
+			$result = $defaults->exists( $parameter );
+			self::assertSame( $expected, $result );
+		} catch ( InvalidSettingsKey $ex ) {
+			self::assertInstanceOf( $exception, $ex );
+		}
+	}
+
+	/**
+	 * Fixture for the Defaults::exists() tests
+	 *
+	 * @return array[]
+	 */
+	public function fixture_exists() {
+		return array(
+			// parameter name, expected value, expected exception
+			array( 'dummy_param', false, InvalidSettingsKey::class ),
+			array( 'sever_url', false, InvalidSettingsKey::class ),
+			array( 'SERVER_URL', false, InvalidSettingsKey::class ),
+			array( 'REST_URL', false, InvalidSettingsKey::class ),
+			array( 'Ajax_URL', false, InvalidSettingsKey::class ),
+			array( 'USE_REST', false, InvalidSettingsKey::class ),
+			array( 'DEBUG_LOGGING', false, InvalidSettingsKey::class ),
+			array( 'STORE_CODE', false, InvalidSettingsKey::class ),
+			array( 'Connection_URI', false, InvalidSettingsKey::class ),
+			array( 'server_url', true, null ),
+			array( 'version', true, null ),
+			array( 'rest_url', true, null ),
+			array( 'ajax_url', true, null ),
+			array( 'use_rest', true, null ),
+			array( 'debug_logging', true, null ),
+			array( 'store_code', true, null ),
+			array( 'connection_uri', true, null ),
+		);
+	}
+
+	/**
+	 * Test the unlock() function
+	 *
+	 * @param string $param_name
+	 * @param bool $expected
+	 * @param InvalidSettingsKey
+	 *
+	 * @throws InvalidSettingsKey|BadOperation
+	 * @dataProvider fixture_unlock_exceptions
+	 * @covers \E20R\Licensing\Settings\Defaults::unlock()
+	 */
+	public function test_unlock_exceptions( $param_name, $expected, $exception ) {
+		$defaults = new Defaults( true );
+		try {
+			$defaults->unlock( $param_name );
+			$result = $defaults->get( "{$param_name}_locked" );
+			self::assertSame( $expected, $result );
+		} catch ( BadOperation $ex ) {
+			self::assertInstanceOf( $exception, $ex );
+		}
+	}
+
+	/**
+	 * Fixture for testing Defaults::unlock()
+	 *
+	 * @return array[]
+	 */
+	public function fixture_unlock_exceptions() {
+		return array(
+			array( 'store_code', false, null ),
+			array( 'STORE_CODE', false, BadOperation::class ),
+		);
+	}
+
+	/**
+	 * Test the unlock() function
+	 *
+	 * @param string $param_name
+	 * @param bool $expected
+	 * @param InvalidSettingsKey
+	 *
+	 * @throws InvalidSettingsKey|BadOperation
+	 * @dataProvider fixture_lock_exceptions
+	 * @covers \E20R\Licensing\Settings\Defaults::lock()
+	 */
+	public function test_lock_exceptions( $param_name, $expected, $exception ) {
+		$defaults = new Defaults( true );
+		try {
+			$defaults->lock( $param_name );
+			$result = $defaults->get( "{$param_name}_locked" );
+			self::assertSame( $expected, $result );
+		} catch ( BadOperation $ex ) {
+			self::assertInstanceOf( $exception, $ex );
+		}
+	}
+
+	/**
+	 * Fixture for testing Defaults::unlock()
+	 *
+	 * @return array[]
+	 */
+	public function fixture_lock_exceptions() {
+		return array(
+			array( 'store_code', true, null ),
+			array( 'STORE_CODE', false, BadOperation::class ),
 		);
 	}
 }

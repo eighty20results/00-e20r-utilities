@@ -272,15 +272,9 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 
 			$settings = json_decode( $json_blob, true );
 
-			if ( null === $settings ) {
+			if ( null === $settings || empty( $settings ) ) {
 				throw new ConfigDataNotFound(
 					esc_attr__( 'Unable to decode the configuration data', '00-e20r-utilities' )
-				);
-			}
-
-			if ( ! is_array( $settings ) ) {
-				throw new ConfigDataNotFound(
-					esc_attr__( 'Invalid configuration file format', '00-e20r-utilities' )
 				);
 			}
 
@@ -508,7 +502,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		 *
 		 * @throws InvalidSettingsKey
 		 */
-		protected function exists( string $param_name ): bool {
+		public function exists( string $param_name ): bool {
 			$reflection = new \ReflectionClass( self::class );
 			$params     = array_keys( $reflection->getDefaultProperties() );
 
