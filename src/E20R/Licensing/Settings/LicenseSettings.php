@@ -21,8 +21,10 @@
 
 namespace E20R\Licensing\Settings;
 
+use E20R\Licensing\Exceptions\ConfigDataNotFound;
 use E20R\Licensing\Exceptions\ErrorSavingSettings;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Exceptions\NoLicenseKeyFound;
 use E20R\Licensing\Exceptions\ServerConnectionError;
@@ -43,7 +45,7 @@ if ( ! defined( 'E20R_MISSING_SETTING' ) ) {
 }
 
 if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
-	class LicenseSettings extends NewLicenseSettings {
+	class LicenseSettings {
 
 		/**
 		 * All settings for all processed licenses
@@ -107,31 +109,40 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		protected $domain_name = '';
 
 		/**
+		 * @var null|NewSettings|OldSettings
+		 */
+		private $license_request_settings = null;
+
+		/**
+		 * @var \E20R\Licensing\Settings\Defaults|mixed|null
+		 */
+		private $plugin_defaults;
+
+		/**
 		 * LicenseSettings constructor.
 		 *
 		 * @param string|null $product_sku
 		 *
-		 * @throws InvalidSettingsKey|MissingServerURL|BadOperation
+		 * @throws InvalidSettingsKey|MissingServerURL|BadOperation|InvalidSettingsVersion|ConfigDataNotFound|\ReflectionException
 		 */
 		public function __construct( $product_sku = 'e20r_default_license', $plugin_defaults = null, $utils = null ) {
-			parent::__construct( $product_sku, $plugin_defaults, $utils );
 
 			if ( empty( $product_sku ) ) {
 				$product_sku = 'e20r_default_license';
-			}
-
-			if ( empty( $plugin_defaults ) ) {
-				$plugin_defaults = new Defaults();
 			}
 
 			if ( empty( $utils ) ) {
 				$messages = new Message();
 				$utils    = new Utilities( $messages );
 			}
+			$this->utils = $utils;
+
+			if ( empty( $plugin_defaults ) ) {
+				$plugin_defaults = new Defaults( true, $this->utils );
+			}
 
 			$this->domain_name     = apply_filters( 'e20r_license_domain_to_license', ( $_SERVER['SERVER_NAME'] ?? 'localhost' ) );
 			$this->product_sku     = $product_sku;
-			$this->utils           = $utils;
 			$this->plugin_defaults = $plugin_defaults;
 			$this->update_plugin_defaults();
 
@@ -148,17 +159,34 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				'all_settings',
 				'instance',
 				'page',
-				'to_debug',
-				// 'plugin_defaults',
+				'plugin_defaults',
 			);
 
-			if ( ! $this->new_version ) {
-				$this->settings = new NewLicenseSettings( $product_sku, $this->plugin_defaults, $this->utils );
+			if ( $this->new_version ) {
+				$this->license_request_settings = new NewSettings( $this->product_sku );
 			} else {
-				$this->settings = new OldLicenseSettings( $product_sku, $this->plugin_defaults, $this->utils );
+				$this->license_request_settings = new OldSettings( $this->product_sku );
 			}
 
-			$server_url = $this->plugin_defaults->get( 'server_url' );
+			// Create setting(s) objets for all saved setting(s)
+			$defaults           = $this->license_request_settings->defaults();
+			$this->all_settings = get_option( 'e20r_license_settings', array() );
+			$server_url         = $this->plugin_defaults->get( 'server_url' );
+
+			// This could happen if the settings are saved incorrectly
+			if ( ! is_array( $this->all_settings ) ) {
+				$this->all_settings = array();
+			}
+
+			if ( ! isset( $this->all_settings[ $this->product_sku ] ) ) {
+				$this->utils->log( "Warning: No {$this->product_sku} specific settings were loaded. Using default values" );
+				$this->all_settings[ $this->product_sku ] = $defaults;
+			}
+
+			$this->utils->log( "Loading settings for {$this->product_sku}" );
+			foreach ( $this->all_settings[ $this->product_sku ] as $key => $value ) {
+				$this->license_request_settings->set( $key, $value );
+			}
 
 			if (
 				empty( $server_url ) ||
@@ -168,7 +196,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$this->utils->log( $msg );
 				$this->utils->add_message(
 					esc_html__(
-						"Error: The license server URL is unknown, or the URL is malformed! Place a correct URL in your wp-config.php file. Example: define( 'E20R_LICENSE_SERVER_URL', 'https://eighty20results.com/' )",
+						"Error: The license server URL is unknown, or the URL is malformed! Add a correct URL in your wp-config.php file. Example: define( 'E20R_LICENSE_SERVER_URL', 'https://eighty20results.com/' )",
 						'00-e20r-utilities'
 					),
 					'error',
@@ -198,7 +226,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			// Determine whether we're using the new or old Licensing version
 			try {
-				$this->new_version = version_compare( $this->plugin_defaults->get( 'version' ), '3.0', 'ge' );
+				$licensing_version = $this->plugin_defaults->get( 'version' );
+				$this->new_version = version_compare( $licensing_version, '3.0', 'ge' );
 			} catch ( \Exception $e ) {
 				$this->utils->log( 'Error: Unable to fetch the version information for this plugin!' );
 				$this->utils->add_message(
@@ -239,26 +268,26 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$this->product_sku = $product_sku;
 			}
 
-			$defaults           = $this->defaults();
-			$this->all_settings = get_option( 'e20r_license_settings', $defaults );
+			$defaults           = $this->license_request_settings->defaults();
+			$this->all_settings = get_option( 'e20r_license_settings', array() );
 
 			// $product_sku  = strtolower( $product_sku ); phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-			$settings = get_option( 'e20r_license_settings', $defaults );
 
 			if ( empty( $this->all_settings ) || (
-				( 1 <= count( $this->all_settings ) && 'e20r_default_license' === $product_sku ) )
+				( 1 <= count( array_keys( $this->all_settings ) ) && 'e20r_default_license' === $product_sku ) )
 			) {
 				$this->utils->log( 'Overwriting license settings with defaults' );
-				$settings = $defaults;
+				$this->all_settings[ $this->product_sku ] = $defaults;
+				$this->update( $product_sku );
 			}
 
-			foreach ( $settings as $setting_key => $value ) {
-				$this->settings->set( $setting_key, $value );
+			foreach ( $this->all_settings[ $this->product_sku ] as $setting_key => $value ) {
+				$this->{$setting_key} = $value;
 			}
 
 			if ( $this->to_debug ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-				$this->utils->log( 'All settings: ' . print_r( $settings, true ) );
+				$this->utils->log( 'All settings: ' . print_r( $this->all_settings, true ) );
 			}
 
 			if ( 'e20r_default_license' === $product_sku || empty( $product_sku ) ) {
@@ -268,7 +297,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 					);
 				}
 
-				return $settings;
+				return $this->all_settings;
 			}
 
 			if ( $this->to_debug ) {
@@ -279,7 +308,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				return null;
 			}
 
-			return $this->all_settings();
+			return $this->all_settings[ $this->product_sku ];
 		}
 
 		/**
@@ -369,45 +398,29 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			return $this->{$key};
 		}
+
 		/**
 		 * Create a list (array) of settings with values for use by other function(s)
 		 *
 		 * @return array
+		 * @throws InvalidSettingsKey|\ReflectionException
 		 */
 		public function all_settings() {
-			$parent_props = array();
-			$reflection   = new \ReflectionClass( $this );
-			$parent       = $reflection->getParentClass();
-			$child_props  = $reflection->getProperties(
-				\ReflectionProperty::IS_PUBLIC |
-				\ReflectionProperty::IS_PROTECTED |
-				\ReflectionProperty::IS_PRIVATE
-			);
+			$properties = $this->license_request_settings->get_properties();
 
-			if ( ! empty( $parent ) ) {
-				$parent_props = $parent->getProperties(
-					\ReflectionProperty::IS_PUBLIC |
-					\ReflectionProperty::IS_PROTECTED
-				);
+			if ( empty( $this->all_settings[ $this->product_sku ] ) ) {
+				$this->all_settings[ $this->product_sku ] = array();
 			}
 
-			$settings = array();
-
-			foreach ( $parent_props as $prop ) {
-				$key = $prop->getName();
-				if ( ! in_array( $key, $this->excluded, true ) ) {
-					$settings[ $key ] = $this->{$key} ?? null;
+			foreach ( $properties as $property ) {
+				try {
+					$this->all_settings[ $this->product_sku ][ $property ] = $this->license_request_settings->get( $property );
+				} catch ( InvalidSettingsKey | \ReflectionException $e ) {
+					throw $e;
 				}
 			}
 
-			foreach ( $child_props as $prop ) {
-				$key = $prop->getName();
-				if ( ! in_array( $key, $this->excluded, true ) ) {
-					$settings[ $key ] = $this->{$key} ?? null;
-				}
-			}
-
-			return $settings;
+			return $this->all_settings;
 		}
 
 		/**
@@ -418,7 +431,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @return array
 		 */
 		public function defaults( ?string $product_sku = 'e20r_default_license' ): array {
-			return $this->all_settings();
+			return $this->license_request_settings->defaults();
 		}
 
 		/**
@@ -649,7 +662,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			*/
 
 			if ( empty( $old_settings ) ) {
-				$old_settings = $this->defaults();
+				$old_settings = $this->license_request_settings->defaults();
 			}
 
 			// Assign new settings to
@@ -713,7 +726,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				if ( $this->to_debug ) {
 					$this->utils->log( "Unexpected settings layout while processing {$this->product_sku}!" );
 				}
-				$license_settings[ $this->product_sku ] = $this->defaults();
+				$license_settings[ $this->product_sku ] = $this->license_request_settings->defaults();
 			}
 
 			// Need to update the settings for a (possibly) pre-existing product
