@@ -236,13 +236,13 @@ class LicenseSettings_Test extends Unit {
 				MissingServerURL::class,
 				"Error: Haven't configured the license server URL, or the URL is malformed. Can be configured in the wp-config.php file.",
 				function() use ( $sku, $mocked_plugin_defaults ) {
-					$settings = new LicenseSettings( $sku, null, $mocked_plugin_defaults, $this->m_utils );
+					$settings = new LicenseSettings( $sku, $mocked_plugin_defaults, $this->m_utils );
 				}
 			);
 			return;
 		} else {
 			try {
-				$settings = new LicenseSettings( $sku, null, $mocked_plugin_defaults, $this->m_utils );
+				$settings = new LicenseSettings( $sku, $mocked_plugin_defaults, $this->m_utils );
 			} catch ( \Exception $e ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( 'Error: Unable to instantiate the LicenseSettings class: ' . $e->getMessage() );
@@ -442,7 +442,7 @@ class LicenseSettings_Test extends Unit {
 		);
 		$m_license_settings = $this->construct(
 			LicenseSettings::class,
-			array( $test_sku, null, $m_defaults, $this->m_utils ),
+			array( $test_sku, $m_defaults, $this->m_utils ),
 			array(
 				'save' => $defaults['update_option'],
 			)

@@ -122,13 +122,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * LicenseSettings constructor.
 		 *
 		 * @param string|null                  $product_sku
-		 * @param NewSettings|OldSettings|null $settings_class
 		 * @param Defaults|null                $plugin_defaults
 		 * @param Utilities|null               $utils
+		 * @param NewSettings|OldSettings|null $settings_class
 		 *
 		 * @throws InvalidSettingsKey|MissingServerURL|BadOperation|InvalidSettingsVersion|ConfigDataNotFound|\ReflectionException
 		 */
-		public function __construct( $product_sku = 'e20r_default_license', $settings_class = null, $plugin_defaults = null, $utils = null ) {
+		public function __construct( $product_sku = 'e20r_default_license', $plugin_defaults = null, $utils = null, $settings_class = null ) {
 
 			if ( empty( $product_sku ) ) {
 				$product_sku = 'e20r_default_license';
