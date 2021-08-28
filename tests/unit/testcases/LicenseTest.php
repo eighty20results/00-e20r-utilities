@@ -532,6 +532,15 @@ class LicenseTest extends Unit {
 					return fixture_upload_dir();
 				}
 			);
+		Functions\when( 'update_option' )
+			->alias(
+				function( $option_name, $values, $cache ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
+					error_log( "Saving to {$option_name} (cached: {$cache}) -> " . print_r( $values, true ) );
+					return true;
+				}
+			);
+
 		$m_defaults = $this->makeEmpty(
 			Defaults::class,
 			array(
@@ -545,6 +554,9 @@ class LicenseTest extends Unit {
 					}
 					if ( 'store_code' === $param_name ) {
 						$value = $store_code;
+					}
+					if ( 'server_url' === $param_name ) {
+						$value = 'https://eighty20results.com';
 					}
 					return $value;
 				},
@@ -656,7 +668,7 @@ class LicenseTest extends Unit {
 		return array(
 			array( 'E20R_LICENSE_TEST', false, 'dummy_store_1', 'active', null, 'localhost', ServerConnectionError::class, true, null, null ),
 			array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', false, 'localhost', null, true, $blocked, null ),
-			array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', $this->make_payload( 'error', 1 ), 'localhost', null, true, $blocked, $lsc ),
+			array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', $this->make_payload( 'error', 1 ), 'localhost', null, true, $error, $lsc ),
 			// array( 'E20R_LICENSE_TEST', true, 'dummy_store_1', 'active', false, 'localhost', null, false, $blocked, null ),
 		);
 	}

@@ -33,6 +33,9 @@ function e20r_unittest_stubs() {
 	Functions\when( 'esc_attr__' )
 		->returnArg( 1 );
 
+	Functions\when( 'esc_html__' )
+		->returnArg( 1 );
+
 	Functions\when( '__return_true' )
 		->justReturn( true );
 
@@ -53,20 +56,11 @@ function e20r_unittest_stubs() {
 		);
 
 	Functions\expect( 'wp_date' )
-		->with( Mockery::contains( 'Y_M_D' ) )
 		->andReturnUsing(
 			function( $date_string, $time ) {
 				return date( $date_string, $time ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
 			}
 		);
-
-	try {
-		Functions\expect( 'get_option' )
-			->with( 'home' )
-			->andReturn( 'https://localhost:7254/' );
-	} catch ( \Exception $e ) {
-		echo 'Error: ' . $e->getMessage(); // phpcs:ignore
-	}
 
 	Functions\expect( 'plugins_url' )
 		->andReturn( 'https://localhost:7254/wp-content/plugins/' );
@@ -74,7 +68,11 @@ function e20r_unittest_stubs() {
 	try {
 		Functions\expect( 'admin_url' )
 			->with( \Mockery::contains( 'options-general.php' ) )
-			->andReturn( 'https://localhost:7254/wp-admin/options-general.php' );
+			->andReturnUsing(
+				function() {
+					return 'https://localhost:7254/wp-admin/options-general.php';
+				}
+			);
 	} catch ( \Exception $e ) {
 		echo 'Error: ' . $e->getMessage(); // phpcs:ignore
 	}

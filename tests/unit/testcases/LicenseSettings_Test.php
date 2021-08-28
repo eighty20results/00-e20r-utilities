@@ -26,14 +26,13 @@ use Codeception\Test\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use E20R\Licensing\Settings\Defaults;
-use E20R\Utilities\Cache;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Settings\LicenseSettings;
-use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use function E20R\Tests\Unit\Fixtures\e20r_unittest_stubs;
 
-class LicenseSettings_Happy_Path_Test extends Unit {
+class LicenseSettings_Test extends Unit {
 
 	use MockeryPHPUnitIntegration;
 	use AssertThrows;
@@ -45,6 +44,8 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	 *
 	 */
 	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
 		// So we can update the default settings for the License component of the E20R Utilities module
 		// For testing purposes
 		if ( ! defined( 'PLUGIN_PHPUNIT' ) ) {
@@ -59,10 +60,8 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 			define( 'WP_DEBUG', true );
 		}
 
-		parent::setUp();
-		Monkey\setUp();
-
 		$this->loadFiles();
+		e20r_unittest_stubs();
 		$this->loadMockedFunctions();
 	}
 
@@ -88,24 +87,14 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 			$this->m_utils = $this->makeEmpty(
 				Utilities::class,
 				array(
-					'add_message'        => null,
-					'log'                => null,
+					'add_message'        => function( $msg, $severity, $location ) { error_log( "Mocked add_message(): {$msg}" ); /* phpcs:ignore */ },
+					'log'                => function( $msg ) { error_log( "Mocked log(): {$msg}" ); /* phpcs:ignore */ },
 					'get_util_cache_key' => 'e20r_pw_utils_0',
 				)
 			);
 		} catch ( \ Exception $exception ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( 'Utilities() mocker: ' . $exception->getMessage() );
-		}
-
-		try {
-			Functions\expect( 'get_option' )
-				->with( 'timezone_string' )
-				->zeroOrMoreTimes()
-				->andReturn( 'Europe/Oslo' );
-		} catch ( \Exception $e ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( 'get_options() mock error: ' . esc_attr( $e->getMessage() ) );
 		}
 
 		try {
@@ -145,17 +134,6 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 			error_log( 'file_exists() mock error: ' . esc_attr( $e->getMessage() ) );
 		}
 
-		Functions\stubs(
-			array(
-				'plugins_url'         => 'https://localhost:7254/wp-content/plugins/00-e20r-utilities/',
-				'plugin_dir_path'     => __DIR__ . '/../../../',
-				'get_current_blog_id' => 0,
-				'esc_html__'          => null,
-				'esc_attr__'          => null,
-				'__'                  => null,
-				'_e'                  => null,
-			)
-		);
 	}
 
 	/**
@@ -163,6 +141,7 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../../../inc/autoload.php';
+		require_once __DIR__ . '/../inc/unittest_stubs.php';
 	}
 
 	/**
@@ -179,6 +158,8 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 	 */
 	public function test_instantiate_class( $sku, $domain, $with_debug, $version, $expected ) {
 
+		$settings = array();
+
 		Functions\expect( 'dirname' )
 			->zeroOrMoreTimes()
 			->with( \Mockery::contains( '/.info.json' ) )
@@ -189,6 +170,29 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 
 		Functions\when( 'set_transient' )
 			->justReturn( true );
+		Functions\expect( 'get_option' )
+			->with( \Mockery::contains( 'e20r_license_settings' ) )
+			->andReturn(
+				function( $name, $defaults ) use ( $settings ) {
+					$value = $defaults;
+					if ( 'e20r_license_settings' === $name ) {
+						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+						error_log( "Mocked get_option() for {$name}" );
+						$value = $defaults;
+					}
+
+					return $defaults; // TODO: Return better settings
+				}
+			);
+		try {
+			Functions\expect( 'get_option' )
+				->with( 'timezone_string' )
+				->zeroOrMoreTimes()
+				->andReturn( 'Europe/Oslo' );
+		} catch ( \Exception $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'get_options() mock error: ' . esc_attr( $e->getMessage() ) );
+		}
 
 		$config = $this->fixture_config_file( $sku );
 
@@ -230,15 +234,15 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 		if ( empty( $config['server_url'] ) ) {
 			$this->assertThrowsWithMessage(
 				MissingServerURL::class,
-				"Error: Haven't configured the Eighty/20 Results server URL, or the URL is malformed. Can be configured in the wp-config.php file.",
+				"Error: Haven't configured the license server URL, or the URL is malformed. Can be configured in the wp-config.php file.",
 				function() use ( $sku, $mocked_plugin_defaults ) {
-					$settings = new LicenseSettings( $sku, $mocked_plugin_defaults, $this->m_utils );
+					$settings = new LicenseSettings( $sku, null, $mocked_plugin_defaults, $this->m_utils );
 				}
 			);
 			return;
 		} else {
 			try {
-				$settings = new LicenseSettings( $sku, $mocked_plugin_defaults, $this->m_utils );
+				$settings = new LicenseSettings( $sku, null, $mocked_plugin_defaults, $this->m_utils );
 			} catch ( \Exception $e ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( 'Error: Unable to instantiate the LicenseSettings class: ' . $e->getMessage() );
@@ -341,6 +345,261 @@ class LicenseSettings_Happy_Path_Test extends Unit {
 					'new_version'     => true,
 				),
 			),
+		);
+	}
+
+
+	/**
+	 * @param string $test_sku
+	 * @param $settings
+	 * @param array $defaults
+	 * @param $expected
+	 *
+	 * @throws \ReflectionException|\Exception
+	 *
+	 * @dataProvider fixture_license_settings
+	 */
+	public function test_load_settings( $test_sku, $settings, $defaults, $expected ) {
+
+		Functions\when( '_deprecated_function' )
+			->justEcho( 'Deprecated function warning printed' );
+
+		Functions\when( 'update_option' )
+			->alias(
+				function( $option_name, $values, $cache ) use ( $defaults ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
+					error_log( "Saving to {$option_name} (cached: {$cache}) -> " . print_r( $values, true ) );
+					return $defaults['update_option'];
+				}
+			);
+
+		Functions\when( 'get_option' )
+			->alias(
+				function( $name, $defaults = null ) use ( $settings, $test_sku ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( "Mocked get_option() for {$name}" );
+
+					switch ( $name ) {
+						case 'timezone_string':
+							$value = 'Europe/Oslo';
+							break;
+						case 'e20r_license_settings':
+							$using = $test_sku;
+							if ( empty( $test_sku ) ) {
+								$using = 'e20r_default_license';
+							}
+							$value = array( $using => $settings );
+							break;
+						default:
+							$value = $defaults;
+					}
+					return $value;
+				}
+			);
+
+		$m_defaults         = $this->makeEmpty(
+			Defaults::class,
+			array(
+				'get'      => function( $param_name ) use ( $defaults ) {
+					$value = null;
+					if ( 'debug_logging' === $param_name ) {
+						$value = true;
+					}
+					if ( 'version' === $param_name ) {
+						$value = $defaults['new_version'];
+					}
+					if ( 'store_code' === $param_name ) {
+						$value = $defaults['store_code'];
+					}
+					if ( 'server_url' === $param_name ) {
+						$value = $defaults['server_url'];
+					}
+					return $value;
+				},
+				'constant' => function( $constant_name ) {
+					$value = -1;
+					switch ( $constant_name ) {
+						case 'E20R_LICENSE_ERROR':
+							$value = 256;
+							break;
+						case 'E20R_LICENSE_MAX_DOMAINS':
+							$value = 2048;
+							break;
+						case 'E20R_LICENSE_REGISTERED':
+							$value = 1024;
+							break;
+						case 'E20R_LICENSE_DOMAIN_ACTIVE':
+							$value = 512;
+							break;
+						case 'E20R_LICENSE_BLOCKED':
+							$value = 128;
+							break;
+					}
+
+					return $value;
+				},
+			)
+		);
+		$m_license_settings = $this->construct(
+			LicenseSettings::class,
+			array( $test_sku, null, $m_defaults, $this->m_utils ),
+			array(
+				'save' => $defaults['update_option'],
+			)
+		);
+		// $license_settings = new LicenseSettings( $test_sku, $m_defaults, $this->m_utils );
+		$result = $m_license_settings->load_settings( $test_sku, $settings );
+		self::assertSame( $expected, $result );
+	}
+
+	/**
+	 * Fixture for License_WPUnitTest::test_load_settings()
+	 *
+	 * @return array[]
+	 */
+	public function fixture_license_settings() {
+		$new_settings = $this->fixture_new_settings();
+		$old_settings = $this->fixture_old_settings();
+
+		return array(
+			// Sku, saved_settings, new_version, expected
+			array( // # 0
+				'E20R_TEST_LICENSE',
+				array(
+					'expire'           => -1,
+					'activation_id'    => null,
+					'expire_date'      => '2021-08-21T08:30:30',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				array(
+					'new_version'   => '3.2',
+					'store_code'    => 'store_code_1',
+					'server_url'    => 'https://eighty20results.com/',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => -1,
+					'activation_id'    => null,
+					'expire_date'      => '2021-08-21T08:30:30',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+			),
+			array( // # 1
+				'E20R_LICENSING',
+				array(
+					'product'    => 'Dummy license for Unit tests',
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'key'        => base64_encode( 'mysecretkey' ),
+					'renewed'    => null,
+					'domain'     => 'example.com',
+					'expires'    => null,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => 10230,
+				),
+				array(
+					'new_version'   => '2.0',
+					'store_code'    => 'store_code_1',
+					'server_url'    => 'https://eighty20results.com/',
+					'update_option' => true,
+				),
+				array(
+					'product'    => 'Dummy license for Unit tests',
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'key'        => base64_encode( 'mysecretkey' ),
+					'renewed'    => null,
+					'domain'     => 'example.com',
+					'expires'    => null,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => 10230,
+				),
+			),
+			array( // # 2
+				null,
+				array(
+					'expire'           => -1,
+					'activation_id'    => null,
+					'expire_date'      => '2021-08-21T08:30:30',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				array(
+					'new_version'   => '3.2',
+					'store_code'    => 'store_code_1',
+					'server_url'    => 'https://eighty20results.com/',
+					'update_option' => true,
+				),
+				array(
+					'e20r_default_license' => array(
+						'expire'           => -1,
+						'activation_id'    => null,
+						'expire_date'      => '2021-08-21T08:30:30',
+						'timezone'         => 'UTC',
+						'the_key'          => '',
+						'url'              => '',
+						'has_expired'      => true,
+						'status'           => 'cancelled',
+						'allow_offline'    => false,
+						'offline_interval' => 'days',
+						'offline_value'    => 0,
+					),
+				),
+			),
+		);
+	}
+
+	public function fixture_new_settings() {
+		return array(
+			'expire'           => -1,
+			'activation_id'    => null,
+			'expire_date'      => gmdate( 'Y-m-d\Th:i:s' ),
+			'timezone'         => 'UTC',
+			'the_key'          => '',
+			'url'              => '',
+			'has_expired'      => true,
+			'status'           => 'cancelled',
+			'allow_offline'    => false,
+			'offline_interval' => 'days',
+			'offline_value'    => 0,
+		);
+	}
+	public function fixture_old_settings() {
+		return array(
+			'product'    => '',
+			'key'        => null,
+			'renewed'    => null,
+			'domain'     => '',
+			'expires'    => null,
+			'status'     => 'cancelled',
+			'first_name' => '',
+			'last_name'  => '',
+			'email'      => '',
+			'timestamp'  => time(),
 		);
 	}
 }

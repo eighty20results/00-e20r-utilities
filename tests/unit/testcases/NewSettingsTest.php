@@ -183,7 +183,7 @@ class NewSettingsTest extends \Codeception\Test\Unit {
 				null,
 				array(
 					'product_sku' => 'PRODUCT_2',
-					'expire_date' => null,
+					'expire_date' => '',
 					'timezone'    => 'UTC',
 					'has_expired' => true,
 				),
@@ -417,7 +417,7 @@ class NewSettingsTest extends \Codeception\Test\Unit {
 		return array(
 			array( 'expire', -1, null ),
 			array( 'activation_id', null, null ),
-			array( 'expire_date', null, null ),
+			array( 'expire_date', '', null ),
 			array( 'timezone', 'UTC', null ),
 			array( 'the_key', '', null ),
 			array( 'url', '', null ),

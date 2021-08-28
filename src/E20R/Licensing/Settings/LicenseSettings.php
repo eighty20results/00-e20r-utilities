@@ -121,11 +121,14 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		/**
 		 * LicenseSettings constructor.
 		 *
-		 * @param string|null $product_sku
+		 * @param string|null                  $product_sku
+		 * @param NewSettings|OldSettings|null $settings_class
+		 * @param Defaults|null                $plugin_defaults
+		 * @param Utilities|null               $utils
 		 *
 		 * @throws InvalidSettingsKey|MissingServerURL|BadOperation|InvalidSettingsVersion|ConfigDataNotFound|\ReflectionException
 		 */
-		public function __construct( $product_sku = 'e20r_default_license', $plugin_defaults = null, $utils = null ) {
+		public function __construct( $product_sku = 'e20r_default_license', $settings_class = null, $plugin_defaults = null, $utils = null ) {
 
 			if ( empty( $product_sku ) ) {
 				$product_sku = 'e20r_default_license';
@@ -162,10 +165,14 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				'plugin_defaults',
 			);
 
-			if ( $this->new_version ) {
-				$this->license_request_settings = new NewSettings( $this->product_sku );
+			if ( empty( $settings_class ) ) {
+				if ( $this->new_version ) {
+					$this->license_request_settings = new NewSettings( $this->product_sku );
+				} else {
+					$this->license_request_settings = new OldSettings( $this->product_sku );
+				}
 			} else {
-				$this->license_request_settings = new OldSettings( $this->product_sku );
+				$this->license_request_settings = $settings_class;
 			}
 
 			// Create setting(s) objets for all saved setting(s)
@@ -250,39 +257,39 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * Load local settings for the specified product
 		 *
 		 * @param string|null $product_sku
-		 *
+		 * @param array|null  $settings
 		 * @return array|null
 		 *
 		 * @throws \Exception
 		 */
-		public function load_settings( string $product_sku = null ) {
+		public function load_settings( ?string $product_sku = null, ?array $settings = null ) {
 
-			if ( empty( $product_sku ) && empty( $this->product_sku ) ) {
+			if ( empty( $product_sku ) ) {
 				if ( $this->to_debug ) {
 					$this->utils->log( 'No product key provided. Using default key (e20r_default_license)!' );
 				}
 				$product_sku = 'e20r_default_license';
 			}
 
-			if ( ! empty( $product_sku ) && $this->product_sku !== $product_sku ) {
-				$this->product_sku = $product_sku;
-			}
-
+			$this->product_sku  = $product_sku;
 			$defaults           = $this->license_request_settings->defaults();
 			$this->all_settings = get_option( 'e20r_license_settings', array() );
 
 			// $product_sku  = strtolower( $product_sku ); phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 
-			if ( empty( $this->all_settings ) || (
-				( 1 <= count( array_keys( $this->all_settings ) ) && 'e20r_default_license' === $product_sku ) )
+			if ( empty( $this->all_settings[ $this->product_sku ] ) || (
+				( 1 <= count( array_keys( $this->all_settings[ $this->product_sku ] ) ) && 'e20r_default_license' === $product_sku ) )
 			) {
 				$this->utils->log( 'Overwriting license settings with defaults' );
 				$this->all_settings[ $this->product_sku ] = $defaults;
-				$this->update( $product_sku );
+				$this->save();
 			}
 
-			foreach ( $this->all_settings[ $this->product_sku ] as $setting_key => $value ) {
-				$this->{$setting_key} = $value;
+			if ( ! empty( $settings ) && is_array( $settings ) ) {
+				foreach ( $settings as $key => $value ) {
+					$this->license_request_settings->set( $key, $value );
+				}
+				$this->all_settings[ $this->product_sku ] = $this->license_request_settings->all();
 			}
 
 			if ( $this->to_debug ) {
@@ -302,10 +309,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			if ( $this->to_debug ) {
 				$this->utils->log( "Requested and returning settings for {$product_sku}" );
-			}
-
-			if ( empty( $this->get( 'product_sku' ) ) ) {
-				return null;
 			}
 
 			return $this->all_settings[ $this->product_sku ];
@@ -648,11 +651,16 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @return LicenseSettings
 		 *
-		 * @throws ErrorSavingSettings
+		 * @throws ErrorSavingSettings|InvalidSettingsKey | \ReflectionException
 		 */
-		public function merge( $new_settings ): LicenseSettings {
+		public function merge( $new_settings ) {
 
-			$old_settings = $this->all_settings();
+			try {
+				$old_settings = $this->all_settings();
+			} catch ( InvalidSettingsKey | \ReflectionException $e ) {
+				$this->utils->log( $e->getMessage() );
+				throw $e;
+			}
 
 			/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 			if ( $this->to_debug ) {
@@ -693,12 +701,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * Keep for backwards compatibility reasons
 		 *
 		 * @param string|null $sku
-		 * @param array $settings
+		 * @param array       $settings
 		 *
 		 * @return bool
+		 * @throws ErrorSavingSettings
 		 */
 		public function update( $sku = null, $settings = null ) {
-			_deprecated_function( 'License::update()', '5.8', 'License::save()' );
+			_deprecated_function( 'License::update()', '2.2', 'License::save()' );
 			if ( empty( $settings ) ) {
 				$this->merge( $settings );
 			}
@@ -713,7 +722,19 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		public function save() {
 			// TODO: This function needs to load the existing settings from the DB and then and saves the current settings
 
-			$license_settings = $this->all_settings();
+			try {
+				$license_settings = $this->all_settings();
+			} catch ( InvalidSettingsKey | \ReflectionException $e ) {
+				$this->utils->add_message(
+					sprintf(
+						// translators: %1$s - The exception error message
+						esc_attr__( 'Error saving license settings: %1$s', '00-e20r-utilities' ),
+						$e->getMessage()
+					),
+					'error',
+					'backend'
+				);
+			}
 			/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 			if ( $this->to_debug ) {
 				$this->utils->log( "Settings before update: " . print_r( $license_settings, true ) );

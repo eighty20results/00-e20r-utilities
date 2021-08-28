@@ -115,26 +115,10 @@ class OldSettings extends BaseSettings {
 	 */
 	public function __construct( ?string $product_sku = 'e20r_default_license', $settings = null ) {
 		$this->product_sku = ( ! empty( $product_sku ) ? $product_sku : 'e20r_default_license' );
-		$this->product     = $this->product_sku;
 		if ( empty( $settings ) ) {
-			$settings      = $this->defaults();
-			$this->product = $this->product_sku;
+			$settings = $this->defaults();
 		}
-
 		$this->all_settings[ $product_sku ] = $settings;
-		parent::__construct( $product_sku, $this->all_settings[ $product_sku ] );
-
-		global $current_user;
-
-		if ( ! empty( $current_user ) ) {
-			$this->first_name = ! empty( $current_user->user_firstname ) ?
-				$current_user->user_firstname :
-				$current_user->first_name;
-			$this->last_name  = ! empty( $current_user->user_lastname ) ?
-				$current_user->user_lastname :
-				$current_user->last_name;
-			$this->email      = $current_user->user_email;
-		}
 
 		// Loading settings from the supplied array
 		foreach ( $this->all_settings[ $product_sku ] as $key => $value ) {
@@ -146,7 +130,21 @@ class OldSettings extends BaseSettings {
 					)
 				);
 			}
+			$this->{$key} = $value;
 		}
+		parent::__construct( $product_sku, $this->all_settings[ $product_sku ] );
+		global $current_user;
+
+		if ( ! empty( $current_user ) ) {
+			$this->first_name = ! empty( $current_user->user_firstname ) ?
+				$current_user->user_firstname :
+				$current_user->first_name;
+			$this->last_name  = ! empty( $current_user->user_lastname ) ?
+				$current_user->user_lastname :
+				$current_user->last_name;
+			$this->email      = $current_user->user_email;
+		}
+		$this->product = $this->product_sku;
 	}
 
 	/**

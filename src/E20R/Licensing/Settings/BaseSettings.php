@@ -73,9 +73,13 @@ abstract class BaseSettings {
 	public function get( $key ) {
 		if ( ! property_exists( $this, $key ) ) {
 			throw new InvalidSettingsKey(
-				esc_attr__(
-					'Not a valid setting for this version of the licensing solution',
-					'00-e20r-utilities'
+				sprintf(
+					// translators: %1$s - The setting/key name
+					esc_attr__(
+						'%1$s is not a valid setting for this version of the licensing solution',
+						'00-e20r-utilities'
+					),
+					$key
 				)
 			);
 		}
@@ -96,7 +100,7 @@ abstract class BaseSettings {
 				sprintf(
 					// translators: %1$s - Class property
 					esc_attr__(
-						'"%1$s" Not a valid setting for this version of the licensing solution',
+						'"%1$s" is not a valid setting for this version of the licensing solution',
 						'00-e20r-utilities'
 					),
 					$key
@@ -135,6 +139,21 @@ abstract class BaseSettings {
 		return $properties;
 	}
 
+	/**
+	 * Get all settings and its values
+	 *
+	 * @return array
+	 * @throws \ReflectionException
+	 */
+	public function all() {
+		$property_names = $this->get_properties();
+		$settings       = array();
+
+		foreach ( $property_names as $property_name ) {
+			$settings[ $property_name ] = $this->{$property_name};
+		}
+		return $settings;
+	}
 	/**
 	 * Return all properties from the class with its default values
 	 *

@@ -87,7 +87,7 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 				}
 
 				try {
-					$settings = new LicenseSettings( null, $defaults, $this->utils );
+					$settings = new LicenseSettings( null, null, $defaults, $this->utils );
 				} catch ( Exceptions\InvalidSettingsKey | Exceptions\MissingServerURL $e ) {
 					$this->utils->log( $e->getMessage() );
 					throw $e;

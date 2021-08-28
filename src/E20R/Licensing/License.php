@@ -22,8 +22,11 @@
 
 namespace E20R\Licensing;
 
+use E20R\Licensing\Exceptions\BadOperation;
+use E20R\Licensing\Exceptions\ConfigDataNotFound;
 use E20R\Licensing\Exceptions\ErrorSavingSettings;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Exceptions\ServerConnectionError;
 use E20R\Licensing\Settings\Defaults;
@@ -133,8 +136,8 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			if ( empty( $settings ) ) {
 				try {
 					$defaults = new Defaults();
-					$settings = new LicenseSettings( $this->product_sku, $defaults, $this->utils );
-				} catch ( Exceptions\InvalidSettingsKey | MissingServerURL $e ) {
+					$settings = new LicenseSettings( $this->product_sku, null, $defaults, $this->utils );
+				} catch ( Exceptions\InvalidSettingsKey | MissingServerURL | BadOperation | ConfigDataNotFound | InvalidSettingsVersion | \ReflectionException $e ) {
 					$this->utils->log( 'Error: Invalid setting key used when instantiating the LicenseSettings() class: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
@@ -216,7 +219,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			$this->settings = null;
 			$defaults       = new Defaults();
 			try {
-				$this->settings = new LicenseSettings( $this->product_sku, $defaults, $this->utils );
+				$this->settings = new LicenseSettings( $this->product_sku, null,  $defaults, $this->utils );
 			} catch ( Exceptions\InvalidSettingsKey | MissingServerURL $e ) {
 				$this->utils->log( $e->getMessage() );
 				throw $e;
@@ -380,11 +383,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 */
 		public function is_expiring( $product_sku ) {
 
-			// phpcs:ignore
-			// $product_sku = strtolower( $product_sku );
-
 			try {
-
 				$settings = $this->settings->get_settings( $product_sku );
 				$expires  = null;
 			} catch ( \Exception $e ) {
@@ -446,7 +445,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 *
 		 * @return array|bool
 		 *
-		 * @throws ServerConnectionError | Exceptions\InvalidSettingsKey | MissingServerURL
+		 * @throws ServerConnectionError|Exceptions\InvalidSettingsKey|MissingServerURL|Exceptions\BadOperation
 		 * @since 1.8.4 - BUG FIX: Didn't save the license settings
 		 * @since 3.2 - BUG FIX: Use LicenseServer class as part of status and throw exceptions when things go sideways
 		 */
@@ -469,7 +468,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 
 			if ( empty( $this->settings ) ) {
 				try {
-					$this->settings = new LicenseSettings( $product_sku );
+					$this->settings = new LicenseSettings( $product_sku, null, $plugin_defaults, $this->utils );
 				} catch ( Exceptions\InvalidSettingsKey | MissingServerURL $e ) {
 					$this->utils->add_message( $e->getMessage(), 'error', 'backend' );
 					throw $e;
@@ -487,7 +486,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			// Send query to the license manager server
 			$decoded = $this->server->send( $api_params );
 
-			if ( false === $decoded ) {
+			if ( empty( $decoded ) ) {
 
 				$msg = esc_attr__( 'Error transmitting to the remote Licensing server', '00-e20r-utilities' );
 				$this->utils->add_message( $msg, 'error', 'backend' );
@@ -511,7 +510,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				$this->utils->log( 'New Licensing server returned error...' );
 
 				$state          = $plugin_defaults->constant( 'E20R_LICENSE_ERROR' );
-				$this->settings = new LicenseSettings( $product_sku );
+				$this->settings = new LicenseSettings( $product_sku, null, $plugin_defaults, $this->utils );
 
 				// translators: The substitution values come from the error object
 				$msg = esc_attr__( 'Activation error: %1$s -> %2$s', '00-e20r-utilities' );
@@ -534,7 +533,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 						'error',
 						'backend'
 					);
-					$state = $plugin_defaults->constant( 'E20R_LICENSE_BLOCKED' );
+					$state = $plugin_defaults->constant( 'E20R_LICENSE_ERROR' );
 				}
 
 				return array(

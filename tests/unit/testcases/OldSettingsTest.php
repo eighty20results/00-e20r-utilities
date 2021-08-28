@@ -79,10 +79,6 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 		Functions\expect( 'get_current_blog_id' )
 			->andReturn( 1 );
 
-		Functions\expect( 'get_option' )
-			->with( 'timezone_string' )
-			->andReturn( 'Europe/Oslo' );
-
 		Functions\when( 'esc_attr__' )
 			->returnArg( 1 );
 
@@ -130,14 +126,18 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 	 * @covers \E20R\Licensing\Settings\NewSettings()
 	 */
 	public function test_instantiate_old_settings( $sku, $license_settings, $expected ) {
-		Functions\expect( 'get_option' )
-			->with( \Mockery::contains( 'e20r_license_settings' ) )
-			->andReturn(
+		Functions\when( 'get_option' )
+			->justReturn(
 				function( $key, $default_value ) use ( $license_settings ) {
-					if ( empty( $license_settings ) ) {
-						return $default_value;
+					$value = $default_value;
+					if ( 'e20r_license_settings' === $key ) {
+						if ( empty( $license_settings ) ) {
+							return $default_value;
+						}
+						$value = $license_settings;
 					}
-					return $license_settings;
+
+					return $value;
 				}
 			);
 		global $current_user;
@@ -153,7 +153,7 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 		try {
 			$settings = new OldSettings( $sku, $license_settings );
 			foreach ( $expected as $key => $value ) {
-				self::assertSame( $value, $settings->get( $key ), "Error: Different '{$key}' value returned! {$expected[$key]} => {$settings->get( $key )}" );
+				self::assertSame( $value, $settings->get( $key ), "Error: Different '{$key}' value returned: {$expected[$key]} => {$settings->get( $key )}" );
 			}
 			self::assertSame( $expected['product'], $settings->get( 'product_sku' ), 'Error: Unexpected SKU returned' );
 			self::assertInstanceOf( OldSettings::class, $settings );
@@ -199,7 +199,7 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 					'product' => 'PRODUCT_2',
 					'email'   => 'tester@example.com',
 					'domain'  => 'localhost.local',
-					'status'  => 'expired',
+					'status'  => 'cancelled',
 				),
 			),
 		);
@@ -277,25 +277,38 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 	 *
 	 * @param string $old_sku
 	 * @param string $new_sku
-	 * @param array  $new_settings
+	 * @param array  $updated_settings
 	 * @param array  $expected
 	 *
-	 * @covers \E20R\Licensing\Settings\BaseSettings::set()
+	 * @covers       \E20R\Licensing\Settings\BaseSettings::set()
 	 * @dataProvider fixture_update_old_settings
+	 * @throws InvalidSettingsKey|InvalidSettingsVersion
 	 */
 	public function test_set_old_license_parameters( $old_sku, $new_sku, $new_settings, $expected ) {
 
-		$new = new OldSettings( $old_sku );
+		$settings = new OldSettings( $old_sku );
 		foreach ( $new_settings as $key => $value ) {
-			$new->set( $key, $value );
+			$settings->set( $key, $value );
 		}
 
-		self::assertSame( $old_sku, $new->get( 'product_sku' ), 'Error: SKU is not the expected value: ' . $old_sku );
+		self::assertSame(
+			$old_sku,
+			$settings->get( 'product_sku' ),
+			'Error: SKU is not the expected value: ' . $old_sku
+		);
 		foreach ( $expected as $key => $value ) {
-			self::assertSame( $expected[ $key ], $new->get( $key ), "Error: Unable to set '{$key}' to '{$value}'. Actual value: '{$new->get( $key )}'" );
+			self::assertSame(
+				$expected[ $key ],
+				$settings->get( $key ),
+				"Error: Unable to set '{$key}' to '{$value}'. Actual value: '{$settings->get( $key )}'"
+			);
 		}
-		$new->set( 'product_sku', $new_sku );
-		self::assertSame( $new_sku, $new->get( 'product_sku' ), 'Error: SKU is not the expected value: ' . $old_sku );
+		$settings->set( 'product_sku', $new_sku );
+		self::assertSame(
+			$new_sku,
+			$settings->get( 'product_sku' ),
+			'Error: SKU is not the expected value: ' . $old_sku
+		);
 	}
 
 	/**
@@ -312,32 +325,28 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 				'E20R_DUMMY_1',
 				'E20R_DUMMY_2',
 				array(
-					'expire'           => 1629466277, // Friday, August 20, 2021 1:31:17 PM
-					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-					'activation_id'    => base64_encode( 'E20R_DUMMY_1' ),
-					'expire_date'      => $this->exp_date,
-					'timezone'         => 'CET',
-					'the_key'          => '',
-					'url'              => '',
-					'has_expired'      => true,
-					'status'           => 'cancelled',
-					'allow_offline'    => false,
-					'offline_interval' => 'days',
-					'offline_value'    => 0,
+					'product'    => '',
+					'key'        => null,
+					'renewed'    => null,
+					'domain'     => '',
+					'expires'    => $this->exp_date,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => 1629466277, // Friday, August 20, 2021 1:31:17 PM,
 				),
 				array(
-					'expire'           => 1629466277, // Friday, August 20, 2021 1:31:17 PM
-					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-					'activation_id'    => base64_encode( 'E20R_DUMMY_1' ),
-					'expire_date'      => $this->exp_date,
-					'timezone'         => 'CET',
-					'the_key'          => '',
-					'url'              => '',
-					'has_expired'      => true,
-					'status'           => 'cancelled',
-					'allow_offline'    => false,
-					'offline_interval' => 'days',
-					'offline_value'    => 0,
+					'product'    => '',
+					'key'        => null,
+					'renewed'    => null,
+					'domain'     => '',
+					'expires'    => $this->exp_date,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => 1629466277, // Friday, August 20, 2021 1:31:17 PM,
 				),
 			),
 			array(
@@ -345,18 +354,16 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 				'E20R_DUMMY_2',
 				$settings,
 				array(
-					'expire'           => 1629466277, // Friday, August 20, 2021 1:31:17 PM
-					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-					'activation_id'    => base64_encode( 'E20R_DUMMY_1' ),
-					'expire_date'      => $this->exp_date,
-					'timezone'         => 'CET',
-					'the_key'          => '',
-					'url'              => '',
-					'has_expired'      => true,
-					'status'           => 'cancelled',
-					'allow_offline'    => false,
-					'offline_interval' => 'days',
-					'offline_value'    => 0,
+					'product'    => '',
+					'key'        => null,
+					'renewed'    => null,
+					'domain'     => null,
+					'expires'    => $this->exp_date,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => 1629466277, // Friday, August 20, 2021 1:31:17 PM,
 				),
 			),
 		);
@@ -371,7 +378,7 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 			'product'    => '',
 			'key'        => null,
 			'renewed'    => null,
-			'domain'     => '',
+			'domain'     => null,
 			'expires'    => $this->exp_date,
 			'status'     => 'cancelled',
 			'first_name' => '',
@@ -422,7 +429,7 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 			array( 'product', 'e20r_default_license', null ),
 			array( 'key', null, null ),
 			array( 'renewed', null, null ),
-			array( 'domain', '', null ),
+			array( 'domain', 'localhost.local', null ),
 			array( 'expires', null, null ),
 			array( 'status', 'cancelled', null ),
 			array( 'first_name', '', null ),
