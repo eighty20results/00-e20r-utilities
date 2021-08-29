@@ -25,7 +25,10 @@ use Codeception\AssertThrows;
 use Codeception\Test\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use E20R\Licensing\Exceptions\BadOperation;
+use E20R\Licensing\Exceptions\ConfigDataNotFound;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Settings\LicenseSettings;
@@ -708,6 +711,11 @@ class LicenseSettings_Test extends Unit {
 		}
 	}
 
+	/**
+	 * Fixture for the test_get_parameter()
+	 *
+	 * @return array[]
+	 */
 	public function fixture_get_parameters() {
 		return array(
 			// plugin defaults, parameter name, expected value
@@ -1191,6 +1199,607 @@ class LicenseSettings_Test extends Unit {
 					'timestamp'  => 1630236998,
 				),
 				'first_name',
+				'Tester',
+			),
+		);
+	}
+
+	/**
+	 * Test the `set()` member function for LicenseSettings()
+	 *
+	 * @param array  $defaults
+	 * @param array  $license_settings
+	 * @param string $param_name - The Defaults(), NewSettings() or OldSettings() parameter name
+	 * @param mixed  $param_value
+	 * @param mixed  $expected
+	 *
+	 * @dataProvider fixture_set_parameters
+	 * @covers \E20R\Licensing\Settings\LicenseSettings::set()
+	 *
+	 * @throws InvalidSettingsKey|InvalidSettingsVersion|MissingServerURL
+	 * @throws BadOperation|\ReflectionException|ConfigDataNotFound
+	 */
+	public function test_set_parameters( $defaults, $license_settings, $param_name, $param_value, $expected ) {
+		Functions\when( 'get_option' )
+			->alias(
+				function( $name, $defaults = null ) use ( $license_settings ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( "Mocked get_option() for {$name}" );
+
+					switch ( $name ) {
+						case 'timezone_string':
+							$value = 'Europe/Oslo';
+							break;
+						case 'e20r_license_settings':
+							$value = array( 'e20r_test_license' => $license_settings );
+							break;
+						default:
+							$value = $defaults;
+					}
+					return $value;
+				}
+			);
+		$m_defaults         = $this->makeEmpty(
+			Defaults::class,
+			array(
+				'get'      => function( $param_name ) use ( $defaults ) {
+					$value = null;
+					if ( 'debug_logging' === $param_name ) {
+						$value = true;
+					}
+					if ( 'version' === $param_name ) {
+						$value = $defaults['version'];
+					}
+					if ( 'store_code' === $param_name ) {
+						$value = $defaults['store_code'];
+					}
+					if ( 'server_url' === $param_name ) {
+						$value = $defaults['server_url'];
+					}
+					return $value;
+				},
+				'constant' => function( $constant_name ) {
+					$value = -1;
+					switch ( $constant_name ) {
+						case 'E20R_LICENSE_ERROR':
+							$value = 256;
+							break;
+						case 'E20R_LICENSE_MAX_DOMAINS':
+							$value = 2048;
+							break;
+						case 'E20R_LICENSE_REGISTERED':
+							$value = 1024;
+							break;
+						case 'E20R_LICENSE_DOMAIN_ACTIVE':
+							$value = 512;
+							break;
+						case 'E20R_LICENSE_BLOCKED':
+							$value = 128;
+							break;
+					}
+
+					return $value;
+				},
+			)
+		);
+		$m_license_settings = $this->construct(
+			LicenseSettings::class,
+			array( 'e20r_test_license', $m_defaults, $this->m_utils ),
+			array(
+				'save' => $defaults['update_option'],
+			)
+		);
+
+		if ( version_compare( $m_defaults->get( 'version' ), '3.0', 'ge' ) ) {
+			$m_settings = $this->construct(
+				NewSettings::class,
+				array( 'e20r_test_license', $license_settings )
+			);
+		} else {
+			$m_settings = $this->construct(
+				OldSettings::class,
+				array( 'e20r_test_license', $license_settings )
+			);
+		}
+		$settings = new LicenseSettings( 'e20r_test_license', $m_defaults, $this->m_utils, $m_settings );
+		try {
+			$set_result = $settings->set( $param_name, $param_value );
+			$result     = $settings->get( $param_name );
+			self::assertTrue( $set_result );
+			self::assertSame( $expected, $result );
+		} catch ( InvalidSettingsKey $e ) {
+			self::assertInstanceOf( InvalidSettingsKey::class, $e );
+		}
+	}
+
+	/**
+	 * Fixture for the test_set_parameters()
+	 *
+	 * @return array[]
+	 */
+	public function fixture_set_parameters() {
+		return array(
+			// plugin defaults, parameter name, expected value
+			array( // #0 - NewSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => - 1,
+					'activation_id'    => null,
+					'expire_date'      => '',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'server_url',
+				'https://eighty20results.com',
+				'https://eighty20results.com',
+			),
+			array( // #1 - NewSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => - 1,
+					'activation_id'    => null,
+					'expire_date'      => '',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'expire',
+				1630236998,
+				1630236998,
+			),
+			array( # 2 - NewSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => - 1,
+					'activation_id'    => null,
+					'expire_date'      => '',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'activation_id',
+				'dGVzdF9hY3RpdmF0aW9uX2lk', // test_activation_id
+				'dGVzdF9hY3RpdmF0aW9uX2lk', // test_activation_id
+			),
+			array(
+				// #3 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => - 1,
+					'activation_id'    => null,
+					'expire_date'      => '',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'expire_date',
+				'2021-08-29T13:37:00',
+				'2021-08-29T13:37:00',
+			),
+			array(
+				// #4 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => - 1,
+					'activation_id'    => null,
+					'expire_date'      => '',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'the_key',
+				'123e4567-e89b-12d3-a456-426614174000',
+				'123e4567-e89b-12d3-a456-426614174000',
+			),
+			array(
+				// #5 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => - 1,
+					'activation_id'    => null,
+					'expire_date'      => '',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'has_expired',
+				false,
+				false,
+			),
+			array(
+				// #6 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => - 1,
+					'activation_id'    => null,
+					'expire_date'      => '',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'status',
+				'active',
+				'active',
+			),
+			array(
+				// #7 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => - 1,
+					'activation_id'    => null,
+					'expire_date'      => '',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'allow_offline',
+				false,
+				false,
+			),
+			array(
+				// #8 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => - 1,
+					'activation_id'    => null,
+					'expire_date'      => '',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'not_a_valid_NewSettings_key',
+				'we_dont_care',
+				InvalidSettingsKey::class,
+			),
+			array(
+				// #9 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => - 1,
+					'activation_id'    => null,
+					'expire_date'      => '',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'store_code',
+				'abc123456',
+				'abc123456',
+			),
+			array(
+				// #10 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => '',
+					'key'        => null,
+					'renewed'    => null,
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'expires'    => null,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => null,
+				),
+				'new_version',
+				false,
+				InvalidSettingsKey::class,
+			),
+			array(
+				// #11 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => '',
+					'key'        => null,
+					'renewed'    => null,
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'expires'    => null,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => null,
+				),
+				'product',
+				'The E20R test license',
+				'The E20R test license',
+			),
+			array(
+				// #12 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '1.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => '',
+					'key'        => null,
+					'renewed'    => null,
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'expires'    => null,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => null,
+				),
+				'new_version',
+				false,
+				InvalidSettingsKey::class,
+			),
+			array(
+				// #13 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => '',
+					'key'        => null,
+					'renewed'    => null,
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'expires'    => null,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => null,
+				),
+				'key',
+				'dGVzdF9hY3RpdmF0aW9uX2lk',
+				'dGVzdF9hY3RpdmF0aW9uX2lk',
+			),
+			array(
+				// #14 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => '',
+					'key'        => null,
+					'renewed'    => null,
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'expires'    => null,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => null,
+				),
+				'renewed',
+				true,
+				true,
+			),
+			array(
+				// #15 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => '',
+					'key'        => null,
+					'renewed'    => null,
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'expires'    => null,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => null,
+				),
+				'domain',
+				'example.com',
+				'example.com',
+			),
+			array(
+				// #16 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => '',
+					'key'        => null,
+					'renewed'    => null,
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'expires'    => null,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => null,
+				),
+				'timestamp',
+				1630236998,
+				1630236998,
+			),
+			array(
+				// #17 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => '',
+					'key'        => null,
+					'renewed'    => null,
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'expires'    => null,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => null,
+				),
+				'firstname',
+				'doesnt_matter',
+				InvalidSettingsKey::class,
+			),
+			array(
+				// #18 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => '',
+					'key'        => null,
+					'renewed'    => null,
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'expires'    => null,
+					'status'     => 'cancelled',
+					'first_name' => '',
+					'last_name'  => '',
+					'email'      => '',
+					'timestamp'  => null,
+				),
+				'first_name',
+				'Tester',
 				'Tester',
 			),
 		);

@@ -34,6 +34,7 @@ use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\License;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
+use phpDocumentor\Reflection\DocBlock\Tags\PropertyRead;
 
 // Deny direct access to the file
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
@@ -163,6 +164,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				'instance',
 				'page',
 				'plugin_defaults',
+				'new_version',
 			);
 
 			if ( empty( $settings_class ) ) {
@@ -322,7 +324,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @return bool
 		 *
-		 * @throws InvalidSettingsKey
+		 * @throws InvalidSettingsKey|BadOperation
 		 */
 		public function set( string $key, $value = null ): bool {
 
@@ -331,6 +333,28 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$this->plugin_defaults = $value;
 				$this->update_plugin_defaults();
 				return true;
+			}
+
+			if ( $this->is_request_setting( $key ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+				$this->utils->log( "Set the request setting '{$key}' to " . print_r( $value, true ) );
+				$this->license_request_settings->set( $key, $value );
+			}
+
+			if ( $this->is_setting( $key ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+				$this->utils->log( "Set '{$key}' to " . print_r( $value, true ) );
+				$this->{$key} = $value;
+			}
+
+			if ( $this->is_default_setting( $key ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+				$this->utils->log( "Attempt to set Defaults->{$key} to " . print_r( $value, true ) );
+				try {
+					$this->plugin_defaults->set( $key, $value );
+				} catch ( InvalidSettingsKey | \Exception $e ) {
+					throw $e;
+				}
 			}
 
 			if ( in_array( $key, $this->excluded, true ) ) {
@@ -343,9 +367,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 					)
 				);
 			}
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-			$this->utils->log( "Set '{$key}' to " . print_r( $value, true ) );
-			$this->{$key} = $value;
 
 			// (Re)Load the settings for the specified sku
 			if ( 'product_sku' === $key ) {
@@ -353,6 +374,39 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			}
 
 			return true;
+		}
+
+		/**
+		 * Does the specified property belong to the NewSettings|OldSettings class
+		 *
+		 * @param string $property
+		 *
+		 * @return bool
+		 */
+		private function is_request_setting( $property ) {
+			return property_exists( $this->license_request_settings, $property );
+		}
+
+		/**
+		 * Does the specified property belong to the Defaults class
+		 *
+		 * @param string $property
+		 *
+		 * @return bool
+		 */
+		private function is_default_setting( $property ) {
+			return property_exists( $this->plugin_defaults, $property );
+		}
+
+		/**
+		 * Does the specified property belong to this class
+		 *
+		 * @param string $property
+		 *
+		 * @return bool
+		 */
+		private function is_setting( $property ) {
+			return property_exists( $this, $property );
 		}
 
 		/**
@@ -391,10 +445,15 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @param string $key
 		 *
 		 * @return null|mixed
+		 * @throws InvalidSettingsKey
 		 */
 		public function get( $key ) {
 			$value = null;
-			if ( ! property_exists( __CLASS__, $key ) && ! property_exists( $this->license_request_settings, $key ) ) {
+			if (
+				! property_exists( __CLASS__, $key ) &&
+				! property_exists( $this->license_request_settings, $key ) &&
+				! property_exists( $this->plugin_defaults, $key )
+			) {
 				$this->utils->log( "{$key} does not exist. Returning null!" );
 				throw new InvalidSettingsKey(
 					sprintf(
@@ -405,12 +464,16 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				);
 			}
 
-			if ( property_exists( __CLASS__, $key ) ) {
+			if ( $this->is_setting( $key ) ) {
 				$value = $this->{$key};
 			}
 
-			if ( property_exists( $this->license_request_settings, $key ) ) {
+			if ( $this->is_request_setting( $key ) ) {
 				$value = $this->license_request_settings->get( $key );
+			}
+
+			if ( $this->is_default_setting( $key ) ) {
+				$value = $this->plugin_defaults->get( $key );
 			}
 
 			return $value;
