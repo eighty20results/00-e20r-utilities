@@ -25,9 +25,12 @@ use Codeception\AssertThrows;
 use Codeception\Test\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Settings\LicenseSettings;
+use E20R\Licensing\Settings\NewSettings;
+use E20R\Licensing\Settings\OldSettings;
 use E20R\Utilities\Utilities;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use function E20R\Tests\Unit\Fixtures\e20r_unittest_stubs;
@@ -600,6 +603,596 @@ class LicenseSettings_Test extends Unit {
 			'last_name'  => '',
 			'email'      => '',
 			'timestamp'  => time(),
+		);
+	}
+
+	/**
+	 * Test the `get()` member function for LicenseSettings()
+	 *
+	 * @param array  $defaults
+	 * @param string $param_name - The Defaults(), NewSettings() or OldSettings() parameter name
+	 * @param mixed  $expected
+	 *
+	 * @throws \Exception
+	 * @dataProvider fixture_get_parameters
+	 * @covers \E20R\Licensing\Settings\LicenseSettings::get()
+	 */
+	public function test_get_parameters( $defaults, $license_settings, $param_name, $expected ) {
+		Functions\when( 'get_option' )
+			->alias(
+				function( $name, $defaults = null ) use ( $license_settings ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( "Mocked get_option() for {$name}" );
+
+					switch ( $name ) {
+						case 'timezone_string':
+							$value = 'Europe/Oslo';
+							break;
+						case 'e20r_license_settings':
+							$value = array( 'e20r_test_license' => $license_settings );
+							break;
+						default:
+							$value = $defaults;
+					}
+					return $value;
+				}
+			);
+		$m_defaults         = $this->makeEmpty(
+			Defaults::class,
+			array(
+				'get'      => function( $param_name ) use ( $defaults ) {
+					$value = null;
+					if ( 'debug_logging' === $param_name ) {
+						$value = true;
+					}
+					if ( 'version' === $param_name ) {
+						$value = $defaults['version'];
+					}
+					if ( 'store_code' === $param_name ) {
+						$value = $defaults['store_code'];
+					}
+					if ( 'server_url' === $param_name ) {
+						$value = $defaults['server_url'];
+					}
+					return $value;
+				},
+				'constant' => function( $constant_name ) {
+					$value = -1;
+					switch ( $constant_name ) {
+						case 'E20R_LICENSE_ERROR':
+							$value = 256;
+							break;
+						case 'E20R_LICENSE_MAX_DOMAINS':
+							$value = 2048;
+							break;
+						case 'E20R_LICENSE_REGISTERED':
+							$value = 1024;
+							break;
+						case 'E20R_LICENSE_DOMAIN_ACTIVE':
+							$value = 512;
+							break;
+						case 'E20R_LICENSE_BLOCKED':
+							$value = 128;
+							break;
+					}
+
+					return $value;
+				},
+			)
+		);
+		$m_license_settings = $this->construct(
+			LicenseSettings::class,
+			array( 'e20r_test_license', $m_defaults, $this->m_utils ),
+			array(
+				'save' => $defaults['update_option'],
+			)
+		);
+
+		if ( version_compare( $m_defaults->get( 'version' ), '3.0', 'ge' ) ) {
+			$m_settings = $this->construct(
+				NewSettings::class,
+				array( 'e20r_test_license', $license_settings )
+			);
+		} else {
+			$m_settings = $this->construct(
+				OldSettings::class,
+				array( 'e20r_test_license', $license_settings )
+			);
+		}
+		$settings = new LicenseSettings( 'e20r_test_license', $m_defaults, $this->m_utils, $m_settings );
+		try {
+			$result = $settings->get( $param_name );
+			self::assertSame( $expected, $result );
+		} catch ( InvalidSettingsKey $e ) {
+			self::assertInstanceOf( InvalidSettingsKey::class, $e );
+		}
+	}
+
+	public function fixture_get_parameters() {
+		return array(
+			// plugin defaults, parameter name, expected value
+			array( // #0 - NewSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => -1,
+					'activation_id'    => null,
+					'expire_date'      => '',
+					'timezone'         => 'UTC',
+					'the_key'          => '',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'server_url',
+				'https://eighty20results.com',
+			),
+			array( // #1 - NewSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => 1630236998,
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'activation_id'    => base64_encode( 'test_activation_id' ),
+					'expire_date'      => '2021-08-29T13:37:00',
+					'timezone'         => 'CET',
+					'the_key'          => '123e4567-e89b-12d3-a456-426614174000',
+					'url'              => 'https://eighty20results.com/license_key',
+					'has_expired'      => false,
+					'status'           => 'active',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'expire',
+				1630236998,
+			),
+			array( # 2 - NewSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => 1630236998,
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'activation_id'    => base64_encode( 'test_activation_id' ),
+					'expire_date'      => '2021-08-29T13:37:00',
+					'timezone'         => 'CET',
+					'the_key'          => '123e4567-e89b-12d3-a456-426614174000',
+					'url'              => 'https://eighty20results.com/license_key',
+					'has_expired'      => false,
+					'status'           => 'active',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'activation_id',
+				// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+				'dGVzdF9hY3RpdmF0aW9uX2lk', // test_activation_id
+			),
+			array(
+				// #3 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => 1630236998,
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'activation_id'    => base64_encode( 'test_activation_id' ),
+					'expire_date'      => '2021-08-29T13:37:00',
+					'timezone'         => 'CET',
+					'the_key'          => '123e4567-e89b-12d3-a456-426614174000',
+					'url'              => 'https://eighty20results.com/license_key',
+					'has_expired'      => false,
+					'status'           => 'active',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'expire_date',
+				'2021-08-29T13:37:00',
+			),
+			array(
+				// #4 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => 1630236998,
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'activation_id'    => base64_encode( 'test_activation_id' ),
+					'expire_date'      => '2021-08-29T13:37:00',
+					'timezone'         => 'CET',
+					'the_key'          => '123e4567-e89b-12d3-a456-426614174000',
+					'url'              => 'https://eighty20results.com/license_key',
+					'has_expired'      => false,
+					'status'           => 'active',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'the_key',
+				'123e4567-e89b-12d3-a456-426614174000',
+			),
+			array(
+				// #5 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => 1630236998,
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'activation_id'    => base64_encode( 'test_activation_id' ),
+					'expire_date'      => '2021-08-29T13:37:00',
+					'timezone'         => 'CET',
+					'the_key'          => '123e4567-e89b-12d3-a456-426614174000',
+					'url'              => 'https://eighty20results.com/license_key',
+					'has_expired'      => false,
+					'status'           => 'active',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'has_expired',
+				false,
+			),
+			array(
+				// #6 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => 1630236998,
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'activation_id'    => base64_encode( 'test_activation_id' ),
+					'expire_date'      => '2021-08-29T13:37:00',
+					'timezone'         => 'CET',
+					'the_key'          => '123e4567-e89b-12d3-a456-426614174000',
+					'url'              => 'https://eighty20results.com/license_key',
+					'has_expired'      => false,
+					'status'           => 'active',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'status',
+				'active',
+			),
+			array(
+				// #7 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => 1630236998,
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'activation_id'    => base64_encode( 'test_activation_id' ),
+					'expire_date'      => '2021-08-29T13:37:00',
+					'timezone'         => 'CET',
+					'the_key'          => '123e4567-e89b-12d3-a456-426614174000',
+					'url'              => 'https://eighty20results.com/license_key',
+					'has_expired'      => false,
+					'status'           => 'active',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'allow_offline',
+				false,
+			),
+			array(
+				// #7 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => 1630236998,
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'activation_id'    => base64_encode( 'test_activation_id' ),
+					'expire_date'      => '2021-08-29T13:37:00',
+					'timezone'         => 'CET',
+					'the_key'          => '123e4567-e89b-12d3-a456-426614174000',
+					'url'              => 'https://eighty20results.com/license_key',
+					'has_expired'      => false,
+					'status'           => 'active',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'not_a_valid_NewSettings_key',
+				InvalidSettingsKey::class,
+			),
+			array(
+				// #8 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => 1630236998,
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'activation_id'    => base64_encode( 'test_activation_id' ),
+					'expire_date'      => '2021-08-29T13:37:00',
+					'timezone'         => 'CET',
+					'the_key'          => '123e4567-e89b-12d3-a456-426614174000',
+					'url'              => 'https://eighty20results.com/license_key',
+					'has_expired'      => false,
+					'status'           => 'active',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'store_code',
+				'abc123456',
+			),
+			array(
+				// #9 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => '',
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'key'        => base64_encode( 'test_activation_id' ),
+					'renewed'    => false,
+					'domain'     => 'example.com',
+					'expires'    => '2021-08-29T13:37:00',
+					'status'     => 'active',
+					'first_name' => 'Tester',
+					'last_name'  => 'MrsExample',
+					'email'      => 'test@example.com',
+					'timestamp'  => 1630236998,
+				),
+				'new_version',
+				false,
+			),
+			array(
+				// #9 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => 'The E20R test license',
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'key'        => base64_encode( 'test_activation_id' ),
+					'renewed'    => false,
+					'domain'     => 'example.com',
+					'expires'    => '2021-08-29T13:37:00',
+					'status'     => 'active',
+					'first_name' => 'Tester',
+					'last_name'  => 'MrsExample',
+					'email'      => 'test@example.com',
+					'timestamp'  => 1630236998,
+				),
+				'product',
+				'The E20R test license',
+			),
+			array(
+				// #9 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '1.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => 'The E20R test license',
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'key'        => base64_encode( 'test_activation_id' ),
+					'renewed'    => false,
+					'domain'     => 'example.com',
+					'expires'    => '2021-08-29T13:37:00',
+					'status'     => 'active',
+					'first_name' => 'Tester',
+					'last_name'  => 'MrsExample',
+					'email'      => 'test@example.com',
+					'timestamp'  => 1630236998,
+				),
+				'new_version',
+				false,
+			),
+			array(
+				// #10 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => 'The E20R test license',
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'key'        => base64_encode( 'test_activation_id' ),
+					'renewed'    => false,
+					'domain'     => 'example.com',
+					'expires'    => '2021-08-29T13:37:00',
+					'status'     => 'active',
+					'first_name' => 'Tester',
+					'last_name'  => 'MrsExample',
+					'email'      => 'test@example.com',
+					'timestamp'  => 1630236998,
+				),
+				'key',
+				'dGVzdF9hY3RpdmF0aW9uX2lk',
+			),
+			array(
+				// #11 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => 'The E20R test license',
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'key'        => base64_encode( 'test_activation_id' ),
+					'renewed'    => true,
+					'domain'     => 'example.com',
+					'expires'    => '2021-08-29T13:37:00',
+					'status'     => 'active',
+					'first_name' => 'Tester',
+					'last_name'  => 'MrsExample',
+					'email'      => 'test@example.com',
+					'timestamp'  => 1630236998,
+				),
+				'renewed',
+				true,
+			),
+			array(
+				// #12 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => 'The E20R test license',
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'key'        => base64_encode( 'test_activation_id' ),
+					'renewed'    => false,
+					'domain'     => 'example.com',
+					'expires'    => '2021-08-29T13:37:00',
+					'status'     => 'active',
+					'first_name' => 'Tester',
+					'last_name'  => 'MrsExample',
+					'email'      => 'test@example.com',
+					'timestamp'  => 1630236998,
+				),
+				'domain',
+				'example.com',
+			),
+			array(
+				// #13 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => 'The E20R test license',
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'key'        => base64_encode( 'test_activation_id' ),
+					'renewed'    => false,
+					'domain'     => 'example.com',
+					'expires'    => '2021-08-29T13:37:00',
+					'status'     => 'active',
+					'first_name' => 'Tester',
+					'last_name'  => 'MrsExample',
+					'email'      => 'test@example.com',
+					'timestamp'  => 1630236998,
+				),
+				'timestamp',
+				1630236998,
+			),
+			array(
+				// #13 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => 'The E20R test license',
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'key'        => base64_encode( 'test_activation_id' ),
+					'renewed'    => false,
+					'domain'     => 'example.com',
+					'expires'    => '2021-08-29T13:37:00',
+					'status'     => 'active',
+					'first_name' => 'Tester',
+					'last_name'  => 'MrsExample',
+					'email'      => 'test@example.com',
+					'timestamp'  => 1630236998,
+				),
+				'firstname',
+				InvalidSettingsKey::class,
+			),
+			array(
+				// #13 - OldSettings()
+				array(
+					'debug_logging' => true,
+					'version'       => '2.0',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'product'    => 'The E20R test license',
+					// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					'key'        => base64_encode( 'test_activation_id' ),
+					'renewed'    => false,
+					'domain'     => 'example.com',
+					'expires'    => '2021-08-29T13:37:00',
+					'status'     => 'active',
+					'first_name' => 'Tester',
+					'last_name'  => 'MrsExample',
+					'email'      => 'test@example.com',
+					'timestamp'  => 1630236998,
+				),
+				'first_name',
+				'Tester',
+			),
 		);
 	}
 }
