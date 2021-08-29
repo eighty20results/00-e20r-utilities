@@ -202,8 +202,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$msg = "Error: Haven't configured the license server URL, or the URL is malformed. Can be configured in the wp-config.php file.";
 				$this->utils->log( $msg );
 				$this->utils->add_message(
-					esc_html__(
-						"Error: The license server URL is unknown, or the URL is malformed! Add a correct URL in your wp-config.php file. Example: define( 'E20R_LICENSE_SERVER_URL', 'https://eighty20results.com/' )",
+					esc_attr__(
+						'Error: The license server URL is unknown, or the URL is malformed! Add a correct URL in your wp-config.php file. Example: define( "E20R_LICENSE_SERVER_URL", "https://eighty20results.com/" )',
 						'00-e20r-utilities'
 					),
 					'error',
@@ -238,7 +238,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			} catch ( \Exception $e ) {
 				$this->utils->log( 'Error: Unable to fetch the version information for this plugin!' );
 				$this->utils->add_message(
-					__(
+					esc_attr__(
 						'Error: Unable to fetch the version information for this plugin!',
 						'00-e20r-utilities'
 					),
@@ -393,13 +393,27 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @return null|mixed
 		 */
 		public function get( $key ) {
-
-			if ( ! isset( $this->{$key} ) ) {
+			$value = null;
+			if ( ! property_exists( __CLASS__, $key ) && ! property_exists( $this->license_request_settings, $key ) ) {
 				$this->utils->log( "{$key} does not exist. Returning null!" );
-				return null;
+				throw new InvalidSettingsKey(
+					sprintf(
+						// translators: %1$s - The parameter name
+						esc_attr__( 'Cannot find a setting named "%1$s"', '00-e20r-utilities' ),
+						$key
+					)
+				);
 			}
 
-			return $this->{$key};
+			if ( property_exists( __CLASS__, $key ) ) {
+				$value = $this->{$key};
+			}
+
+			if ( property_exists( $this->license_request_settings, $key ) ) {
+				$value = $this->license_request_settings->get( $key );
+			}
+
+			return $value;
 		}
 
 		/**
