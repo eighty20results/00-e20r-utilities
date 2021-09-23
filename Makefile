@@ -451,6 +451,17 @@ wp-unit-test: docker-deps start-stack db-import
   			wordpress $(COMPOSER_DIR)/bin/codecept run wpunit --coverage-html ./coverage/wp-unit --verbose --debug $(WPUNIT_TEST_CASE_PATH); \
 	fi
 # TODO: Add coverage support to the wp-unit-test target
+wp-unit-start: docker-deps start-stack db-import
+
+wp-unit:
+	@if [[ -n "$(FOUND_WP_UNIT_TESTS)" ]]; then \
+  		echo "Running WP Unit/Functional tests for $(PROJECT)/$(TEST_TO_RUN)"; \
+		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
+  		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+  		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
+  			exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ \
+  			wordpress $(COMPOSER_DIR)/bin/codecept run wpunit --coverage-html ./coverage/wp-unit --verbose --debug $(TEST_TO_RUN); \
+	fi
 
 #
 # Using codeception to execute the WP Unit Tests (aka WP integration tests) for this plugin
