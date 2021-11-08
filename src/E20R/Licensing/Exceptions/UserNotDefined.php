@@ -17,7 +17,7 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Licensing\Exceptions\InvalidSettingsKey
+ * @package E20R\Licensing\Exceptions\UserNotDefined
  */
 
 namespace E20R\Licensing\Exceptions;
@@ -26,12 +26,11 @@ use Exception;
 use Throwable;
 
 /**
- * Custom exception raised when the specified class parameter (key) is not present in the settings class that was instatiated
+ * Exception thrown when a user hasn't been defined yet
  */
-class InvalidSettingsKey extends Exception {
-
+class UserNotDefined extends Exception {
 	/**
-	 * Custom exception constructor
+	 * Custom exception to denote an undefined/uninstantiated user
 	 *
 	 * @param string         $message The exception error message to use
 	 * @param int            $code The Exception error code (int) to use

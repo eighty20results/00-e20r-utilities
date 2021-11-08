@@ -17,7 +17,7 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Licensing\Exceptions\InvalidSettingsKey
+ * @package E20R\Licensing\Exceptions\DefinedByConstant
  */
 
 namespace E20R\Licensing\Exceptions;
@@ -26,18 +26,19 @@ use Exception;
 use Throwable;
 
 /**
- * Custom exception raised when the specified class parameter (key) is not present in the settings class that was instatiated
+ * Exception thrown when something was already defined as a constant
  */
-class InvalidSettingsKey extends Exception {
+class DefinedByConstant extends Exception {
 
 	/**
-	 * Custom exception constructor
+	 * Constructor for custom exception
 	 *
-	 * @param string         $message The exception error message to use
-	 * @param int            $code The Exception error code (int) to use
-	 * @param Throwable|null $previous Previous exception that called this one
+	 * @param string         $message The text message for the exception.
+	 * @param int            $code    Error code.
+	 * @param Throwable|null $previous Last exception if it exists.
 	 */
 	public function __construct( string $message = '', int $code = 0, ?Throwable $previous = null ) { // phpcs:ignore Generic.CodeAnalysis.UselessOverridingMethod.Found
+
 		parent::__construct( $message, $code, $previous );
 	}
 }

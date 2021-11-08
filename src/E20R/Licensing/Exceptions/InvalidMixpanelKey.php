@@ -17,7 +17,7 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Licensing\Exceptions\InvalidSettingsKey
+ * @package E20R\Licensing\Exceptions\InvalidMixpanelKey
  */
 
 namespace E20R\Licensing\Exceptions;
@@ -26,9 +26,9 @@ use Exception;
 use Throwable;
 
 /**
- * Custom exception raised when the specified class parameter (key) is not present in the settings class that was instatiated
+ * Raised when an invalid/unrecognized MixPanel key was specified
  */
-class InvalidSettingsKey extends Exception {
+class InvalidMixpanelKey extends Exception {
 
 	/**
 	 * Custom exception constructor

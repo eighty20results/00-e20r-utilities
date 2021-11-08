@@ -17,7 +17,7 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Licensing\Exceptions\InvalidSettingsKey
+ * @package E20R\Licensing\Exceptions\MissingServerURL
  */
 
 namespace E20R\Licensing\Exceptions;
@@ -26,9 +26,9 @@ use Exception;
 use Throwable;
 
 /**
- * Custom exception raised when the specified class parameter (key) is not present in the settings class that was instatiated
+ * Custom exception raised when no Server URL has been defined for the License server to connect to
  */
-class InvalidSettingsKey extends Exception {
+class MissingServerURL extends Exception {
 
 	/**
 	 * Custom exception constructor
