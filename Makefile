@@ -206,7 +206,7 @@ php-composer:
 	@if [[ -n "$(PHP_BIN)" ]]; then \
 	    echo "Install the PHP Composer component" && \
 	    $(PHP_BIN) -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
-	    $(PHP_BIN) -r "if (hash_file('sha384', 'composer-setup.php') === '756890a4488ce9024fc62c56153228907f1545c228516cbf63f885e036d37e9a59d27d63f46af1d4d07ee0f76181c7d3') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
+	    $(PHP_BIN) -r "if (hash_file('sha384', 'composer-setup.php') === '906a84df04cea2aa72f40b5f787e49f22d4c2f19492ac310e8cba5b96ac8b64115ac402c8cd292b8a03482574915d1a8') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
             $(PHP_BIN) composer-setup.php --install-dir=$(BASE_PATH)/ && \
             $(PHP_BIN) -r "unlink('composer-setup.php');" ; \
     fi
@@ -418,7 +418,7 @@ code-standard-test: wp-deps
 		--colors \
 		-p \
 		-s \
-		--standard=.phpcs.xml.dist \
+		--standard=phpcs.xml \
 		--ignore='$(PHP_IGNORE_PATHS)' \
 		--extensions=php \
 		$(PHP_CODE_PATHS)
