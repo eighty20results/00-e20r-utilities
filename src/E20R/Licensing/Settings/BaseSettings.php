@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
@@ -15,16 +15,19 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Licensing\Settings\BaseSettings
  */
 
 namespace E20R\Licensing\Settings;
 
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
-use E20R\Licensing\Exceptions\InvalidSettingsVersion;
-use E20R\Utilities\Utilities;
+use ReflectionClass;
+use ReflectionProperty;
 
 /**
  * Class NewSettings
+ *
  * @package E20R\Licensing\Settings
  */
 abstract class BaseSettings {
@@ -53,10 +56,8 @@ abstract class BaseSettings {
 	/**
 	 * BaseSettings constructor.
 	 *
-	 * @param null|string $product_sku
-	 * @param array|null  $settings
-	 *
-	 * @throws InvalidSettingsVersion
+	 * @param null|string $product_sku - The product SKU (from WooCommerce)
+	 * @param array|null  $settings - An array of settings for the license base class to use
 	 */
 	public function __construct( ?string $product_sku = 'e20r_default_license', $settings = null ) {
 		$this->product_sku = $product_sku;
@@ -65,10 +66,10 @@ abstract class BaseSettings {
 	/**
 	 * Getter for the BaseSettings() class
 	 *
-	 * @param string $key
+	 * @param string $key - The class parameter name to fetch the value for
 	 *
 	 * @return mixed
-	 * @throws InvalidSettingsKey
+	 * @throws InvalidSettingsKey - Specified key is not defined for this class
 	 */
 	public function get( $key ) {
 		if ( ! property_exists( $this, $key ) ) {
@@ -89,10 +90,10 @@ abstract class BaseSettings {
 	/**
 	 * Getter for the BaseSettings() class
 	 *
-	 * @param string $key
-	 * @param mixed $value
+	 * @param string $key - Specified key to set the value for
+	 * @param mixed  $value - Value to set the specified key to
 	 *
-	 * @throws InvalidSettingsKey
+	 * @throws InvalidSettingsKey - The specified key is not defined for this class
 	 */
 	public function set( $key, $value ) {
 		if ( ! property_exists( $this, $key ) ) {
@@ -113,20 +114,20 @@ abstract class BaseSettings {
 	/**
 	 * Return the class properties
 	 *
-	 * @param BaseSettings|NewSettings|OldSettings $class_name
+	 * @param BaseSettings|NewSettings|OldSettings $class_name - The class to use for the property "getter"
 	 *
 	 * @return array
-	 * @throws \ReflectionException
+	 * @throws \ReflectionException - Thrown when the specified class isn't defined/loaded
 	 */
 	public function get_properties( $class_name = null ): array {
 		$properties = array();
 		if ( empty( $class_name ) ) {
 			$class_name = $this;
 		}
-		$reflection = new \ReflectionClass( $class_name );
+		$reflection = new ReflectionClass( $class_name );
 		$props      = $reflection->getProperties(
-			\ReflectionProperty::IS_PROTECTED |
-			\ReflectionProperty::IS_PRIVATE
+			ReflectionProperty::IS_PROTECTED |
+			ReflectionProperty::IS_PRIVATE
 		);
 
 		foreach ( $props as $prop ) {
@@ -143,7 +144,7 @@ abstract class BaseSettings {
 	 * Get all settings and its values
 	 *
 	 * @return array
-	 * @throws \ReflectionException
+	 * @throws \ReflectionException - Thrown when the specified class isn't defined/loaded
 	 */
 	public function all() {
 		$property_names = $this->get_properties();
@@ -156,8 +157,6 @@ abstract class BaseSettings {
 	}
 	/**
 	 * Return all properties from the class with its default values
-	 *
-	 * @param NewSettings|OldSettings|BaseSettings
 	 *
 	 * @return array
 	 */
