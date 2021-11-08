@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
@@ -15,6 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Utilities\Licensing
  */
 
 namespace E20R\Licensing\Settings;
@@ -23,7 +25,6 @@ use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 
 /**
  * Class OldSettings
- * @package E20R\Utilities\Licensing
  *
  * @deprecated
  */
@@ -59,7 +60,9 @@ class OldSettings extends BaseSettings {
 
 
 	/**
-	 * @var null|string Date and time of expiration for the license
+	 * Date and time of expiration for the license
+	 *
+	 * @var null|string
 	 */
 	protected $expires = null;
 
@@ -108,10 +111,10 @@ class OldSettings extends BaseSettings {
 	/**
 	 * OldSettings constructor.
 	 *
-	 * @param string|null $product_sku
-	 * @param null|array  $settings
+	 * @param string|null $product_sku - The WooCommerce store SKU for the license product being processed
+	 * @param null|array  $settings - Default settings to use for this class
 	 *
-	 * @throws InvalidSettingsVersion
+	 * @throws InvalidSettingsVersion - Raised when we get a property that doesn't match this version of the class
 	 */
 	public function __construct( ?string $product_sku = 'e20r_default_license', $settings = null ) {
 		$this->product_sku = ( ! empty( $product_sku ) ? $product_sku : 'e20r_default_license' );
@@ -152,12 +155,12 @@ class OldSettings extends BaseSettings {
 	 *
 	 * @return array
 	 */
-	public function defaults() {
+	public function defaults(): array {
 		return array(
 			'product'    => '',
 			'key'        => null,
 			'renewed'    => null,
-			'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+			'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local', // phpcs:ignore
 			'expires'    => null,
 			'status'     => 'cancelled',
 			'first_name' => '',

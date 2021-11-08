@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
@@ -15,6 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Licensing\Settings
  */
 
 namespace E20R\Licensing\Settings;
@@ -23,6 +25,7 @@ use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 
 /**
  * Class NewSettings
+ *
  * @package E20R\Licensing\Settings
  */
 class NewSettings extends BaseSettings {
@@ -115,10 +118,10 @@ class NewSettings extends BaseSettings {
 	/**
 	 * NewSettings constructor.
 	 *
-	 * @param null|string $product_sku
-	 * @param array|null  $settings
+	 * @param null|string $product_sku - The WooCommerce store SKU for the License product in question
+	 * @param array|null  $settings - Settings to apply for this class
 	 *
-	 * @throws InvalidSettingsVersion
+	 * @throws InvalidSettingsVersion - Raised when we get a property that doesn't match this version of the class
 	 */
 	public function __construct( ?string $product_sku = 'e20r_default_license', $settings = null ) {
 		$this->product_sku = ( ! empty( $product_sku ) ? $product_sku : 'e20r_default_license' );
@@ -148,7 +151,7 @@ class NewSettings extends BaseSettings {
 	 *
 	 * @return array
 	 */
-	public function defaults() {
+	public function defaults(): array {
 		return array(
 			'expire'           => -1,
 			'activation_id'    => null,
