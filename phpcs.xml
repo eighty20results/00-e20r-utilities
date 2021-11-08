@@ -38,8 +38,12 @@
 	<config name="testVersion" value="5.6-" />
 
     <!-- Include the WordPress ruleset. -->
-    <rule ref="WordPress-Extra">
+    <rule ref="WordPress">
+		<!-- PSD4 -->
         <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
         <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
+		<exclude name="Squiz.Commenting.FunctionComment.ParamCommentFullStop"/>
+		<exclude name="Squiz.Commenting.FunctionComment.ThrowsNoFullStop"/>
     </rule>
 </ruleset>
