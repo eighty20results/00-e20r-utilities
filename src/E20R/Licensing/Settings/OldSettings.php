@@ -160,7 +160,7 @@ class OldSettings extends BaseSettings {
 			'product'    => '',
 			'key'        => null,
 			'renewed'    => null,
-			'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local', // phpcs:ignore
+			'domain'     => filter_var( wp_unslash( $_SERVER['HTTP_HOST'] ), FILTER_SANITIZE_URL ) ?? 'localhost.local', // phpcs:ignore
 			'expires'    => null,
 			'status'     => 'cancelled',
 			'first_name' => '',
