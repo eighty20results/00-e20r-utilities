@@ -1,5 +1,5 @@
 <?php
-/*
+/**
 Plugin Name: E20R Utilities Module
 Plugin URI: https://eighty20results.com/
 Description: Provides functionality required by some of the Eighty/20 Results developed plugins
@@ -27,10 +27,13 @@ Domain Path: languages/
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
+ * @package E20R\Utilities\Utilities
  */
 
 namespace E20R\Utilities;
 
+use E20R\Licensing\Exceptions\BadOperation;
+use E20R\Metrics\MixpanelConnector;
 use function \add_action;
 use function \add_filter;
 
@@ -50,11 +53,14 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 
 	/**
 	 * Class Loader
+	 *
 	 * @package E20R\Utilities
 	 */
 	class Loader {
 
 		/**
+		 * Instance of the Utilities class.
+		 *
 		 * @var Utilities|null $utils
 		 */
 		private $utils = null;
@@ -65,9 +71,19 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 * @var int $default_priority
 		 */
 		private $default_priority = 99999;
+
+		/**
+		 * Link to registering metrics for MixPanel
+		 *
+		 * @var MixpanelConnector|null $metrics
+		 */
+		private $metrics = null;
+
 		/**
 		 * Loader constructor.
 		 * Loads the default PSR-4 Autoloader and configures a couple of required action handlers
+		 *
+		 * @param Utilities $utils - An instance of the Utilities class.
 		 */
 		public function __construct( $utils = null ) {
 			if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
@@ -80,14 +96,14 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 			}
 
 			// The loader uses the Utilities class to load action handlers,
-			// so we need it for testing purposes
+			// so we need it for testing purposes.
 			if ( empty( $utils ) ) {
 				$message = new Message();
 				$utils   = new Utilities( $message );
 			}
 			$this->utils = $utils;
 
-			// Add required action for language modules (I18N)
+			// Add required action for language modules (I18N).
 			add_action( 'plugins_loaded', array( $this->utils, 'load_text_domain' ), 11 );
 		}
 
@@ -104,11 +120,15 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 * Function to make sure the last filter hook executed for
 		 * 'e20r_utilities_module_installed' returns true (since this plugin is active)
 		 *
-		 * @param bool $is_installed
+		 * @param bool $is_installed - Force setting that Utilities module as installed
 		 *
 		 * @return bool
 		 */
-		public function making_sure_we_win( $is_installed ): bool {
+		public function making_sure_we_win( $is_installed = false ): bool {
+			// No need to keep looping if we already established that the plugin has been installed on this server
+			if ( true === $is_installed ) {
+				return $is_installed;
+			}
 			global $wp_filter;
 
 			$max_priority    = $this->get_max_hook_priority();
@@ -118,7 +138,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 				count( $wp_filter['e20r_utilities_module_installed']->callbacks[ $this->default_priority ] ) :
 				0;
 
-			// Remove unnecessary executions of extra instance of the 'making_sure_we_win' hook handler (in case it's executed more than once)
+			// Remove unnecessary executions of extra instance of the 'making_sure_we_win' hook handler (in case it's executed more than once).
 			if ( $filter_count > 1 ) {
 				$hook_handlers = array_keys( $wp_filter['e20r_utilities_module_installed']->callbacks[ $this->default_priority ] );
 				$same_hook     = array();
@@ -129,7 +149,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 					}
 				}
 
-				// Clean up so we don't go bananas with adding extra insurance handlers
+				// Clean up so we don't go bananas with adding extra insurance handlers.
 				if ( count( $same_hook ) >= 1 ) {
 					foreach ( $same_hook as $hook_key ) {
 						unset( $wp_filter['e20r_utilities_module_installed']->callbacks[ $this->default_priority ][ $hook_handlers[ $hook_key ] ] );
@@ -139,9 +159,9 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 			}
 
 			// Latest (highest) priority hook is above the default value
-			// and the handler has a hook priority less or same as latest hook handler
+			// and the handler has a hook priority less or same as latest hook handler.
 			if ( ( $this->default_priority < $max_priority ) && ( $default_handler <= $max_priority ) ) {
-				// Need to bump priority and make sure we always return true;
+				// Need to bump priority and make sure we always return true.
 				$bump_priority = true;
 			}
 
@@ -188,15 +208,44 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 			rsort( $filter_priority_list );
 			return (int) $filter_priority_list[0];
 		}
+
+		/**
+		 * Instantiate and register with MixPanel when activating the plugin
+		 */
+		public function utilities_installed() {
+			$this->metrics = new MixpanelConnector( 'a14f11781866c2117ab6487792e4ebfd' );
+
+			$mp_events = array(
+				'installed' => true,
+				'activated' => true,
+			);
+
+			try {
+				$this->metrics->get()->registerAllOnce( $mp_events );
+			} catch ( BadOperation $exception ) {
+				$this->utils->log( $exception->getMessage() );
+			}
+
+			$this->metrics->increment_activations();
+		}
+
+		/**
+		 * Various actions when deactivating the plugin
+		 */
+		public function utilities_uninstalled() {
+			$this->metrics->decrement_activations();
+		}
 	}
 }
 
 if ( function_exists( '\add_action' ) ) {
 	$loader = new Loader();
-	\add_action( 'plugins_loaded', array( $loader, 'utilities_loaded' ), 10 );
+	register_activation_hook( __FILE__, array( $loader, 'utilities_installed' ) );
+	register_deactivation_hook( __FILE__, array( $loader, 'utilities_uninstalled' ) );
+	add_action( 'plugins_loaded', array( $loader, 'utilities_loaded' ), 10 );
 }
 
-// One-click update support for the plugin
+// One-click update support for the plugin.
 if ( class_exists( '\E20R\Utilities\Utilities' ) && defined( 'WP_PLUGIN_DIR' ) ) {
 	Utilities::configure_update( '00-e20r-utilities', __FILE__ );
 }
