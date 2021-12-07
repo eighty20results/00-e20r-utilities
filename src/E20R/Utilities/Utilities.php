@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
@@ -15,6 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Utilities\Utilities
  */
 
 namespace E20R\Utilities;
@@ -26,9 +28,9 @@ use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Settings\Defaults;
 use Exception;
 use Puc_v4_Factory;
+use stdClass;
 use function apply_filters;
 use function plugin_dir_path;
-use function plugins_url;
 
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 	wp_die( 'Cannot access file directly' );
@@ -38,6 +40,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 	/**
 	 * Class Utilities
+	 *
 	 * @package E20R\Utilities
 	 *
 	 * @version 3.0 - GDPR opt-in, erasure and data access framework
@@ -50,38 +53,50 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		const VERSION = '3.2';
 
 		/**
+		 * The key for the Utilities cached data
+		 *
 		 * @var string Cache key
 		 */
 		private static $cache_key;
 
 		/**
+		 * The slug for the plugin (I18N usage)
+		 *
 		 * @var null|string
 		 */
 		public $plugin_slug = '00-e20r-utilities';
 
 		/**
+		 * The current instance of this Utilties class
+		 *
 		 * @var null|Utilities
 		 */
 		private static $instance = null;
 
 		/**
+		 * The WordPress blog ID
+		 *
 		 * @var int $blog_id
 		 */
 		private $blog_id = null;
 
 		/**
-		 * @var null $msg
+		 * The error message text
+		 *
+		 * @var null|string $msg
 		 */
 		private $msg = null;
 
 		/**
 		 * Utilities constructor.
 		 *
-		 * @param null|Message $message
+		 * @param null|Message $message The error message object used by this class
 		 */
 		public function __construct( $message = null ) {
 
-			$this->plugin_slug  = function_exists( 'apply_filters' ) ? apply_filters( 'e20r_licensing_text_domain', '00-e20r-utilities' ) : '00-e20r-utilities';
+			$this->plugin_slug = function_exists( 'apply_filters' ) ?
+				apply_filters( 'e20r_licensing_text_domain', '00-e20r-utilities' ) :
+				'00-e20r-utilities';
 
 			if ( empty( $message ) ) {
 				$message = new Message();
@@ -132,10 +147,10 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Mask the text if it's a valid email address
 		 *
-		 * @param string $email
-		 * @param int    $min_length
-		 * @param int    $max_length
-		 * @param string $mask
+		 * @param string $email Email address to possibly mask
+		 * @param int    $min_length The length of the unmasked text
+		 * @param int    $max_length The length of the masked text
+		 * @param string $mask The mask character to use. Default is '*'
 		 *
 		 * @return string
 		 */
@@ -189,6 +204,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$ip = null;
 
 			if ( isset( $_SERVER['REMOTE_ADDR'] ) ) {
+				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 				return $_SERVER['REMOTE_ADDR'];
 			}
 
@@ -206,6 +222,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 				if ( array_key_exists( $key, $_SERVER ) === true ) {
 
+					// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput
 					foreach ( explode( ',', $_SERVER[ $key ] ) as $ip ) {
 
 						// trim for safety measures
@@ -258,23 +275,23 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			load_textdomain( '00-e20r-utilities', $mofile_local );
 
-			//Attempt to load the global translation first (if it exists)
+			// Attempt to load the global translation first (if it exists)
 			if ( file_exists( $mofile_global ) ) {
 				load_textdomain( '00-e20r-utilities', $mofile_global );
 			}
 
-			//load local second
+			// Load from local drive, second location
 			load_textdomain( '00-e20r-utilities', $mofile_local );
 
-			//load via plugin_textdomain/glotpress
+			// Load via plugin_textdomain/glotpress
 			load_plugin_textdomain( '00-e20r-utilities', false, dirname( __FILE__ ) . '/../../languages/' );
 		}
 
 		/**
 		 * Test whether the plugin is active on the system or in the network
 		 *
-		 * @param null|string $plugin_file
-		 * @param null|string $function_name
+		 * @param null|string $plugin_file The path to the plugin file we're checking for
+		 * @param null|string $function_name The plugin specific public function we're checking for
 		 *
 		 * @return bool
 		 */
@@ -302,7 +319,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Return last message of a specific type
 		 *
-		 * @param string $type
+		 * @param string $type The message type. Valid types are 'notice', 'warning' 'error'
 		 *
 		 * @return string[]
 		 */
@@ -364,7 +381,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 		/**
 		 * Return the cache key for the Utilities class
-		 * @return string
+		 *
+		 * @return string The cache key string we're using
 		 */
 		public function get_util_cache_key() {
 			return self::$cache_key;
@@ -373,7 +391,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Return all delay values for a membership payment start
 		 *
-		 * @param \stdClass|array $level
+		 * @param stdClass|array $level The membership level we're checking start delays for
 		 *
 		 * @return array|bool|mixed|null
 		 */
@@ -427,7 +445,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 						self::$instance->log( "Processing Subscription Delay values for {$level->id}" );
 
-						//Get the default delay value (days)
+						// Get the default delay value (days)
 						$date_or_num = pmprosd_getDelay( $level->id, null ); // @phpstan-ignore-line
 						self::$instance->log( "Received default delay value: {$date_or_num}" );
 
@@ -483,7 +501,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Convert a Cycle Period (from PMPro) string to an approximate day count
 		 *
-		 * @param string $period
+		 * @param string $period The period (PMPro cycle period) to convert to days (more or less accurately)
 		 *
 		 * @return int|null
 		 */
@@ -521,14 +539,14 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		public static function get_all_discount_codes() {
 
 			global $wpdb;
-
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			return $wpdb->get_results( "SELECT id, code FROM {$wpdb->pmpro_discount_codes}" );
 		}
 
 		/**
 		 * Remove the start delay cache for the level
 		 *
-		 * @param int $level_id
+		 * @param int $level_id The PMPro membership level ID we're clearing the cache of
 		 */
 		public function clear_delay_cache( $level_id ) {
 
@@ -539,8 +557,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Test whether the user is in Trial mode (i.e. the user's startdate is configured as 'after' the current date/time
 		 *
-		 * @param int $user_id
-		 * @param int $level_id
+		 * @param int $user_id The WP_User ID for the user we're checking the trial status for
+		 * @param int $level_id The membership level ID we expect them to be in trial for
 		 *
 		 * @return int|bool - Returns the Timestamp (seconds) of when the trial ends, or false if no trial was found
 		 */
@@ -551,6 +569,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			// Get the most recent (active) membership level record for the specified user/membership level ID
 			$start_ts = intval(
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->get_var(
 					$wpdb->prepare(
 						"SELECT UNIX_TIMESTAMP( mu.startdate ) AS start_date
@@ -621,8 +640,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Return the correct Stripe amount formatting (based on currency setting)
 		 *
-		 * @param float|int $amount
-		 * @param string    $currency
+		 * @param float|int $amount The amount being formatted for the currency configured
+		 * @param string    $currency The currency we're formatting for
 		 *
 		 * @return float|string
 		 */
@@ -695,7 +714,8 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Print a message to the daily E20R Log file if WP_DEBUG is configured (Does not try to mask email addresses)
 		 *
-		 * @param string $message
+		 * @param string $message The string message to log to the server error_log facility
+		 *
 		 * @return bool
 		 */
 		public function log( $message ) {
@@ -707,16 +727,11 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			/**
 			 * Mask email addresses if applicable
 			 */
-			// phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-			/*
-			if ( 1 === preg_match( '/\b[^\s]+@[^\s]+/i', $msg, $match ) ) {
-
-				$masked_email = $this->maybe_mask_email( $match[0] );
-				$msg          = preg_replace( '/\b[^\s]+@[^\s]+/i', $masked_email, $msg );
-			}
-			*/
 			// Get timestamp, thread ID and function calling us
-			$remote_addr      = isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+			$remote_addr = isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
+
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 			$req_time         = isset( $_SERVER['REQUEST_TIME'] ) ? $_SERVER['REQUEST_TIME'] : time();
 			$thread_id        = sprintf( '%08x', abs( crc32( $remote_addr . $req_time ) ) );
 			$tz_string        = get_option( 'timezone_string' );
@@ -751,9 +766,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Case insensitive search/replace function (recursive)
 		 *
-		 * @param string $search
-		 * @param string $replacer
-		 * @param string $input
+		 * @param string $search The string to search for when attempting to replace text in a string
+		 * @param string $replacer The replacement string to use
+		 * @param string $input The received input to search through
 		 *
 		 * @return mixed
 		 */
@@ -777,14 +792,14 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * @return bool|float|int|null|string  Sanitized value from the front-end.
 		 */
 		public function get_variable( $name, $default = null ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 			return isset( $_REQUEST[ $name ] ) && ! empty( $_REQUEST[ $name ] ) ? $this->sanitize( $_REQUEST[ $name ] ) : $default;
 		}
 
 		/**
 		 * Sanitizes the passed field/value.
 		 *
-		 * @param array|int|null|string|\stdClass $field The value to sanitize
+		 * @param array|int|null|string|stdClass $field The value to sanitize
 		 *
 		 * @return mixed     Sanitized value
 		 */
@@ -846,7 +861,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * More consistent boolean tester
 		 *
-		 * @param mixed $variable
+		 * @param mixed $variable The variable value to test if is boolean
 		 *
 		 * @return false|mixed
 		 */
@@ -860,18 +875,18 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Test whether string contains HTML
 		 *
-		 * @param string $string
+		 * @param string $string The string to test for HTML tags
 		 *
 		 * @return bool
 		 */
 		final public static function is_html( $string ) {
-			return preg_match( '/<[^<]+>/', $string, $m ) !== 0;
+			return preg_match( '/<[^<]+>/', $string ) !== 0;
 		}
 
 		/**
 		 * Test whether the value is an integer
 		 *
-		 * @param mixed $val
+		 * @param mixed $val The value to test the integerness of
 		 *
 		 * @return bool|int
 		 */
@@ -884,13 +899,13 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				return false;
 			}
 
-			return is_float( $val ) ? false : preg_match( '~^((?:\+|-)?[0-9]+)$~', $val );
+			return is_float( $val ) ? false : preg_match( '~^((?:\+-)?[0-9]+)$~', $val );
 		}
 
 		/**
 		 * Test if the value is a floating point number
 		 *
-		 * @param string|mixed $val
+		 * @param string|mixed $val The value to test the floatingpointedness of
 		 *
 		 * @return bool
 		 */
@@ -905,7 +920,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Decode the JSON object we received
 		 *
-		 * @param string $response
+		 * @param string $response The JSON encoded response we're decoding
 		 *
 		 * @return array|mixed|object
 		 *
@@ -929,7 +944,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Encode data to JSON
 		 *
-		 * @param mixed $data
+		 * @param mixed $data The data (mixed) we'll encode into JSON
 		 *
 		 * @return bool|string
 		 *
@@ -958,9 +973,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Return or print checked field for HTML Checkbox INPUT
 		 *
-		 * @param mixed $needle
-		 * @param mixed $haystack
-		 * @param bool  $echo
+		 * @param mixed $needle The value to check the input for
+		 * @param mixed $haystack The value/string we're checking against
+		 * @param bool  $echo Whether to return or print the content
 		 *
 		 * @return null|string
 		 */
@@ -996,9 +1011,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Return or print selected field for HTML Select input
 		 *
-		 * @param mixed $needle
-		 * @param mixed $haystack
-		 * @param bool  $echo
+		 * @param mixed $needle The value to check the input for
+		 * @param mixed $haystack The value/string we're checking against
+		 * @param bool  $echo Whether to return or print the content
 		 *
 		 * @return null|string
 		 */
@@ -1061,7 +1076,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Search through array values to check whether there's anything there
 		 *
-		 * @param array $array
+		 * @param array $array The array to check if is empty
 		 *
 		 * @return bool
 		 */
@@ -1075,9 +1090,9 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Substitute [IN] for proper SQL 'IN' statement containing array of like values
 		 *
-		 * @param string $sql
-		 * @param array  $values
-		 * @param string $type
+		 * @param string $sql The SQL statement to add an IN clause to
+		 * @param array  $values The values to check for in the IN clause
+		 * @param string $type The type string for values being searched for (string/integers/floats/etc)
 		 *
 		 * @return string
 		 */
@@ -1154,21 +1169,20 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Backwards compatible function to support prior version of the plugin
 		 *
-		 * @param string $plugin_slug
-		 * @param string $plugin_path
+		 * @param string $plugin_slug The slug used by the plugin we're checking remotely for updates of
+		 * @param string $plugin_path The file path to the plugin we're checking remotely for updates of
 		 *
 		 * @return mixed|null
 		 */
-		// phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
-		public static function configureUpdateServerV4( $plugin_slug, $plugin_path ) {
+		public static function configureUpdateServerV4( $plugin_slug, $plugin_path ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
 			return self::configure_update( $plugin_slug, $plugin_path );
 		}
 
 		/**
 		 * Configure and load the plugin_update_checker
 		 *
-		 * @param string      $plugin_slug
-		 * @param string|null $plugin_path
+		 * @param string $plugin_slug The slug used by the plugin we're checking remotely for updates of
+		 * @param string $plugin_path The file path to the plugin we're checking remotely for updates of
 		 *
 		 * @return mixed
 		 */
@@ -1205,19 +1219,23 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Does the supplied URL contain the Licensing Server info?
 		 *
-		 * @param string|null $url - The URL to check the license server name against
+		 * @param string|null   $url The URL to check the license server name against
+		 * @param null|Defaults $defaults The Defaults() class or a mock of the Defaults class.
 		 *
 		 * @return bool
-		 * @throws InvalidSettingsKey|BadOperation
+		 * @throws InvalidSettingsKey Thrown if the provided settings key is invalid for that version of the License settings
+		 * @throws BadOperation Thrown if the specified operation is unsupported by the settings class in use
 		 */
 		public function is_license_server( ?string $url = null, $defaults = null ): bool {
 
 			if ( null === $defaults ) {
+				$this->log( 'Not using a received Defaults() class' );
 				$defaults = new Defaults();
 			}
 
 			if ( empty( $url ) ) {
 				$url = home_url();
+				$this->log( "Home URL: {$url}" );
 			}
 
 			return (
@@ -1229,16 +1247,20 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Deactivate local SSL certificate validation for local server URL
 		 *
-		 * @param array  $request_args
-		 * @param string $url
+		 * @param array  $request_args The REQUEST arguments we may need to update
+		 * @param string $url The URL to the SSL enabled server we're connecting to
 		 *
 		 * @return array
 		 * @uses 'http_request_args' -> Configure Request arguments (header)
-		 *
 		 */
 		public function set_ssl_validation_for_updates( $request_args, $url ) {
 
-			if ( ! $this->is_license_server( $url ) ) {
+			try {
+				if ( ! $this->is_license_server( $url ) ) {
+					return $request_args;
+				}
+			} catch ( BadOperation | InvalidSettingsKey $e ) {
+				self::$instance->log( 'Unable to validate whether the specified URL points to ourselves: ' . $e->getMessage() );
 				return $request_args;
 			}
 
