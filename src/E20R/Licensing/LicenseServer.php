@@ -81,6 +81,13 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 		private $license_settings = null;
 
 		/**
+		 * The client class instance for the LicenseKeys framework
+		 *
+		 * @var Client|null $license_keys_client
+		 */
+		private $license_keys_client = null;
+
+		/**
 		 * LicenseServer constructor.
 		 *
 		 * @param LicenseSettings $license_settings The settings for the license we're connecting to verify/add/update
@@ -92,12 +99,13 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 			if ( empty( $utils ) ) {
 				$utils = new Utilities();
 			}
-			$this->license_settings = $license_settings;
-			$this->utils            = $utils;
-			$this->log_debug        = $this->license_settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSING_DEBUG' ) &&
-									( defined( 'WP_DEBUG' ) && WP_DEBUG );
-			$this->is_new_version   = $this->license_settings->get( 'new_version' );
-			$this->use_ssl          = $this->license_settings->get( 'ssl_verify' );
+			$this->license_keys_client = new Client();
+			$this->license_settings    = $license_settings;
+			$this->utils               = $utils;
+			$this->log_debug           = $this->license_settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSING_DEBUG' ) &&
+										( defined( 'WP_DEBUG' ) && WP_DEBUG );
+			$this->is_new_version      = $this->license_settings->get( 'new_version' );
+			$this->use_ssl             = $this->license_settings->get( 'ssl_verify' );
 		}
 
 
@@ -131,7 +139,7 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 				// Send query to the license manager server
 				try {
 					return Api::validate(
-						new Client(),
+						$this->license_keys_client,
 						function() use ( $api_params ) {
 							return new LicenseRequest( $api_params['license_key'] );
 						},
@@ -278,7 +286,7 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 				// Returns a boolean if successful
 				try {
 					return Api::validate(
-						new Client(),
+						$this->license_keys_client,
 						function() use ( $settings ) {
 							return new LicenseRequest( $settings['key'] );
 						},
