@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @version 3.0
- *
+ * @package E20R\Utilities\Licensing\License
  */
 
 namespace E20R\Licensing;
@@ -33,9 +33,8 @@ use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Settings\LicenseSettings;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
-use LicenseKeys\Utility\Api;
-use LicenseKeys\Utility\Client;
-use LicenseKeys\Utility\LicenseRequest;
+use Exception;
+use ReflectionException;
 
 // Deny direct access to the file
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
@@ -45,8 +44,7 @@ if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 
 	/**
-	 * Class License
-	 * @package E20R\Utilities\Licensing
+	 * Class used to handle operations from the licensing client
 	 */
 	class License {
 
@@ -85,6 +83,8 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		private $ajax = null;
 
 		/**
+		 * Instance of the connection object to the license server
+		 *
 		 * @var LicenseServer|null $server
 		 */
 		private $server = null;
@@ -112,14 +112,18 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		/**
 		 * Configure the License class (load settings, etc)
 		 *
-		 * @param null|string          $product_sku
-		 * @param LicenseSettings|null $settings
-		 * @param LicenseServer|null   $server
-		 * @param LicensePage|null     $page
-		 * @param Utilities|null       $utils
+		 * @param null|string          $product_sku - The licensed product's SKU
+		 * @param LicenseSettings|null $settings - The settings for the license
+		 * @param LicenseServer|null   $server - The license server connection class
+		 * @param LicensePage|null     $page - The viewer for the licensing HTML
+		 * @param Utilities|null       $utils - The Utilities class
 		 *
-		 * @throws Exceptions\InvalidSettingsKey
-		 * @throws MissingServerURL
+		 * @throws Exceptions\InvalidSettingsKey - When a LicenseSetting doesn't exist
+		 * @throws MissingServerURL - Raised when the URL to the license server isn't defined
+		 * @throws ConfigDataNotFound - Raised if the configuration JSON blob is missing
+		 * @throws BadOperation - Raised if somebody tries an invalid operation against a constant or settings class parameter
+		 * @throws InvalidSettingsVersion - Raised when the version of the licensing code is unsupported
+		 * @throws Exception - Default exception being raised
 		 */
 		public function __construct( ?string $product_sku = null, ?LicenseSettings $settings = null, ?LicenseServer $server = null, ?LicensePage $page = null, Utilities $utils = null ) {
 
@@ -137,7 +141,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				try {
 					$defaults = new Defaults();
 					$settings = new LicenseSettings( $this->product_sku, $defaults, $this->utils );
-				} catch ( Exceptions\InvalidSettingsKey | MissingServerURL | BadOperation | ConfigDataNotFound | InvalidSettingsVersion | \ReflectionException $e ) {
+				} catch ( Exceptions\InvalidSettingsKey | MissingServerURL | BadOperation | ConfigDataNotFound | InvalidSettingsVersion $e ) {
 					$this->utils->log( 'Error: Invalid setting key used when instantiating the LicenseSettings() class: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
@@ -149,7 +153,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			if ( empty( $server ) ) {
 				try {
 					$server = new LicenseServer( $this->settings, $this->utils );
-				} catch ( \Exception $e ) {
+				} catch ( Exception $e ) {
 					$this->utils->log( 'License Server configuration: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
@@ -161,7 +165,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			if ( empty( $page ) ) {
 				try {
 					$page = new LicensePage( $this->settings, $this->utils );
-				} catch ( \Exception $e ) {
+				} catch ( Exception $e ) {
 					$this->utils->log( 'License Page: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
@@ -172,7 +176,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 
 			try {
 				$this->ajax = new AjaxHandler( $product_sku, $this->settings, $this->server, $this->utils );
-			} catch ( \Exception $e ) {
+			} catch ( Exception $e ) {
 				$this->utils->log( 'Warning: Not loading the AJAX handler. No SKU or Key found.' );
 			}
 
@@ -184,7 +188,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		/**
 		 * Return the License class requested
 		 *
-		 * @param string $class_name
+		 * @param string $class_name - Name of the class to return the name of
 		 *
 		 * @return LicenseSettings|LicenseServer|LicensePage|License|null
 		 */
@@ -207,10 +211,13 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		/**
 		 * Set the SKU and reload setting(s)
 		 *
-		 * @param string $sku
+		 * @param string $sku - The product SKU for the licensed bit of code/product
 		 *
-		 * @throws Exceptions\InvalidSettingsKey
-		 * @throws MissingServerURL
+		 * @throws Exceptions\InvalidSettingsKey - Raised if the key specified doesn't exist for the settings class
+		 * @throws MissingServerURL - Raised if the URL to the License server is missing/wrong
+		 * @throws BadOperation - Raised if a constant operation isn't defined
+		 * @throws ConfigDataNotFound - Raised if the cofiguration data JSON is missing
+		 * @throws InvalidSettingsVersion - Raised if we're attemting to use an unsupported Licensing plugin or plugin version
 		 */
 		public function set_sku( $sku ) {
 			$this->product_sku = $sku;
@@ -220,7 +227,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			$defaults       = new Defaults();
 			try {
 				$this->settings = new LicenseSettings( $this->product_sku, $defaults, $this->utils );
-			} catch ( Exceptions\InvalidSettingsKey | MissingServerURL $e ) {
+			} catch ( Exceptions\InvalidSettingsKey | MissingServerURL | BadOperation | ConfigDataNotFound | InvalidSettingsVersion $e ) {
 				$this->utils->log( $e->getMessage() );
 				throw $e;
 			}
@@ -296,7 +303,6 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 *
 		 * @return bool
 		 * @test E20R\Tests\WPUnit\License_WPUnitTest::test_is_licensed()
-		 *
 		 */
 		public function is_licensed( $product_sku = null, $force = false ) : bool {
 
@@ -307,30 +313,41 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				return false;
 			}
 
-			if ( $this->utils->is_license_server( $this->settings->get( 'plugin_defaults' )->get( 'server_url' ) ) ) {
-				$this->utils->log( 'Running on the server issuing licenses. Skipping check (treating as licensed)' );
-				return true;
+			try {
+				if (
+					$this->utils->is_license_server(
+						$this->settings->get( 'plugin_defaults' )->get( 'server_url' ),
+						$this->settings->get( 'plugin_defaults' )
+					)
+				) {
+					$this->utils->log( 'Running on the server issuing licenses. Skipping check (treating as licensed)' );
+					return true;
+				}
+			} catch ( BadOperation | InvalidSettingsKey $e ) {
+				$this->utils->log( $e->getMessage() );
+				return false;
 			}
 
 			$this->utils->log( "Checking license for {$product_sku}" );
-
 			$is_licensed = $this->server->status( $product_sku, $force );
-			return $this->is_active( $product_sku, $is_licensed );
+			try {
+				return $this->is_active( $product_sku, $is_licensed );
+			} catch ( InvalidSettingsKey $e ) {
+				$this->utils->log( 'Invalid setting found: ' . $e->getMessage() );
+				return false;
+			}
 		}
 
 		/**
 		 * Check if a licensed product has an active license
 		 *
-		 * @param string $product_sku
-		 * @param bool   $is_licensed
+		 * @param string $product_sku - The SKU for the product that is licensed
+		 * @param bool   $is_licensed - Is the product/SKU licensed (as we test for whether the license is active still)
 		 *
 		 * @return bool
+		 * @throws InvalidSettingsKey - Raised when the provided key isn't a valid setting in the LicenseSettings class
 		 */
 		public function is_active( $product_sku, $is_licensed = false ) : bool {
-			$is_active = false;
-			$the_key   = null;
-			$status    = null;
-			$domain    = null;
 
 			if ( 'e20r_default_license' === $product_sku ) {
 				$this->utils->log( 'Processing the Default (non-existent) license. Returning false' );
@@ -361,8 +378,8 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				$is_active = (
 					! empty( $the_key ) &&
 					! empty( $status ) &&
-					'active' === $status &&
-					( ( $_SERVER['SERVER_NAME'] ?? '' ) === $domain )
+					'active' === $status && isset( $_SERVER['SERVER_NAME'] ) &&
+					filter_var( wp_unslash( $_SERVER['SERVER_NAME'] ) ) === $domain
 				);
 				$this->utils->log( "Active: '{$is_active}', key: {$the_key}, status: {$status}, domain: {$domain}" );
 			} else {
@@ -377,7 +394,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		/**
 		 * Is the license scheduled to expire within the specified interval(s)
 		 *
-		 * @param string $product_sku
+		 * @param string $product_sku - The SKU for the licensed product/software
 		 *
 		 * @return int|bool
 		 */
@@ -385,8 +402,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 
 			try {
 				$settings = $this->settings->get_settings( $product_sku );
-				$expires  = null;
-			} catch ( \Exception $e ) {
+			} catch ( Exception $e ) {
 				$this->utils->log( "Warning: Cannot find license for ${product_sku}: " . $e->getMessage() );
 				return true;
 			}
@@ -441,21 +457,28 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		/**
 		 * Activate the license key on the remote server
 		 *
-		 * @param string $product_sku
-		 *
+		 * @param string             $product_sku - The Product SKU in WooCommerce store from whence the product was licensed
+		 * @param LicenseServer|null $server - The License server connection class
 		 * @return array|bool
 		 *
-		 * @throws ServerConnectionError|Exceptions\InvalidSettingsKey|MissingServerURL|Exceptions\BadOperation
+		 * @throws ServerConnectionError - Raised when the license Server isn't available
+		 * @throws Exceptions\InvalidSettingsKey - Raised if the specified setting doesn't exist in the settings class
+		 * @throws Exceptions\BadOperation - Raised when attempting an unsupported action against a constant
+		 * @throws Exceptions\InvalidSettingsVersion - Raised when an unsupported version of the settings class is used
+		 * @throws MissingServerURL - Raised if the License server URL is missing
+		 * @throws ConfigDataNotFound | ReflectionException - Raised when the config data is missing
+		 *
 		 * @since 1.8.4 - BUG FIX: Didn't save the license settings
 		 * @since 3.2 - BUG FIX: Use LicenseServer class as part of status and throw exceptions when things go sideways
+		 * @since 6.0 - ENHANCEMENT: Updated to support new licensing classes and unit/integration test framework
 		 */
-		public function activate( string $product_sku ) {
+		public function activate( string $product_sku, $server = null ) {
 			$state           = null;
 			$plugin_defaults = $this->settings->get( 'plugin_defaults' );
 			$new_version     = $this->is_new_version();
 
 			if ( ! $new_version ) {
-				$msg = esc_attr__( 'Error: Unable to connect to license server. Please upgrade the Utilities plugin!', '00-e20r-utilities' );
+				$msg = esc_attr__( 'Error: Unable to connect to license server. Please upgrade the E20R Utilities plugin!', '00-e20r-utilities' );
 				$this->utils->add_message( $msg, 'error', 'backend' );
 				throw new ServerConnectionError( $msg );
 			}
@@ -469,7 +492,13 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			if ( empty( $this->settings ) ) {
 				try {
 					$this->settings = new LicenseSettings( $product_sku, $plugin_defaults, $this->utils );
-				} catch ( Exceptions\InvalidSettingsKey | MissingServerURL $e ) {
+				} catch (
+					Exceptions\InvalidSettingsKey |
+				MissingServerURL |
+				BadOperation |
+				ConfigDataNotFound |
+				InvalidSettingsVersion $e
+				) {
 					$this->utils->add_message( $e->getMessage(), 'error', 'backend' );
 					throw $e;
 				}
@@ -479,9 +508,13 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				'action'      => 'license_key_activate',
 				'store_code'  => $plugin_defaults->get( 'store_code' ),
 				'sku'         => $this->settings->get( 'product_sku' ),
-				'license_key' => $this->settings->get( 'license_key' ),
+				'license_key' => ( true === $new_version ? $this->settings->get( 'the_key' ) : $this->settings->get( 'key' ) ),
 				'domain'      => $this->settings->get( 'domain_name' ),
 			);
+
+			if ( null !== $server ) {
+				$this->server = $server;
+			}
 
 			// Send query to the license manager server
 			$decoded = $this->server->send( $api_params );
@@ -508,9 +541,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			if ( true === $decoded->error ) {
 
 				$this->utils->log( 'New Licensing server returned error...' );
-
-				$state          = $plugin_defaults->constant( 'E20R_LICENSE_ERROR' );
-				$this->settings = new LicenseSettings( $product_sku, $plugin_defaults, $this->utils );
+				$state = $plugin_defaults->constant( 'E20R_LICENSE_ERROR' );
 
 				// translators: The substitution values come from the error object
 				$msg = esc_attr__( 'Activation error: %1$s -> %2$s', '00-e20r-utilities' );
@@ -527,7 +558,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 
 				try {
 					$this->settings->update();
-				} catch ( InvalidSettingsKey | \Exception $exception ) {
+				} catch ( Exception $exception ) {
 					$this->utils->add_message(
 						$exception->getMessage(),
 						'error',
@@ -551,16 +582,17 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				} elseif ( ! isset( $settings[ $product_sku ] ) && ! empty( $settings ) ) {
 					$existing_settings = $settings;
 				} else {
-					$existing_settings = $this->settings->defaults( $product_sku );
+					$existing_settings = $this->settings->defaults();
 				}
-
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+				$this->utils->log( 'FIXME: Need to do something with existing settings: ' . print_r( $existing_settings, true ) );
 				$new_settings = (array) $decoded->data;
 				try {
 					$this->settings->merge( $new_settings );
 				} catch ( ErrorSavingSettings $e ) {
 					$this->utils->add_message(
 						sprintf(
-							// translators: %1$s - Error message from the LicenseSettings::merge() operation
+						// translators: %1$s - Error message from the LicenseSettings::merge() operation
 							esc_attr__( 'Error merging settings: %1$s', '00-e20r-utilities' ),
 							$e->getMessage()
 						),
@@ -588,8 +620,8 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		/**
 		 * Deactivate the specified license (product/license key)
 		 *
-		 * @param string     $product_sku
-		 * @param array|null $settings
+		 * @param string     $product_sku - The SKU for the licensed product/software
+		 * @param array|null $settings - List of settings to use
 		 *
 		 * @return bool
 		 */
@@ -618,7 +650,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 					'slm_action'        => 'slm_deactivate',
 					'license_key'       => $settings['key'],
 					'secret_key'        => $this->settings->get( 'plugin_defaults' )->constant( 'E20R_LICENSE_SECRET_KEY' ),
-					'registered_domain' => $_SERVER['SERVER_NAME'] ?? 'localhost.local',
+					'registered_domain' => $_SERVER['SERVER_NAME'] ?? 'localhost.local', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 					'status'            => 'pending',
 				);
 			} else {
@@ -641,7 +673,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 					'store_code'    => $this->settings->get( 'plugin_defaults' )->get( 'store_code' ),
 					'sku'           => $this->settings->get( 'product_sku' ),
 					'license_key'   => $this->settings->get( 'license_key' ),
-					'domain'        => $_SERVER['SERVER_NAME'] ?? 'localhost',
+					'domain'        => filter_var( wp_unslash( $_SERVER['SERVER_NAME'] ), FILTER_SANITIZE_URL ) ?? 'localhost',
 					'activation_id' => $this->settings->get( 'activation_id' ),
 				);
 			}
@@ -737,7 +769,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		/**
 		 * Get the license page URL for the local admin/options page
 		 *
-		 * @param string $license_stub
+		 * @param string $license_stub - the SKU/stub for the license
 		 *
 		 * @return string
 		 */
@@ -791,8 +823,6 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			}
 
 			foreach ( $settings as $product_sku => $license ) {
-
-				$is_active = false;
 
 				if ( $this->log_debug ) {
 					$this->utils->log( "Processing license info for ${product_sku}" );
