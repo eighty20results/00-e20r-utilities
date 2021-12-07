@@ -17,11 +17,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *  You can contact us at mailto:info@eighty20results.com
+ *
+ * @package E20R\Licensing\Settings\LicensSettings
  */
 
 namespace E20R\Licensing\Settings;
 
 use E20R\Licensing\Exceptions\ConfigDataNotFound;
+use E20R\Licensing\Exceptions\DefinedByConstant;
 use E20R\Licensing\Exceptions\ErrorSavingSettings;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\InvalidSettingsVersion;
@@ -30,11 +33,10 @@ use E20R\Licensing\Exceptions\NoLicenseKeyFound;
 use E20R\Licensing\Exceptions\ServerConnectionError;
 use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\LicenseServer;
-use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\License;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
-use phpDocumentor\Reflection\DocBlock\Tags\PropertyRead;
+use ReflectionException;
 
 // Deny direct access to the file
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
@@ -46,6 +48,9 @@ if ( ! defined( 'E20R_MISSING_SETTING' ) ) {
 }
 
 if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
+	/**
+	 * Settings class for the Licensing logic
+	 */
 	class LicenseSettings {
 
 		/**
@@ -56,6 +61,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		protected $all_settings = array();
 
 		/**
+		 * Utilities class instance
+		 *
 		 * @var null|Utilities
 		 */
 		protected $utils = null;
@@ -110,24 +117,32 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		protected $domain_name = '';
 
 		/**
+		 * The chosen license settings class (old or new style)
+		 *
 		 * @var null|NewSettings|OldSettings
 		 */
 		private $license_request_settings = null;
 
 		/**
-		 * @var \E20R\Licensing\Settings\Defaults|mixed|null
+		 * The default settings for Licensing
+		 *
+		 * @var Defaults|mixed|null
 		 */
 		private $plugin_defaults;
 
 		/**
 		 * LicenseSettings constructor.
 		 *
-		 * @param string|null                  $product_sku
-		 * @param Defaults|null                $plugin_defaults
-		 * @param Utilities|null               $utils
-		 * @param NewSettings|OldSettings|null $settings_class
+		 * @param string|null                  $product_sku     The SKU in the WooCommerce store for the product
+		 * @param Defaults|null                $plugin_defaults The default settings for this plugin
+		 * @param Utilities|null               $utils           The utilities class
+		 * @param NewSettings|OldSettings|null $settings_class  The actual settings class
 		 *
-		 * @throws InvalidSettingsKey|MissingServerURL|BadOperation|InvalidSettingsVersion|ConfigDataNotFound|\ReflectionException
+		 * @throws MissingServerURL Raised when the URL for a License server is missing
+		 * @throws InvalidSettingsKey Raised when an invalid key for the settings version is being used
+		 * @throws ConfigDataNotFound Raised when the config data (JSON blob) is missing/unused
+		 * @throws BadOperation Raised if the lock operation fails for a default setting
+		 * @throws InvalidSettingsVersion Raised if we attempt to instantiate the wrong settings class for the licensing code
 		 */
 		public function __construct( $product_sku = 'e20r_default_license', $plugin_defaults = null, $utils = null, $settings_class = null ) {
 
@@ -142,19 +157,31 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			$this->utils = $utils;
 
 			if ( empty( $plugin_defaults ) ) {
-				$plugin_defaults = new Defaults( true, $this->utils );
+				try {
+					$plugin_defaults = new Defaults( true, $this->utils );
+				} catch ( ConfigDataNotFound | InvalidSettingsKey $e ) {
+					$this->utils->log( 'Cannot load settings: ' . $e->getMessage() );
+					throw $e;
+				}
 			}
 
-			$this->domain_name     = apply_filters( 'e20r_license_domain_to_license', ( $_SERVER['SERVER_NAME'] ?? 'localhost' ) );
+			$this->domain_name     = apply_filters(
+				'e20r_license_domain_to_license',
+				filter_var( wp_unslash( $_SERVER['SERVER_NAME'] ), FILTER_SANITIZE_URL ) ?? 'localhost' // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+			);
 			$this->product_sku     = $product_sku;
 			$this->plugin_defaults = $plugin_defaults;
 			$this->update_plugin_defaults();
 
 			// By locking the defaults here we make sure it's possible to test with different default settings
-			$this->plugin_defaults->lock( 'debug_logging' );
-			$this->plugin_defaults->lock( 'server_url' );
-			$this->plugin_defaults->lock( 'version' );
-
+			try {
+				$this->plugin_defaults->lock( 'debug_logging' );
+				$this->plugin_defaults->lock( 'server_url' );
+				$this->plugin_defaults->lock( 'version' );
+			} catch ( BadOperation $e ) {
+				$this->utils->log( 'Error locking settings: ' . $e->getMessage() );
+				throw $e;
+			}
 			$this->excluded = array(
 				'excluded',
 				'utils',
@@ -168,10 +195,15 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			);
 
 			if ( empty( $settings_class ) ) {
-				if ( $this->new_version ) {
-					$this->license_request_settings = new NewSettings( $this->product_sku );
-				} else {
-					$this->license_request_settings = new OldSettings( $this->product_sku );
+				try {
+					if ( $this->new_version ) {
+						$this->license_request_settings = new NewSettings( $this->product_sku );
+					} else {
+						$this->license_request_settings = new OldSettings( $this->product_sku );
+					}
+				} catch ( InvalidSettingsVersion $e ) {
+					$this->utils->log( 'Attempted to use an unexpected settings version: ' . $e->getMessage() );
+					throw $e;
 				}
 			} else {
 				$this->license_request_settings = $settings_class;
@@ -199,7 +231,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			if (
 				empty( $server_url ) ||
-				1 !== preg_match( '/^https?:\/\/([0-9a-zA-Z].*)\.([0-9a-zA-Z].*)\/?/', $server_url )
+				1 !== preg_match( '/^https?:\/\/([0-9a-zA-Z].*)(?:..)?([0-9a-zA-Z].*)(?:..)?/', $server_url )
 			) {
 				$msg = "Error: Haven't configured the license server URL, or the URL is malformed. Can be configured in the wp-config.php file.";
 				$this->utils->log( $msg );
@@ -218,17 +250,17 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		/**
 		 * Configure the plugin defaults (reset them if necessary)
 		 *
-		 * @throws InvalidSettingsKey
+		 * @throws InvalidSettingsKey - Raised when attempting to use an invalid settings key for the configured version
 		 */
 		public function update_plugin_defaults() {
 			try {
 				$this->to_debug = (bool) $this->plugin_defaults->get( 'debug_logging' );
-			} catch ( \Exception $e ) {
+			} catch ( InvalidSettingsKey $e ) {
 				$this->utils->log( 'Error: Unable to save to_debug setting: ' . $e->getMessage() );
 				throw $e;
 			}
 
-			if ( isset( $_SERVER['HTTP_HOST'] ) && 'eighty20results.com' === $_SERVER['HTTP_HOST'] ) {
+			if ( isset( $_SERVER['HTTP_HOST'] ) && 'eighty20results.com' === filter_var( wp_unslash( $_SERVER['HTTP_HOST'] ), FILTER_SANITIZE_URL ) ) {
 				$this->utils->log( 'Running on Licensing server. Deactivating SSL Verification for loop-back connections' );
 				$this->ssl_verify = false;
 			}
@@ -237,7 +269,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			try {
 				$licensing_version = $this->plugin_defaults->get( 'version' );
 				$this->new_version = version_compare( $licensing_version, '3.0', 'ge' );
-			} catch ( \Exception $e ) {
+			} catch ( InvalidSettingsKey $e ) {
 				$this->utils->log( 'Error: Unable to fetch the version information for this plugin!' );
 				$this->utils->add_message(
 					esc_attr__(
@@ -258,11 +290,12 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * Load local settings for the specified product
 		 *
-		 * @param string|null $product_sku
-		 * @param array|null  $settings
+		 * @param string|null $product_sku WooCommerce SKU for the licensed product to process
+		 * @param array|null  $settings An array of settings to use for the licensing code
 		 * @return array|null
 		 *
-		 * @throws \Exception
+		 * @throws InvalidSettingsKey Raised when an invalid settings key is attempted used for the version of the settings
+		 * @throws ReflectionException Generic exception raised when interrogating an existing class' properties and methods
 		 */
 		public function load_settings( ?string $product_sku = null, ?array $settings = null ) {
 
@@ -324,7 +357,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @return bool
 		 *
-		 * @throws InvalidSettingsKey|BadOperation
+		 * @throws InvalidSettingsKey Raised when an invalid settings key is used for a given license plugin version
+		 * @throws BadOperation Raised if an unsupported operation is attempted against a constant
+		 * @throws DefinedByConstant Raised when trying to change a constant using the parameter settings method
+		 * @throws ReflectionException Default exception while processing the settings class by version
+		 * phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
 		 */
 		public function set( string $key, $value = null ): bool {
 
@@ -352,7 +389,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$this->utils->log( "Attempt to set Defaults->{$key} to " . print_r( $value, true ) );
 				try {
 					$this->plugin_defaults->set( $key, $value );
-				} catch ( InvalidSettingsKey | \Exception $e ) {
+				} catch ( InvalidSettingsKey | BadOperation | DefinedByConstant $e ) {
+					$this->utils->log( "Error setting {$key}: " . $e->getMessage() );
 					throw $e;
 				}
 			}
@@ -379,7 +417,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		/**
 		 * Does the specified property belong to the NewSettings|OldSettings class
 		 *
-		 * @param string $property
+		 * @param string $property The settings property to test
 		 *
 		 * @return bool
 		 */
@@ -390,7 +428,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		/**
 		 * Does the specified property belong to the Defaults class
 		 *
-		 * @param string $property
+		 * @param string $property The settings property to check whether is a default setting or not
 		 *
 		 * @return bool
 		 */
@@ -401,7 +439,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		/**
 		 * Does the specified property belong to this class
 		 *
-		 * @param string $property
+		 * @param string $property The key to test whether it is a settings property or not
 		 *
 		 * @return bool
 		 */
@@ -412,9 +450,9 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		/**
 		 * Return all settings for a given license (SKU/Key)
 		 *
-		 * @param string $sku
+		 * @param string $sku WooCommerce store SKU for the licensed product we're processing
 		 *
-		 * @throws NoLicenseKeyFound
+		 * @throws NoLicenseKeyFound The SKU doesn't have a license key we can use
 		 * @return string[]
 		 */
 		public function get_settings( $sku = null ) {
@@ -442,15 +480,15 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		/**
 		 * Return the setting value for the key
 		 *
-		 * @param string $key
+		 * @param string $key The license key we're returning settings for
 		 *
 		 * @return null|mixed
-		 * @throws InvalidSettingsKey
+		 * @throws InvalidSettingsKey - The specified key doesn't exist
 		 */
 		public function get( $key ) {
 			$value = null;
 			if (
-				! property_exists( __CLASS__, $key ) &&
+				! property_exists( $this, $key ) &&
 				! property_exists( $this->license_request_settings, $key ) &&
 				! property_exists( $this->plugin_defaults, $key )
 			) {
@@ -465,7 +503,15 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			}
 
 			if ( $this->is_setting( $key ) ) {
-				$value = $this->{$key};
+				if ( 'license_key' === $key ) {
+					if ( $this->new_version ) {
+						$value = $this->license_request_settings->get( 'the_key' );
+					} else {
+						$value = $this->license_request_settings->get( 'key' );
+					}
+				} else {
+					$value = $this->{$key};
+				}
 			}
 
 			if ( $this->is_request_setting( $key ) ) {
@@ -483,7 +529,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * Create a list (array) of settings with values for use by other function(s)
 		 *
 		 * @return array
-		 * @throws InvalidSettingsKey|\ReflectionException
+		 * @throws InvalidSettingsKey | ReflectionException Raised when the user attempts to fetch an invalid settings property
 		 */
 		public function all_settings() {
 			$properties = $this->license_request_settings->get_properties();
@@ -495,7 +541,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			foreach ( $properties as $property ) {
 				try {
 					$this->all_settings[ $this->product_sku ][ $property ] = $this->license_request_settings->get( $property );
-				} catch ( InvalidSettingsKey | \ReflectionException $e ) {
+				} catch ( InvalidSettingsKey $e ) {
 					throw $e;
 				}
 			}
@@ -504,23 +550,29 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		}
 
 		/**
-		 * Settings array for the License(s) on this system
-		 *
-		 * @param null|string $product_sku
+		 * Defaults settings for the License(s) on this system
 		 *
 		 * @return array
 		 */
-		public function defaults( ?string $product_sku = 'e20r_default_license' ): array {
+		public function defaults(): array {
 			return $this->license_request_settings->defaults();
 		}
 
 		/**
 		 * Prepare license settings for save operation
 		 *
-		 * @param array $input
+		 * @param array $input Settings from the WP Settings API validation hook
 		 *
 		 * @return array
-		 * @throws NoLicenseKeyFound|ErrorSavingSettings|MissingServerURL|InvalidSettingsKey|ServerConnectionError|BadOperation
+		 *
+		 * @throws NoLicenseKeyFound Thrown when the license key is not found on the Licensing server
+		 * @throws ErrorSavingSettings Thrown when we're unable to save the product specific license settings
+		 * @throws ConfigDataNotFound Thrown when we cannot find the config data for the store/url/etc to the licensing server
+		 * @throws MissingServerURL Thrown when the URL to connect to the Licensing Server plugin is incorrect
+		 * @throws InvalidSettingsKey Thrown when a settings key is specified for the wrong version of the Settings class
+		 * @throws InvalidSettingsVersion Thrown when the old version of the licensing plugin is being assumed and the new is needed, and vice versa.
+		 * @throws ServerConnectionError Thrown when the server with the Licensing plugin is unreachable
+		 * @throws BadOperation | ReflectionException Thrown when attempting a disallowed operation on a setting/constant
 		 */
 		public function validate( $input ) {
 
@@ -569,7 +621,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 						try {
 							$licensing = new License( $license_settings[ $product ]['product_sku'] );
-						} catch ( InvalidSettingsKey | MissingServerURL $e ) {
+						} catch ( InvalidSettingsKey | InvalidSettingsVersion | MissingServerURL | ConfigDataNotFound | BadOperation $e ) {
 							$this->utils->log( $e->getMessage() );
 							throw $e;
 						}
@@ -608,7 +660,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 									}
 									try {
 										$result = $licensing->activate( $product );
-									} catch ( InvalidSettingsKey | MissingServerURL | ServerConnectionError $e ) {
+									} catch ( InvalidSettingsKey | ServerConnectionError | InvalidSettingsVersion | BadOperation | MissingServerURL | ConfigDataNotFound $e ) {
 										$this->utils->log( $e->getMessage() );
 										throw $e;
 									}
@@ -624,10 +676,11 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 							if ( true === $server->status( $product, true ) ) {
 								try {
 									$settings_obj = $this->merge( $license_settings[ $product ] );
-								} catch ( ErrorSavingSettings $e ) {
+								} catch ( ErrorSavingSettings | InvalidSettingsKey $e ) {
 									$this->utils->log( $e->getMessage() );
 									throw $e;
 								}
+
 								try {
 									$results['settings'] = $settings_obj->get_settings( $product );
 								} catch ( NoLicenseKeyFound $e ) {
@@ -676,7 +729,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 					$lk = array_search( $l, $input['license_key'], true );
 
-					$this->utils->log( "License to deactivate: {$input['product'][$lk]}" );
+					$this->utils->log( "License to deactivate (key: ${$dk}): {$input['product'][$lk]}" );
 
 					$product   = $input['product'][ $lk ];
 					$licensing = new License( $product );
@@ -724,17 +777,18 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		/**
 		 * Merge existing (or default) settings for the product with the new settings
 		 *
-		 * @param array $new_settings
+		 * @param array $new_settings The settings we'd like to add/update
 		 *
 		 * @return LicenseSettings
 		 *
-		 * @throws ErrorSavingSettings|InvalidSettingsKey | \ReflectionException
+		 * @throws ErrorSavingSettings Thrown when we cannot save the License specific settings for the product
+		 * @throws InvalidSettingsKey Thrown when the specified key is invalid for the version of the Licensing plugin being assumed
 		 */
 		public function merge( $new_settings ) {
 
 			try {
 				$old_settings = $this->all_settings();
-			} catch ( InvalidSettingsKey | \ReflectionException $e ) {
+			} catch ( InvalidSettingsKey $e ) {
 				$this->utils->log( $e->getMessage() );
 				throw $e;
 			}
@@ -766,7 +820,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			foreach ( $old_settings as $key => $value ) {
 				try {
 					$this->set( $key, $value );
-				} catch ( InvalidSettingsKey $e ) {
+				} catch ( InvalidSettingsKey | BadOperation | DefinedByConstant | ReflectionException $e ) {
 					$this->utils->log( $e->getMessage() );
 					throw new ErrorSavingSettings( $e->getMessage() );
 				}
@@ -777,16 +831,21 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		/**
 		 * Keep for backwards compatibility reasons
 		 *
-		 * @param string|null $sku
-		 * @param array       $settings
+		 * @param string|null $sku The WooCommerce product SKU for the licensed software
+		 * @param array       $settings The License settings to update
 		 *
 		 * @return bool
-		 * @throws ErrorSavingSettings
 		 */
 		public function update( $sku = null, $settings = null ) {
 			_deprecated_function( 'License::update()', '2.2', 'License::save()' );
-			if ( empty( $settings ) ) {
-				$this->merge( $settings );
+			if ( ! empty( $settings ) ) {
+				try {
+					$this->merge( $settings );
+				} catch ( ErrorSavingSettings | InvalidSettingsKey $e ) {
+					$this->utils->log( sprintf( 'Error for %1$s: %2$s', $sku, $e->getMessage() ) );
+					$this->utils->add_message( 'Error: ' . $e->getMessage(), 'error', 'backend' );
+					return false;
+				}
 			}
 			return $this->save();
 		}
@@ -801,7 +860,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			try {
 				$license_settings = $this->all_settings();
-			} catch ( InvalidSettingsKey | \ReflectionException $e ) {
+			} catch ( InvalidSettingsKey | ReflectionException $e ) {
 				$this->utils->add_message(
 					sprintf(
 						// translators: %1$s - The exception error message
