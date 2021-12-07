@@ -17,6 +17,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *  You can contact us at mailto:info@eighty20results.com
+ *
+ * @package E20R\Licensing\LicenseServer
  */
 
 namespace E20R\Licensing;
@@ -25,12 +27,12 @@ use E20R\Licensing\Exceptions\NoLicenseKeyFound;
 use E20R\Utilities\Utilities;
 use E20R\Utilities\Cache;
 use E20R\Licensing\Settings\LicenseSettings;
-use E20R\Licensing\Settings\Defaults;
-# For the 10quality license client handling
+// For the 10quality license client handling
 use Exception;
 use LicenseKeys\Utility\Api;
 use LicenseKeys\Utility\Client;
 use LicenseKeys\Utility\LicenseRequest;
+use stdClass;
 
 // Deny direct access to the file
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
@@ -59,6 +61,7 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 
 		/**
 		 * Should the License Server connection use SSL?
+		 *
 		 * @var bool $use_ssl
 		 */
 		private $use_ssl = true;
@@ -80,8 +83,10 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 		/**
 		 * LicenseServer constructor.
 		 *
-		 * @param LicenseSettings $license_settings
-		 * @param Utilities|null  $utils
+		 * @param LicenseSettings $license_settings The settings for the license we're connecting to verify/add/update
+		 * @param Utilities|null  $utils            The Utilities class (or a mock thereof). Used during testing
+		 *
+		 * @throws Exceptions\InvalidSettingsKey Raised if the setting specified does not exist for the version of the Licensing code being used
 		 */
 		public function __construct( LicenseSettings $license_settings, ?Utilities $utils = null ) {
 			if ( empty( $utils ) ) {
@@ -99,9 +104,9 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 		/**
 		 * Transmit Request to the Licensing server
 		 *
-		 * @param array $api_params
+		 * @param array $api_params Payload to send
 		 *
-		 * @return \stdClass|bool
+		 * @return stdClass|bool
 		 */
 		public function send( $api_params ) {
 
@@ -126,7 +131,7 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 				// Send query to the license manager server
 				try {
 					return Api::validate(
-						Client::instance(),
+						new Client(),
 						function() use ( $api_params ) {
 							return new LicenseRequest( $api_params['license_key'] );
 						},
@@ -142,34 +147,6 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 					$this->utils->log( $e->getTraceAsString() );
 					return false;
 				}
-				/** FIXME: Remove when testing of the new API module works as expected
-				$action = isset( $api_params['action'] ) ? $api_params['action'] : null;
-
-				if ( empty( $action ) ) {
-					$this->utils->log( 'Error: Using NEW Licensing version, but no action set!!!' );
-
-					return false;
-				} else {
-					$this->utils->log( "Action: {$action}" );
-				}
-
-				unset( $api_params['action'] );
-
-				if ( $this->log_debug ) {
-					$this->utils->log( "Expensive: Connecting to upstream license server!" );
-				}
-
-				$response = wp_remote_post(
-					add_query_arg( 'action', $action, E20R_LICENSE_SERVER_URL . '/wp-admin/admin-ajax.php' ),
-					array(
-						'timeout'     => apply_filters( 'e20r-license-remote-server-timeout', 30 ),
-						'sslverify'   => $license->get_ssl_verify(),
-						'httpversion' => '1.1',
-						'decompress'  => true,
-						'body'        => $api_params,
-					)
-				);
-				 */
 			}
 
 			// Check for error in the response
@@ -231,16 +208,15 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 		/**
 		 * Connect to license server and check status for the current product/server
 		 *
-		 * @param string     $sku - The product/SKU to get the license status for
-		 * @param bool       $force - Whether to force a check against the license server
+		 * @param string $sku - The product/SKU to get the license status for
+		 * @param bool   $force - Whether to force a check against the license server
 		 *
 		 * @return bool
 		 */
 		public function status( $sku, $force = false ) : bool {
 
 			// Default value for the license (it's not active)
-			$license_status = null;
-			$use_new        = (bool) $this->license_settings->get( 'new_version' );
+			$use_new = (bool) $this->license_settings->get( 'new_version' );
 
 			try {
 				$settings = $this->license_settings->get_settings( $sku );
@@ -302,7 +278,7 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 				// Returns a boolean if successful
 				try {
 					return Api::validate(
-						Client::instance(),
+						new Client(),
 						function() use ( $settings ) {
 							return new LicenseRequest( $settings['key'] );
 						},
@@ -316,27 +292,10 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 							return $license_settings->update( $sku, $settings );
 						}
 					);
-				} catch ( \Exception $e ) {
+				} catch ( Exception $e ) {
 					$this->utils->log( "Validation error: " . $e->getMessage() ); //phpcs:ignore
 					return false;
 				}
-
-				/** FIXME: Remove this when the new client API works as expected
-				if ( ! isset( $settings['activation_id'] ) ) {
-					$this->utils->log( "Assume the license is inactive and return" );
-
-					return false;
-				}
-
-				$api_params = array(
-					'action'        => 'license_key_validate',
-					'store_code'    => self::E20R_LICENSE_STORE_CODE,
-					'license_key'   => $settings['the_key'],
-					'domain'        => isset( $_SERVER['SERVER_NAME'] ) ? $_SERVER['SERVER_NAME'] : 'Unknown',
-					'sku'           => $settings['product_sku'],
-					'activation_id' => $settings['activation_id'],
-				);
-				*/
 			}
 
 			if ( $this->log_debug ) {
@@ -357,9 +316,9 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 		/**
 		 * Using the new Licensing plugin for WooCommerce (different format)
 		 *
-		 * @param string $sku
-		 * @param \stdClass $decoded
-		 * @param array $settings
+		 * @param string   $sku The license SKU we're processing
+		 * @param stdClass $decoded The decoded License Server response payload
+		 * @param array    $settings The license settings we're using
 		 *
 		 * @return bool
 		 */
@@ -393,7 +352,10 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 
 				foreach ( $decoded->registered_domains as $domain ) {
 
-					if ( isset( $domain->registered_domain ) && $domain->registered_domain === $_SERVER['SERVER_NAME'] ) {
+					if (
+						isset( $domain->registered_domain ) && isset( $_SERVER['SERVER_NAME'] ) &&
+						filter_var( wp_unslash( $_SERVER['SERVER_NAME'] ), FILTER_SANITIZE_URL ) === $domain->registered_domain
+					) {
 
 						if ( '0000-00-00' !== $decoded->date_renewed ) {
 							$settings['renewed'] = strtotime( $decoded->date_renewed, time() );
@@ -467,9 +429,9 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 		/**
 		 * Process the original type of license information
 		 *
-		 * @param string $sku
-		 * @param \stdClass $decoded
-		 * @param array $settings
+		 * @param string   $sku The license SKU we're processing
+		 * @param stdClass $decoded The decoded License Server HTTP response
+		 * @param array    $settings The license settings
 		 *
 		 * @return bool
 		 */
