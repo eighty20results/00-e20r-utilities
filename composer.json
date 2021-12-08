@@ -24,6 +24,7 @@
         "php": ">=7.3",
         "yahnis-elsts/plugin-update-checker": ">=4.5",
         "10quality/license-keys-php-client": ">=v1.2.2",
+        "mixpanel/mixpanel-php" : "2.*",
         "ext-curl": "*",
         "ext-json": "*"
     },
@@ -54,23 +55,24 @@
     },
     "autoload": {
         "psr-4": {
-            "ProjectRoot\\" : "",
+            "ProjectRoot\\" : ".",
             "NamespaceInSourceDir\\": "",
-            "E20R\\": "src/E20R",
-            "E20R\\Utilities\\": "src/E20R/Utilities",
-            "E20R\\Licensing\\": "src/E20R/Licensing",
-            "E20R\\Licensing\\Exceptions\\": "src/E20R/Licensing/Exceptions",
-            "E20R\\Licensing\\Settings\\": "src/E20R/Licensing/Settings"
+            "E20R\\": "src/E20R/",
+            "E20R\\Utilities\\": "src/E20R/Utilities/",
+            "E20R\\Licensing\\": "src/E20R/Licensing/",
+            "E20R\\Metrics\\": "src/E20R/Metrics/",
+            "E20R\\Licensing\\Exceptions\\": "src/E20R/Licensing/Exceptions/",
+            "E20R\\Licensing\\Settings\\": "src/E20R/Licensing/Settings/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "E20R\\Tests\\": "tests",
-            "E20R\\Tests\\Unit\\": "tests/unit/testcases",
-            "E20R\\Tests\\WPUnit\\": "tests/wpunit/testcases",
-            "E20R\\Tests\\Functional\\": "tests/functional/testcases",
-            "E20R\\Tests\\Acceptance\\": "tests/acceptance/testcases",
-            "E20R\\Tests\\Api\\": "tests/api/testcases"
+            "E20R\\Tests\\": "tests/",
+            "E20R\\Tests\\Unit\\": "tests/unit/testcases/",
+            "E20R\\Tests\\WPUnit\\": "tests/wpunit/testcases/",
+            "E20R\\Tests\\Functional\\": "tests/functional/testcases/",
+            "E20R\\Tests\\Acceptance\\": "tests/acceptance/testcases/",
+            "E20R\\Tests\\Api\\": "tests/api/testcases/"
         }
     },
     "scripts": {
