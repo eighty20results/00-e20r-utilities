@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
@@ -15,28 +15,35 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Tests\WPUnit\Loader_WPUnitTest
  */
 
-namespace E20R\Tests\Unit;
+namespace E20R\Tests\WPUnit;
 
 use Codeception\TestCase\WPTestCase;
 use E20R\Utilities\Loader;
 use E20R\Utilities\Utilities;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use Exception;
 
-
+/**
+ * WP tests ("unit") for testing the Loader class
+ */
 class Loader_WPUnitTest extends WPTestCase {
 
 	use MockeryPHPUnitIntegration;
 
 	/**
 	 * Mocked Utilities class
+	 *
 	 * @var mixed $m_utils
 	 */
 	private $m_utils = null;
 
 	/**
 	 * Real Utilities class
+	 *
 	 * @var null|Utilities $utils
 	 */
 	private $utils = null;
@@ -63,7 +70,7 @@ class Loader_WPUnitTest extends WPTestCase {
 					'dummy_function'   => null,
 				)
 			);
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( $e->getMessage() );
 		}
@@ -71,10 +78,11 @@ class Loader_WPUnitTest extends WPTestCase {
 
 	/**
 	 * Unit test for the Loader() class instantiation
-	 * @param string   $action_name
-	 * @param array    $hook_function
-	 * @param int|bool $expected
-	 * @param int      $execution_count
+	 *
+	 * @param string   $action_name     Name of action to test
+	 * @param array    $hook_function   Function to use as hook
+	 * @param int|bool $expected        The expected result
+	 * @param int      $execution_count The number of executions
 	 *
 	 * @dataProvider fixture_loaded_actions
 	 */
@@ -87,7 +95,8 @@ class Loader_WPUnitTest extends WPTestCase {
 
 	/**
 	 * Fixture for the Loader() class constructor test
-	 * @return \string[][]
+	 *
+	 * @return string[][]
 	 */
 	public function fixture_loaded_actions() {
 		$utils  = new Utilities();
@@ -101,8 +110,9 @@ class Loader_WPUnitTest extends WPTestCase {
 
 	/**
 	 * Make sure the filter is loaded when the plugin starts up
-	 * @param $test_value
-	 * @param $expected
+	 *
+	 * @param bool $test_value Value to pass to the filter
+	 * @param bool $expected The expected return value
 	 *
 	 * @dataProvider fixture_utilities_loaded
 	 * @covers \E20R\Utilities\Loader::utilities_loaded()
@@ -137,11 +147,11 @@ class Loader_WPUnitTest extends WPTestCase {
 	/**
 	 * Test the 'e20r_utilities_module_installed' filter
 	 *
-	 * @param bool $first_filter_value
-	 * @param int  $first_priority
-	 * @param bool $second_filter_value
-	 * @param int  $second_priority
-	 * @param bool $expected
+	 * @param bool $first_filter_value The value to pass to and return from the first filter hook function
+	 * @param int  $first_priority The priority to use for the filter
+	 * @param bool $second_filter_value The value to pass to and return from the second filter hook function
+	 * @param int  $second_priority The priority to use for the 2nd filter
+	 * @param bool $expected The value we expect the filters to return in the end
 	 *
 	 * @dataProvider fixture_loaded_filter
 	 */
@@ -149,7 +159,7 @@ class Loader_WPUnitTest extends WPTestCase {
 		add_filter(
 			'e20r_utilities_module_installed',
 			function ( $received_value ) use ( $first_filter_value ) {
-				return $first_filter_value;
+				return $received_value;
 			},
 			$first_priority,
 			1
@@ -158,7 +168,7 @@ class Loader_WPUnitTest extends WPTestCase {
 		add_filter(
 			'e20r_utilities_module_installed',
 			function ( $received_value ) use ( $second_filter_value ) {
-				return $second_filter_value;
+				return $received_value;
 			},
 			$second_priority,
 			1
@@ -184,10 +194,11 @@ class Loader_WPUnitTest extends WPTestCase {
 
 	/**
 	 * Test to make sure we return true even if someone injected a later 'e20r_utilities_module_installed' hook
-	 * @param array $custom_hook
-	 * @param int   $priority
-	 * @param bool  $expected_result
-	 * @param bool  $expected_priority
+	 *
+	 * @param array $custom_hook Custom hook function for the filter
+	 * @param int   $priority Hook priority
+	 * @param bool  $expected_result The result we expect
+	 * @param bool  $expected_priority The priority we expect the filter to have run against
 	 *
 	 * @covers \E20R\Utilities\Loader::making_sure_we_win
 	 * @dataProvider fixture_install_handler
@@ -232,7 +243,7 @@ class Loader_WPUnitTest extends WPTestCase {
 	public function fixture_install_handler() {
 		return array(
 			array(
-				function( $value ) {
+				function() {
 					return false;
 				},
 				99998, // priority
@@ -240,7 +251,7 @@ class Loader_WPUnitTest extends WPTestCase {
 				99999, // expected_priority
 			),
 			array(
-				function( $value ) {
+				function() {
 					return false;
 				},
 				99999, // priority
@@ -248,7 +259,7 @@ class Loader_WPUnitTest extends WPTestCase {
 				100009, // expected_priority
 			),
 			array(
-				function( $value ) {
+				function() {
 					return false;
 				},
 				100000, // priority
@@ -262,8 +273,8 @@ class Loader_WPUnitTest extends WPTestCase {
 	 * Test whether Loader::make_sure_we_win() does the expected thing (sets the priority of the
 	 * '__return_true' handler to the highest value it can)
 	 *
-	 * @param $hook_priority
-	 * @param $expected
+	 * @param int $hook_priority The priority to use when adding the filter
+	 * @param int $expected The expected priority value that was returned
 	 *
 	 * @covers \E20R\Utilities\Loader::get_max_hook_priority()
 	 * @dataProvider fixture_hook_priority
