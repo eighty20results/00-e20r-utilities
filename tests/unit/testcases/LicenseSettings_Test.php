@@ -1,22 +1,23 @@
 <?php
-/*
- * *
- *   * Copyright (c) 2021. - Eighty / 20 Results by Wicked Strong Chicks.
- *   * ALL RIGHTS RESERVED
- *   *
- *   * This program is free software: you can redistribute it and/or modify
- *   * it under the terms of the GNU General Public License as published by
- *   * the Free Software Foundation, either version 3 of the License, or
- *   * (at your option) any later version.
- *   *
- *   * This program is distributed in the hope that it will be useful,
- *   * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   * GNU General Public License for more details.
- *   *
- *   * You should have received a copy of the GNU General Public License
- *   * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+/**
  *
+ * Copyright (c) 2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * ALL RIGHTS RESERVED
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Tests\Unit\LicenseSettings_Test
  */
 
 namespace E20R\Tests\Unit;
@@ -26,28 +27,39 @@ use Codeception\Test\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use E20R\Licensing\Exceptions\BadOperation;
-use E20R\Licensing\Exceptions\ConfigDataNotFound;
+use E20R\Licensing\Exceptions\DefinedByConstant;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
-use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Settings\LicenseSettings;
 use E20R\Licensing\Settings\NewSettings;
 use E20R\Licensing\Settings\OldSettings;
 use E20R\Utilities\Utilities;
+use Exception;
+use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use Mockery\Mock;
+use ReflectionException;
+use Throwable;
 use function E20R\Tests\Unit\Fixtures\e20r_unittest_stubs;
 
+/**
+ * Unit tests for the LicenseSettings class
+ */
 class LicenseSettings_Test extends Unit {
 
 	use MockeryPHPUnitIntegration;
 	use AssertThrows;
 
+	/**
+	 * Mocked Utilities class
+	 *
+	 * @var Utilities|Mock
+	 */
 	private $m_utils;
 
 	/**
 	 * The setup function for this Unit Test suite
-	 *
 	 */
 	protected function setUp(): void {
 		parent::setUp();
@@ -93,12 +105,12 @@ class LicenseSettings_Test extends Unit {
 			$this->m_utils = $this->makeEmpty(
 				Utilities::class,
 				array(
-					'add_message'        => function( $msg, $severity, $location ) { error_log( "Mocked add_message(): {$msg}" ); /* phpcs:ignore */ },
+					'add_message'        => function( $msg, $severity, $location ) { error_log( "Mocked add_message({$severity} to {$location}): {$msg}" ); /* phpcs:ignore */ },
 					'log'                => function( $msg ) { error_log( "Mocked log(): {$msg}" ); /* phpcs:ignore */ },
 					'get_util_cache_key' => 'e20r_pw_utils_0',
 				)
 			);
-		} catch ( \ Exception $exception ) {
+		} catch ( Exception $exception ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( 'Utilities() mocker: ' . $exception->getMessage() );
 		}
@@ -115,27 +127,27 @@ class LicenseSettings_Test extends Unit {
 						'error'   => false,
 					)
 				);
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( 'wp_upload_dir() mock error: ' . esc_attr( $e->getMessage() ) );
 		}
 
 		try {
 			Functions\expect( 'date_i18n' )
-				->with( \Mockery::contains( 'Y_M_D' ) )
+				->with( Mockery::contains( 'Y_M_D' ) )
 				->zeroOrMoreTimes()
 				->andReturn( '2021_07_28' );
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( 'date_i18n() mock error: ' . esc_attr( $e->getMessage() ) );
 		}
 
 		try {
 			Functions\expect( 'file_exists' )
-				->with( \Mockery::contains( 'e20r_debug/debug_2021_07_28.log' ) )
+				->with( Mockery::contains( 'e20r_debug/debug_2021_07_28.log' ) )
 				->zeroOrMoreTimes()
 				->andReturn( true );
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( 'file_exists() mock error: ' . esc_attr( $e->getMessage() ) );
 		}
@@ -153,14 +165,14 @@ class LicenseSettings_Test extends Unit {
 	/**
 	 * Test the instantiation of the LicenseSettings() class (happy path)
 	 *
-	 * @param string $sku
-	 * @param string $domain
-	 * @param bool   $with_debug
-	 * @param string $version
-	 * @param array  $expected
+	 * @param string $sku Product SKU to use for testing
+	 * @param string $domain The FQDN
+	 * @param bool   $with_debug Whether to use the DEBUG functionality or not
+	 * @param string $version Expected settings class version
+	 * @param array  $expected The expected values for the test
 	 *
 	 * @dataProvider fixture_instantiate_class
-	 * @throws \Throwable
+	 * @throws Throwable|Exception Generic exceptions
 	 */
 	public function test_instantiate_class( $sku, $domain, $with_debug, $version, $expected ) {
 
@@ -168,7 +180,7 @@ class LicenseSettings_Test extends Unit {
 
 		Functions\expect( 'dirname' )
 			->zeroOrMoreTimes()
-			->with( \Mockery::contains( '/.info.json' ) )
+			->with( Mockery::contains( '/.info.json' ) )
 			->andReturn( __DIR__ . '/../../../src/E20R/Licensing/.info.json' );
 
 		Functions\when( 'get_transient' )
@@ -177,17 +189,16 @@ class LicenseSettings_Test extends Unit {
 		Functions\when( 'set_transient' )
 			->justReturn( true );
 		Functions\expect( 'get_option' )
-			->with( \Mockery::contains( 'e20r_license_settings' ) )
+			->with( Mockery::contains( 'e20r_license_settings' ) )
 			->andReturn(
 				function( $name, $defaults ) use ( $settings ) {
 					$value = $defaults;
 					if ( 'e20r_license_settings' === $name ) {
 						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 						error_log( "Mocked get_option() for {$name}" );
-						$value = $defaults;
 					}
 
-					return $defaults; // TODO: Return better settings
+					return $value; // TODO: Return better settings
 				}
 			);
 		try {
@@ -195,7 +206,7 @@ class LicenseSettings_Test extends Unit {
 				->with( 'timezone_string' )
 				->zeroOrMoreTimes()
 				->andReturn( 'Europe/Oslo' );
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( 'get_options() mock error: ' . esc_attr( $e->getMessage() ) );
 		}
@@ -229,12 +240,13 @@ class LicenseSettings_Test extends Unit {
 					},
 				)
 			);
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( $e->getMessage() );
 			return false;
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		$_SERVER['HTTP_HOST'] = $_SERVER['HTTP_HOST'] ?? $domain;
 
 		if ( empty( $config['server_url'] ) ) {
@@ -242,14 +254,14 @@ class LicenseSettings_Test extends Unit {
 				MissingServerURL::class,
 				"Error: Haven't configured the license server URL, or the URL is malformed. Can be configured in the wp-config.php file.",
 				function() use ( $sku, $mocked_plugin_defaults ) {
-					$settings = new LicenseSettings( $sku, $mocked_plugin_defaults, $this->m_utils );
+					return new LicenseSettings( $sku, $mocked_plugin_defaults, $this->m_utils );
 				}
 			);
-			return;
+			return false;
 		} else {
 			try {
 				$settings = new LicenseSettings( $sku, $mocked_plugin_defaults, $this->m_utils );
-			} catch ( \Exception $e ) {
+			} catch ( Exception $e ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( 'Error: Unable to instantiate the LicenseSettings class: ' . $e->getMessage() );
 				throw $e;
@@ -259,7 +271,7 @@ class LicenseSettings_Test extends Unit {
 		// For testing purposes, we override the default plugin settings
 		try {
 			$settings->set( 'plugin_defaults', $mocked_plugin_defaults );
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( 'Error: Unable to set new plugin_defaults: ' . $e->getMessage() );
 		}
@@ -270,12 +282,14 @@ class LicenseSettings_Test extends Unit {
 		self::assertSame( $expected['new_version'], $settings->get( 'new_version' ), "Error: The new_version variable should have been set to {$expected['new_version']}" );
 		self::assertSame( $expected['license_version'], $settings->get( 'plugin_defaults' )->get( 'version' ), "Error: The license_version variable should have been set to {$expected['license_version']}" );
 		self::assertSame( $expected['store_code'], $settings->get( 'plugin_defaults' )->get( 'store_code' ), "Error: The store code variable should have been {$expected['store_code']}!" );
+
+		return false;
 	}
 
 	/**
 	 * The mocked contents for the fake `.info.json` file
 	 *
-	 * @param string $sku
+	 * @param string $sku The test Product SKU to use
 	 *
 	 * @return string[]
 	 */
@@ -356,12 +370,14 @@ class LicenseSettings_Test extends Unit {
 
 
 	/**
-	 * @param string $test_sku
-	 * @param $settings
-	 * @param array $defaults
-	 * @param $expected
+	 * Unit test for Loading settings for the license
 	 *
-	 * @throws \ReflectionException|\Exception
+	 * @param string $test_sku The test SKU to use
+	 * @param array  $settings The Settings to use (array)
+	 * @param array  $defaults The default settings
+	 * @param array  $expected The expected results
+	 *
+	 * @throws ReflectionException|Exception Standard exceptions
 	 *
 	 * @dataProvider fixture_license_settings
 	 */
@@ -464,8 +480,6 @@ class LicenseSettings_Test extends Unit {
 	 * @return array[]
 	 */
 	public function fixture_license_settings() {
-		$new_settings = $this->fixture_new_settings();
-		$old_settings = $this->fixture_old_settings();
 
 		return array(
 			// Sku, saved_settings, new_version, expected
@@ -579,6 +593,11 @@ class LicenseSettings_Test extends Unit {
 		);
 	}
 
+	/**
+	 * Fixture for settings using new class model
+	 *
+	 * @return array
+	 */
 	public function fixture_new_settings() {
 		return array(
 			'expire'           => -1,
@@ -594,6 +613,12 @@ class LicenseSettings_Test extends Unit {
 			'offline_value'    => 0,
 		);
 	}
+
+	/**
+	 * Fixture for settings using old class model
+	 *
+	 * @return array
+	 */
 	public function fixture_old_settings() {
 		return array(
 			'product'    => '',
@@ -612,11 +637,12 @@ class LicenseSettings_Test extends Unit {
 	/**
 	 * Test the `get()` member function for LicenseSettings()
 	 *
-	 * @param array  $defaults
-	 * @param string $param_name - The Defaults(), NewSettings() or OldSettings() parameter name
-	 * @param mixed  $expected
+	 * @param array  $defaults The default values to use
+	 * @param array  $license_settings The license settings to use
+	 * @param string $param_name The Defaults(), NewSettings() or OldSettings() parameter name
+	 * @param mixed  $expected The expected return values from the function being tested
 	 *
-	 * @throws \Exception
+	 * @throws Exception Default exception thrown during test execution
 	 * @dataProvider fixture_get_parameters
 	 * @covers \E20R\Licensing\Settings\LicenseSettings::get()
 	 */
@@ -640,7 +666,7 @@ class LicenseSettings_Test extends Unit {
 					return $value;
 				}
 			);
-		$m_defaults         = $this->makeEmpty(
+		$m_defaults = $this->makeEmpty(
 			Defaults::class,
 			array(
 				'get'      => function( $param_name ) use ( $defaults ) {
@@ -683,13 +709,6 @@ class LicenseSettings_Test extends Unit {
 				},
 			)
 		);
-		$m_license_settings = $this->construct(
-			LicenseSettings::class,
-			array( 'e20r_test_license', $m_defaults, $this->m_utils ),
-			array(
-				'save' => $defaults['update_option'],
-			)
-		);
 
 		if ( version_compare( $m_defaults->get( 'version' ), '3.0', 'ge' ) ) {
 			$m_settings = $this->construct(
@@ -702,9 +721,17 @@ class LicenseSettings_Test extends Unit {
 				array( 'e20r_test_license', $license_settings )
 			);
 		}
-		$settings = new LicenseSettings( 'e20r_test_license', $m_defaults, $this->m_utils, $m_settings );
+
+		$m_license_settings = $this->construct(
+			LicenseSettings::class,
+			array( 'e20r_test_license', $m_defaults, $this->m_utils, $m_settings ),
+			array(
+				'save' => $defaults['update_option'],
+			)
+		);
+
 		try {
-			$result = $settings->get( $param_name );
+			$result = $m_license_settings->get( $param_name );
 			self::assertSame( $expected, $result );
 		} catch ( InvalidSettingsKey $e ) {
 			self::assertInstanceOf( InvalidSettingsKey::class, $e );
@@ -768,7 +795,7 @@ class LicenseSettings_Test extends Unit {
 				'expire',
 				1630236998,
 			),
-			array( # 2 - NewSettings()
+			array( // 2 - NewSettings()
 				array(
 					'debug_logging' => true,
 					'version'       => '3.2',
@@ -1207,17 +1234,19 @@ class LicenseSettings_Test extends Unit {
 	/**
 	 * Test the `set()` member function for LicenseSettings()
 	 *
-	 * @param array  $defaults
-	 * @param array  $license_settings
-	 * @param string $param_name - The Defaults(), NewSettings() or OldSettings() parameter name
-	 * @param mixed  $param_value
-	 * @param mixed  $expected
+	 * @param array  $defaults         Default settings to use
+	 * @param array  $license_settings License settings to use
+	 * @param string $param_name       The Defaults(), NewSettings() or OldSettings() parameter name
+	 * @param mixed  $param_value      The parameter value we attempt to set
+	 * @param mixed  $expected         The expected status/value after attempting the set operation
 	 *
 	 * @dataProvider fixture_set_parameters
-	 * @covers \E20R\Licensing\Settings\LicenseSettings::set()
+	 * @covers       \E20R\Licensing\Settings\LicenseSettings::set()
 	 *
-	 * @throws InvalidSettingsKey|InvalidSettingsVersion|MissingServerURL
-	 * @throws BadOperation|\ReflectionException|ConfigDataNotFound
+	 * @throws InvalidSettingsKey Exceptions thrown during test execution
+	 * @throws BadOperation|ReflectionException|DefinedByConstant Exceptions thrown during test
+	 *                                                                               execution
+	 * @throws Exception Raised if Mockery::construct() fails
 	 */
 	public function test_set_parameters( $defaults, $license_settings, $param_name, $param_value, $expected ) {
 		Functions\when( 'get_option' )
@@ -1239,7 +1268,7 @@ class LicenseSettings_Test extends Unit {
 					return $value;
 				}
 			);
-		$m_defaults         = $this->makeEmpty(
+		$m_defaults = $this->makeEmpty(
 			Defaults::class,
 			array(
 				'get'      => function( $param_name ) use ( $defaults ) {
@@ -1282,13 +1311,6 @@ class LicenseSettings_Test extends Unit {
 				},
 			)
 		);
-		$m_license_settings = $this->construct(
-			LicenseSettings::class,
-			array( 'e20r_test_license', $m_defaults, $this->m_utils ),
-			array(
-				'save' => $defaults['update_option'],
-			)
-		);
 
 		if ( version_compare( $m_defaults->get( 'version' ), '3.0', 'ge' ) ) {
 			$m_settings = $this->construct(
@@ -1301,10 +1323,18 @@ class LicenseSettings_Test extends Unit {
 				array( 'e20r_test_license', $license_settings )
 			);
 		}
-		$settings = new LicenseSettings( 'e20r_test_license', $m_defaults, $this->m_utils, $m_settings );
+
+		$m_license_settings = $this->construct(
+			LicenseSettings::class,
+			array( 'e20r_test_license', $m_defaults, $this->m_utils, $m_settings ),
+			array(
+				'save' => $defaults['update_option'],
+			)
+		);
+
 		try {
-			$set_result = $settings->set( $param_name, $param_value );
-			$result     = $settings->get( $param_name );
+			$set_result = $m_license_settings->set( $param_name, $param_value );
+			$result     = $m_license_settings->get( $param_name );
 			self::assertTrue( $set_result );
 			self::assertSame( $expected, $result );
 		} catch ( InvalidSettingsKey $e ) {
@@ -1370,7 +1400,7 @@ class LicenseSettings_Test extends Unit {
 				1630236998,
 				1630236998,
 			),
-			array( # 2 - NewSettings()
+			array( // #2 - Uses the NewSettings class
 				array(
 					'debug_logging' => true,
 					'version'       => '3.2',
@@ -1590,7 +1620,7 @@ class LicenseSettings_Test extends Unit {
 					'product'    => '',
 					'key'        => null,
 					'renewed'    => null,
-					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',  // phpcs:ignore
 					'expires'    => null,
 					'status'     => 'cancelled',
 					'first_name' => '',
@@ -1615,7 +1645,7 @@ class LicenseSettings_Test extends Unit {
 					'product'    => '',
 					'key'        => null,
 					'renewed'    => null,
-					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local', // phpcs:ignore
 					'expires'    => null,
 					'status'     => 'cancelled',
 					'first_name' => '',
@@ -1640,7 +1670,7 @@ class LicenseSettings_Test extends Unit {
 					'product'    => '',
 					'key'        => null,
 					'renewed'    => null,
-					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local', // phpcs:ignore
 					'expires'    => null,
 					'status'     => 'cancelled',
 					'first_name' => '',
@@ -1665,7 +1695,7 @@ class LicenseSettings_Test extends Unit {
 					'product'    => '',
 					'key'        => null,
 					'renewed'    => null,
-					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local', // phpcs:ignore
 					'expires'    => null,
 					'status'     => 'cancelled',
 					'first_name' => '',
@@ -1690,7 +1720,7 @@ class LicenseSettings_Test extends Unit {
 					'product'    => '',
 					'key'        => null,
 					'renewed'    => null,
-					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local', // phpcs:ignore
 					'expires'    => null,
 					'status'     => 'cancelled',
 					'first_name' => '',
@@ -1715,7 +1745,7 @@ class LicenseSettings_Test extends Unit {
 					'product'    => '',
 					'key'        => null,
 					'renewed'    => null,
-					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local', // phpcs:ignore
 					'expires'    => null,
 					'status'     => 'cancelled',
 					'first_name' => '',
@@ -1740,7 +1770,7 @@ class LicenseSettings_Test extends Unit {
 					'product'    => '',
 					'key'        => null,
 					'renewed'    => null,
-					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local', // phpcs:ignore
 					'expires'    => null,
 					'status'     => 'cancelled',
 					'first_name' => '',
@@ -1765,7 +1795,7 @@ class LicenseSettings_Test extends Unit {
 					'product'    => '',
 					'key'        => null,
 					'renewed'    => null,
-					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local', // phpcs:ignore
 					'expires'    => null,
 					'status'     => 'cancelled',
 					'first_name' => '',
@@ -1790,7 +1820,7 @@ class LicenseSettings_Test extends Unit {
 					'product'    => '',
 					'key'        => null,
 					'renewed'    => null,
-					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local',
+					'domain'     => $_SERVER['HTTP_HOST'] ?? 'localhost.local', // phpcs:ignore
 					'expires'    => null,
 					'status'     => 'cancelled',
 					'first_name' => '',
@@ -1801,6 +1831,32 @@ class LicenseSettings_Test extends Unit {
 				'first_name',
 				'Tester',
 				'Tester',
+			),
+			array(
+				// #19 - NewSettings
+				array(
+					'debug_logging' => true,
+					'version'       => '3.2',
+					'store_code'    => 'abc123456',
+					'server_url'    => 'https://eighty20results.com',
+					'update_option' => true,
+				),
+				array(
+					'expire'           => - 1,
+					'activation_id'    => null,
+					'expire_date'      => '',
+					'timezone'         => 'UTC',
+					'the_key'          => 'abc987654321',
+					'url'              => '',
+					'has_expired'      => true,
+					'status'           => 'cancelled',
+					'allow_offline'    => false,
+					'offline_interval' => 'days',
+					'offline_value'    => 0,
+				),
+				'license_key',
+				'abc987654321',
+				'abc987654321',
 			),
 		);
 	}
