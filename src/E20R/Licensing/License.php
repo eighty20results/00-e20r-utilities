@@ -80,7 +80,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 *
 		 * @var AjaxHandler $ajax
 		 */
-		private $ajax = null;
+		private $ajax = null; // phpcs:ignore
 
 		/**
 		 * Instance of the connection object to the license server
@@ -117,6 +117,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 * @param LicenseServer|null   $server - The license server connection class
 		 * @param LicensePage|null     $page - The viewer for the licensing HTML
 		 * @param Utilities|null       $utils - The Utilities class
+		 * @param AjaxHandler|null     $ajax_handler - The AJAX handler class
 		 *
 		 * @throws Exceptions\InvalidSettingsKey - When a LicenseSetting doesn't exist
 		 * @throws MissingServerURL - Raised when the URL to the license server isn't defined
@@ -125,7 +126,14 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 * @throws InvalidSettingsVersion - Raised when the version of the licensing code is unsupported
 		 * @throws Exception - Default exception being raised
 		 */
-		public function __construct( ?string $product_sku = null, ?LicenseSettings $settings = null, ?LicenseServer $server = null, ?LicensePage $page = null, Utilities $utils = null ) {
+		public function __construct(
+			?string $product_sku = null,
+			?LicenseSettings $settings = null,
+			?LicenseServer $server = null,
+			?LicensePage $page = null,
+			?Utilities $utils = null,
+			?AjaxHandler $ajax_handler = null
+		) {
 
 			// Define the Utilities class
 			if ( empty( $utils ) ) {
@@ -145,6 +153,8 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 					$this->utils->log( 'Error: Invalid setting key used when instantiating the LicenseSettings() class: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
+			} else {
+				$this->utils->log( 'Using supplied LicenseSettings class' );
 			}
 
 			// Save the LicenseSettings object
@@ -157,6 +167,8 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 					$this->utils->log( 'License Server configuration: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
+			} else {
+				$this->utils->log( 'Using supplied LicenseServer class instance' );
 			}
 
 			// Save the LicenseServer object
@@ -169,16 +181,25 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 					$this->utils->log( 'License Page: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
+			} else {
+				$this->utils->log( 'Using supplied LicensePage class' );
 			}
+
 			// Save the LicensePage object
 			$this->page      = $page;
 			$this->log_debug = $this->settings->get( 'plugin_defaults' )->get( 'debug_logging' );
 
-			try {
-				$this->ajax = new AjaxHandler( $product_sku, $this->settings, $this->server, $this->utils );
-			} catch ( Exception $e ) {
-				$this->utils->log( 'Warning: Not loading the AJAX handler. No SKU or Key found.' );
+			if ( empty( $ajax_handler ) ) {
+				try {
+					$ajax_handler = new AjaxHandler( $product_sku, $this->settings, $this->server, $this->utils );
+				} catch ( Exception $e ) {
+					$this->utils->log( 'Warning: Not loading the AJAX handler. No SKU or Key found.' );
+				}
+			} else {
+				$this->utils->log( 'Using supplied AjaxHandler class' );
 			}
+
+			$this->ajax = $ajax_handler;
 
 			if ( $this->log_debug ) {
 				$this->utils->log( 'Loaded the License class...' );
