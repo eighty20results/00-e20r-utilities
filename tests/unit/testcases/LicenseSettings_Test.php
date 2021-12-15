@@ -133,6 +133,15 @@ class LicenseSettings_Test extends Unit {
 		}
 
 		try {
+			Functions\expect( 'wp_unslash' )
+				->zeroOrMoreTimes()
+				->andReturnFirstArg();
+		} catch ( Exception $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'wp_unslash() mock error: ' . esc_attr( $e->getMessage() ) );
+		}
+
+		try {
 			Functions\expect( 'date_i18n' )
 				->with( Mockery::contains( 'Y_M_D' ) )
 				->zeroOrMoreTimes()
@@ -247,7 +256,8 @@ class LicenseSettings_Test extends Unit {
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
-		$_SERVER['HTTP_HOST'] = $_SERVER['HTTP_HOST'] ?? $domain;
+		$_SERVER['HTTP_HOST']   = $_SERVER['HTTP_HOST'] ?? $domain;
+		$_SERVER['SERVER_NAME'] = $_SERVER['SERVER_NAME'] ?? $domain;
 
 		if ( empty( $config['server_url'] ) ) {
 			$this->assertThrowsWithMessage(
@@ -383,6 +393,9 @@ class LicenseSettings_Test extends Unit {
 	 */
 	public function test_load_settings( $test_sku, $settings, $defaults, $expected ) {
 
+		$_SERVER['SERVER_NAME'] = $_SERVER['SERVER_NAME'] ?? $defaults['SERVER_NAME'];
+		$_SERVER['HTTP_HOST']   = $_SERVER['HTTP_HOST'] ?? $defaults['SERVER_NAME'];
+
 		Functions\when( '_deprecated_function' )
 			->justEcho( 'Deprecated function warning printed' );
 
@@ -419,7 +432,7 @@ class LicenseSettings_Test extends Unit {
 				}
 			);
 
-		$m_defaults         = $this->makeEmpty(
+		$m_defaults = $this->makeEmpty(
 			Defaults::class,
 			array(
 				'get'      => function( $param_name ) use ( $defaults ) {
@@ -462,6 +475,7 @@ class LicenseSettings_Test extends Unit {
 				},
 			)
 		);
+
 		$m_license_settings = $this->construct(
 			LicenseSettings::class,
 			array( $test_sku, $m_defaults, $this->m_utils ),
@@ -469,6 +483,7 @@ class LicenseSettings_Test extends Unit {
 				'save' => $defaults['update_option'],
 			)
 		);
+		// phpcs:ignore
 		// $license_settings = new LicenseSettings( $test_sku, $m_defaults, $this->m_utils );
 		$result = $m_license_settings->load_settings( $test_sku, $settings );
 		self::assertSame( $expected, $result );
@@ -502,6 +517,7 @@ class LicenseSettings_Test extends Unit {
 					'new_version'   => '3.2',
 					'store_code'    => 'store_code_1',
 					'server_url'    => 'https://eighty20results.com/',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -537,6 +553,7 @@ class LicenseSettings_Test extends Unit {
 					'new_version'   => '2.0',
 					'store_code'    => 'store_code_1',
 					'server_url'    => 'https://eighty20results.com/',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -572,6 +589,7 @@ class LicenseSettings_Test extends Unit {
 					'new_version'   => '3.2',
 					'store_code'    => 'store_code_1',
 					'server_url'    => 'https://eighty20results.com/',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -722,6 +740,9 @@ class LicenseSettings_Test extends Unit {
 			);
 		}
 
+		$_SERVER['SERVER_NAME'] = $_SERVER['SERVER_NAME'] ?? $defaults['SERVER_NAME'];
+		$_SERVER['HTTP_HOST']   = $_SERVER['HTTP_HOST'] ?? $defaults['SERVER_NAME'];
+
 		$m_license_settings = $this->construct(
 			LicenseSettings::class,
 			array( 'e20r_test_license', $m_defaults, $this->m_utils, $m_settings ),
@@ -752,6 +773,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -776,6 +798,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -801,6 +824,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -828,6 +852,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -854,6 +879,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -880,6 +906,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -906,6 +933,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -932,6 +960,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -958,6 +987,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -984,6 +1014,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1010,6 +1041,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1035,6 +1067,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1060,6 +1093,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '1.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1085,6 +1119,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1110,6 +1145,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1135,6 +1171,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1160,6 +1197,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1185,6 +1223,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1210,6 +1249,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1324,6 +1364,9 @@ class LicenseSettings_Test extends Unit {
 			);
 		}
 
+		$_SERVER['SERVER_NAME'] = $_SERVER['SERVER_NAME'] ?? $defaults['SERVER_NAME'];
+		$_SERVER['HTTP_HOST']   = $_SERVER['HTTP_HOST'] ?? $defaults['SERVER_NAME'];
+
 		$m_license_settings = $this->construct(
 			LicenseSettings::class,
 			array( 'e20r_test_license', $m_defaults, $this->m_utils, $m_settings ),
@@ -1356,6 +1399,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1381,6 +1425,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1406,6 +1451,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1432,6 +1478,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1458,6 +1505,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1484,6 +1532,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1510,6 +1559,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1536,6 +1586,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1562,6 +1613,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1588,6 +1640,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1614,6 +1667,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1639,6 +1693,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1664,6 +1719,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '1.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1689,6 +1745,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1714,6 +1771,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1739,6 +1797,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1764,6 +1823,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1789,6 +1849,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1814,6 +1875,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '2.0',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
@@ -1839,6 +1901,7 @@ class LicenseSettings_Test extends Unit {
 					'version'       => '3.2',
 					'store_code'    => 'abc123456',
 					'server_url'    => 'https://eighty20results.com',
+					'SERVER_NAME'   => 'eighty20results.com',
 					'update_option' => true,
 				),
 				array(
