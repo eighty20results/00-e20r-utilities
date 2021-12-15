@@ -23,6 +23,7 @@
 namespace E20R\Tests\Unit;
 
 use Codeception\AssertThrows;
+use E20R\Licensing\AjaxHandler;
 use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Exceptions\ConfigDataNotFound;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
@@ -85,6 +86,13 @@ class LicenseTest extends Unit {
 	 * @var Utilities $m_utils
 	 */
 	private $m_utils;
+
+	/**
+	 * The mock for the AjaxHandler class
+	 *
+	 * @var AjaxHandler|Mockery $ajax_mock
+	 */
+	private $ajax_mock;
 
 	/**
 	 * The setup function for this Unit Test suite
@@ -181,6 +189,15 @@ class LicenseTest extends Unit {
 				},
 			)
 		);
+
+		$this->ajax_mock = $this->makeEmpty(
+			AjaxHandler::class,
+			array(
+				'ajax_handler_verify_license' => function( $value = null ) {
+					return $value;
+				},
+			)
+		);
 	}
 	/**
 	 * Teardown function for the Unit Tests
@@ -222,7 +239,7 @@ class LicenseTest extends Unit {
 	public function test_load_hooks() {
 
 		try {
-			$license = new License( null, $this->settings_mock, $this->server_mock, $this->page_mock, $this->m_utils );
+			$license = new License( null, $this->settings_mock, $this->server_mock, $this->page_mock, $this->m_utils, $this->ajax_mock );
 		} catch ( Exception $e ) {
 			self::assertFalse( true, $e->getMessage() );
 		}
@@ -269,7 +286,7 @@ class LicenseTest extends Unit {
 		}
 
 		try {
-			$license = new License( $stub, $this->settings_mock, $this->server_mock, $this->page_mock, $this->m_utils );
+			$license = new License( $stub, $this->settings_mock, $this->server_mock, $this->page_mock, $this->m_utils, $this->ajax_mock );
 		} catch ( InvalidSettingsKey | MissingServerURL $e ) {
 			self::assertFalse( true, 'get_license_page_url() - ' . $e->getMessage() );
 		}
@@ -331,7 +348,7 @@ class LicenseTest extends Unit {
 		}
 
 		try {
-			$license = new License( $stub, $this->settings_mock, $this->server_mock, $this->page_mock, $this->m_utils );
+			$license = new License( $stub, $this->settings_mock, $this->server_mock, $this->page_mock, $this->m_utils, $this->ajax_mock );
 			self::assertNotEquals(
 				$expected,
 				$license->get_license_page_url( $stub ),
@@ -373,7 +390,7 @@ class LicenseTest extends Unit {
 		}
 
 		try {
-			$license = new License( null, $this->settings_mock, $this->server_mock, $this->page_mock, $this->m_utils );
+			$license = new License( null, $this->settings_mock, $this->server_mock, $this->page_mock, $this->m_utils, $this->ajax_mock );
 			self::assertEquals( $expected, $license->is_new_version() );
 		} catch ( InvalidSettingsKey | MissingServerURL | BadOperation | ConfigDataNotFound | InvalidSettingsVersion | ReflectionException | Exception $e ) {
 			self::assertFalse( true, $e->getMessage() );
@@ -406,7 +423,7 @@ class LicenseTest extends Unit {
 			->with( '00-e20r-utilities' );
 
 		try {
-			$license = new License( $test_sku, $this->settings_mock, $this->server_mock, $this->page_mock, $this->m_utils );
+			$license = new License( $test_sku, $this->settings_mock, $this->server_mock, $this->page_mock, $this->m_utils, $this->ajax_mock );
 			self::assertInstanceOf(
 				License::class,
 				$license
