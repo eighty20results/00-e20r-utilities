@@ -131,6 +131,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		private $plugin_defaults;
 
 		/**
+		 * The license key these settings apply to
+		 *
+		 * @var null|string $license_key
+		 */
+		private $license_key = null;
+
+		/**
 		 * LicenseSettings constructor.
 		 *
 		 * @param string|null                  $product_sku     The SKU in the WooCommerce store for the product
@@ -506,8 +513,10 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				if ( 'license_key' === $key ) {
 					if ( $this->new_version ) {
 						$value = $this->license_request_settings->get( 'the_key' );
+						$this->utils->log( 'Using "the_key" to obtain a license key and returning ' . $value );
 					} else {
 						$value = $this->license_request_settings->get( 'key' );
+						$this->utils->log( 'Using "key" to obtain a license key and returning ' . $value );
 					}
 				} else {
 					$value = $this->{$key};
@@ -515,10 +524,12 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			}
 
 			if ( $this->is_request_setting( $key ) ) {
+				$this->utils->log( "Loading '{$key}' from the version specific settings class" );
 				$value = $this->license_request_settings->get( $key );
 			}
 
 			if ( $this->is_default_setting( $key ) ) {
+				$this->utils->log( "Loading '{$key}' from the default settings" );
 				$value = $this->plugin_defaults->get( $key );
 			}
 
@@ -781,14 +792,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @return LicenseSettings
 		 *
-		 * @throws ErrorSavingSettings Thrown when we cannot save the License specific settings for the product
-		 * @throws InvalidSettingsKey Thrown when the specified key is invalid for the version of the Licensing plugin being assumed
+		 * @throws ErrorSavingSettings|ReflectionException Thrown when we cannot save the License specific settings for the product
 		 */
 		public function merge( $new_settings ) {
 
 			try {
-				$old_settings = $this->all_settings();
-			} catch ( InvalidSettingsKey $e ) {
+				$old_settings = $this->license_request_settings->all();
+			} catch ( ReflectionException $e ) {
 				$this->utils->log( $e->getMessage() );
 				throw $e;
 			}
@@ -806,6 +816,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 			// Assign new settings to
 			if ( is_array( $new_settings ) ) {
+				$this->utils->log( 'Updating previous settings with new ones' );
 				foreach ( $new_settings as $key => $value ) {
 					$old_settings[ $key ] = $value;
 				}
@@ -816,7 +827,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$this->utils->log( 'Updated settings (after merge...) ' . print_r( $old_settings, true ) );
 			}
 
-			// Update settings in class (TODO: Account for user's product sku/activation key)
+			// Update settings in class
 			foreach ( $old_settings as $key => $value ) {
 				try {
 					$this->set( $key, $value );

@@ -162,6 +162,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 
 			if ( empty( $server ) ) {
 				try {
+					$this->utils->log( 'Using default License Server class' );
 					$server = new LicenseServer( $this->settings, $this->utils );
 				} catch ( Exception $e ) {
 					$this->utils->log( 'License Server configuration: ' . esc_attr( $e->getMessage() ) );
@@ -202,7 +203,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			$this->ajax = $ajax_handler;
 
 			if ( $this->log_debug ) {
-				$this->utils->log( 'Loaded the License class...' );
+				$this->utils->log( 'Instantiated the License class...' );
 			}
 		}
 
@@ -375,40 +376,34 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				return false;
 			}
 
-			$new_version = $this->is_new_version();
+			$domain          = '';
+			$status          = 'cancelled';
+			$license_key     = null;
+			$new_version     = $this->is_new_version();
+			$domain          = isset( $_SERVER['SERVER_NAME'] ) ? filter_var( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : 'eighty20results.com';
+			$active_statuses = apply_filters( 'e20r_license_active_statuses', array( 'active' ) );
+
 			$this->utils->log( 'Use new or old License logic? ' . ( $new_version ? 'New' : 'Old' ) );
 
-			if ( true === $new_version ) {
-				$this->utils->log( 'Status of license under new Licensing model... Is licensed? ' . ( $is_licensed ? 'True' : 'False' ) );
-
-				$the_key = $this->settings->get( 'the_key' );
-				$status  = $this->settings->get( 'status' );
-
-				$is_active = (
-					! empty( $the_key ) &&
-					! empty( $status ) &&
-					'active' === $status
-				);
-				$this->utils->log( "Active: '{$is_active}', key: {$the_key}, status: {$status}" );
-			} elseif ( false === $new_version ) {
-
-				$the_key = $this->settings->get( 'key' );
-				$status  = $this->settings->get( 'status' );
-				$domain  = $this->settings->get( 'domain' );
-
-				$is_active = (
-					! empty( $the_key ) &&
-					! empty( $status ) &&
-					'active' === $status && isset( $_SERVER['SERVER_NAME'] ) &&
-					filter_var( wp_unslash( $_SERVER['SERVER_NAME'] ) ) === $domain
-				);
-				$this->utils->log( "Active: '{$is_active}', key: {$the_key}, status: {$status}, domain: {$domain}" );
-			} else {
-				$this->utils->log( 'Neither old nor new Licensing plugin selected!!!' );
-				return false;
+			if ( false === $new_version ) {
+				$this->utils->log( 'Status of license under old Licensing model... Is licensed? ' . ( $is_licensed ? 'True' : 'False' ) );
+				$domain = $this->settings->get( 'domain' );
 			}
 
+			$status      = $this->settings->get( 'status' );
+			$license_key = $this->settings->get( 'license_key' );
+			$this->utils->log( "Status for {$license_key} is {$status} at {$domain} vs {$_SERVER['SERVER_NAME']}" );
+
+			$is_active = (
+				! empty( $license_key ) &&
+				! empty( $status ) &&
+				in_array( $status, $active_statuses, true ) &&
+				( isset( $_SERVER['SERVER_NAME'] ) && filter_var( wp_unslash( $_SERVER['SERVER_NAME'] ) ) === $domain )
+			);
+
+			$this->utils->log( "Active: '{$is_active}', key:' {$license_key}', status: '{$status}', domain: '{$domain}'" );
 			$this->utils->log( "License status for {$product_sku}: " . ( $is_active ? 'Active' : 'Inactive' ) );
+
 			return $is_licensed && $is_active;
 		}
 

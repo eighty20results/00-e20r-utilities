@@ -413,8 +413,8 @@ class License_WPUnitTest extends WPTestCase {
 
 		preg_match( '/https:\/\/(.*)\//', $defaults->get( 'server_url' ), $match );
 
-		$_SERVER['HTTP_HOST'] = $match[1];
-		$this->utils->log( "Setting HTTP_HOST to: {$_SERVER['HTTP_HOST']}" ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidatedNotSanitized
+		$_SERVER['SERVER_NAME'] = $match[1];
+		$this->utils->log( "Setting SERVER_NAME to: {$_SERVER['SERVER_NAME']}" ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidatedNotSanitized
 
 		$defaults->unlock( 'debug_logging' );
 		$defaults->set( 'debug_logging', true );
@@ -422,6 +422,15 @@ class License_WPUnitTest extends WPTestCase {
 		$defaults->unlock( 'version' );
 		$defaults->set( 'version', $version );
 		$defaults->lock( 'version' );
+
+		if ( true === $is_local_server ) {
+			$this->utils->log( 'Intentionally updating the E20R_LICENSE_SERVER setting' );
+			$defaults->constant(
+				'E20R_LICENSE_SERVER',
+				Defaults::UPDATE_CONSTANT,
+				$_SERVER['SERVER_NAME'] // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+			);
+		}
 
 		$this->utils->log( 'Server URL: ' . $defaults->get( 'server_url' ) );
 		$this->utils->log( 'E20R_LICENSE_SERVER: ' . $defaults->constant( 'E20R_LICENSE_SERVER_URL' ) );
@@ -432,8 +441,14 @@ class License_WPUnitTest extends WPTestCase {
 		$m_server = $this->makeEmpty(
 			LicenseServer::class,
 			array(
-				'status'    => $license_status,
-				'is_active' => $is_active,
+				'status'    => function( $product_sku, $force ) use ( $license_status ) {
+					$this->utils->log( "Using license status of {$license_status}" );
+					return $license_status;
+				},
+				'is_active' => function( $product_sku, $is_licensed ) use ( $is_active ) {
+					$this->utils->log( "Is Licensed='{$is_licensed}' -> Setting is_active to {$is_active}" );
+					return $is_active;
+				},
 			)
 		);
 
@@ -512,14 +527,14 @@ class License_WPUnitTest extends WPTestCase {
 			// plugin_defaults, is_active, license_status, is_local_server, test_sku, force, settings_array, version, expected
 			array( $remote_server_defaults, false, false, false, null, false, array(), null, false ), // 0
 			array( $remote_server_defaults, false, false, false, '', false, array(), null, false ), // 1
-			array( $local_server_defaults, false, false, true, 'E20R_TEST_LICENSE', false, array(), '3.2', true ), // 2
-			array( $remote_server_defaults, true, false, false, 'E20R_TEST_LICENSE', false, $this->fixture_default_settings( 'E20R_TEST_LICENSE' ), '3.2', false ), // 3
-			array( $remote_server_defaults, true, true, false, 'E20R_TEST_LICENSE', false, $this->fixture_default_settings( 'E20R_TEST_LICENSE' ), '3.2', true ), // 4
-			array( $remote_server_defaults, true, true, false, 'E20R_TEST_LICENSE', true, $this->fixture_default_settings( 'E20R_TEST_LICENSE' ), '3.2', true ), // 5
-			array( $remote_server_defaults, true, false, false, 'E20R_TEST_LICENSE', false, $this->fixture_default_settings( 'E20R_TEST_LICENSE' ), '2.0', false ), // 6
-			array( $remote_server_defaults, true, true, false, 'E20R_TEST_LICENSE', false, $this->fixture_default_settings( 'E20R_TEST_LICENSE' ), '2.0', true ), // 7
-			array( $remote_server_defaults, true, true, false, 'E20R_TEST_LICENSE', true, $this->fixture_default_settings( 'E20R_TEST_LICENSE' ), '2.0', true ), // 8
-			array( $local_server_defaults, true, true, true, 'E20R_TEST_LICENSE', false, $this->fixture_default_settings( 'E20R_TEST_LICENSE' ), '2.0', true ), // 9
+			array( $local_server_defaults, true, false, true, 'E20R_TEST_LICENSE', false, array(), '3.2', true ), // 2
+			array( $remote_server_defaults, true, false, false, 'E20R_TEST_LICENSE', false, $this->fixture_default_settings( 'E20R_TEST_LICENSE', 'new' ), '3.2', false ), // 3
+			array( $remote_server_defaults, true, true, false, 'E20R_TEST_LICENSE', false, $this->fixture_default_settings( 'E20R_TEST_LICENSE', 'new', 'active' ), '3.2', true ), // 4
+			array( $remote_server_defaults, true, true, false, 'E20R_TEST_LICENSE', true, $this->fixture_default_settings( 'E20R_TEST_LICENSE', 'new', 'active' ), '3.2', true ), // 5
+			array( $remote_server_defaults, true, false, false, 'E20R_TEST_LICENSE', false, $this->fixture_default_settings( 'E20R_TEST_LICENSE', 'old' ), '2.0', false ), // 6
+			array( $remote_server_defaults, true, true, false, 'E20R_TEST_LICENSE', false, $this->fixture_default_settings( 'E20R_TEST_LICENSE', 'old', 'active' ), '2.0', true ), // 7
+			array( $remote_server_defaults, true, true, false, 'E20R_TEST_LICENSE', true, $this->fixture_default_settings( 'E20R_TEST_LICENSE', 'old', 'active' ), '2.0', true ), // 8
+			array( $local_server_defaults, true, true, true, 'E20R_TEST_LICENSE', false, $this->fixture_default_settings( 'E20R_TEST_LICENSE', 'old', 'active' ), '2.0', true ), // 9
 		);
 	}
 
@@ -528,10 +543,11 @@ class License_WPUnitTest extends WPTestCase {
 	 *
 	 * @param string $sku The product SKU we're using for testing
 	 * @param string $type LicenseSettings type (new|old)
+	 * @param string $status The status to use for the 'licensed' field
 	 *
 	 * @return array
 	 */
-	private function fixture_default_settings( $sku, $type = 'new' ) {
+	private function fixture_default_settings( $sku, $type = 'new', $status = 'cancelled' ) {
 		$all_settings = array();
 
 		if ( 'new' === $type ) {
@@ -540,35 +556,35 @@ class License_WPUnitTest extends WPTestCase {
 				'activation_id'    => null,
 				'expire_date'      => null,
 				'timezone'         => 'UTC',
-				'the_key'          => '',
+				'the_key'          => $sku,
 				'url'              => '',
 				'domain_name'      => '',
 				'has_expired'      => true,
-				'status'           => 'cancelled',
+				'status'           => $status,
 				'allow_offline'    => false,
 				'offline_interval' => 'days',
 				'offline_value'    => 0,
-				'product_sku'      => null,
+				'product_sku'      => $sku,
 			);
 		}
 
 		if ( 'old' === $type ) {
 			$settings = array(
-				'product'     => '',
-				'key'         => null,
+				'product'     => $sku,
+				'key'         => $sku,
 				'renewed'     => null,
 				'domain'      => null,
 				'domain_name' => '',
 				'expires'     => null,
-				'status'      => '',
+				'status'      => $status,
 				'first_name'  => '',
 				'last_name'   => '',
 				'email'       => '',
 				'timestamp'   => null,
 			);
 		}
-		$all_settings[ $sku ] = $settings;
-		return $all_settings;
+
+		return $settings;
 	}
 
 	/**
