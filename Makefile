@@ -149,17 +149,22 @@ clean-inc:
 # Log in to your Docker HUB account before performing pull/push operations
 #
 docker-hub-login:
-	@echo "Login for Docker Hub"
-	@docker login --username ${DOCKER_USER} --password ${CONTAINER_ACCESS_TOKEN}
+	@if [[ "inactive" -ne "$(LOCAL_NETWORK_STATUS)" ]]; then \
+		echo "Login for Docker Hub" ; \
+		docker login --username ${DOCKER_USER} --password ${CONTAINER_ACCESS_TOKEN} ; \
+	fi
+
 
 #
 # (re)Build the Docker images for this development/test environment
 #
 image-build: docker-deps
-	@echo "Building the docker container stack for $(PROJECT)"
-	@APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
-  DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
-  docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) build --pull --progress tty
+	@if [[ "$(LOCAL_NETWORK_STATUS)" -ne "inactive" ]]; then \
+		echo "Building the docker container stack for $(PROJECT)" ; \
+		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
+  		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
+  		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) build --pull --progress tty ; \
+	fi
 
 #
 # Trigger the security scan of the docker image(s)
@@ -185,8 +190,8 @@ image-push: docker-hub-login # image-scan
 # Attempt to pull (download) the plugin specific Docker images for the test/development environment
 #
 image-pull: docker-hub-login
-	@echo "Pulling image from Docker repo"
-	@if docker manifest inspect $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION) > /dev/null; then \
+	@if docker manifest inspect $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION) > /dev/null && "$(LOCAL_NETWORK_STATUS)" -ne "inactive"; then \
+		echo "Pulling image from Docker repo" ; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
       		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
         	docker pull $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION); \
