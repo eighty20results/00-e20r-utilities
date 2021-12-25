@@ -1,6 +1,9 @@
 {
     "config": {
-        "vendor-dir": "inc/"
+        "vendor-dir": "inc/",
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
     },
     "name": "eight20results/utilities",
     "type": "wordpress-plugin",
