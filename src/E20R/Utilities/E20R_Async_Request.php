@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
@@ -15,6 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Utilities\E20R_Async_Request
  */
 
 namespace E20R\Utilities;
@@ -70,13 +72,25 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Async_Request' ) ) {
 		 */
 		protected $data = array();
 
+		/**
+		 * The request arguments used when processing asynchronous requests
+		 *
+		 * @var mixed $query_args
+		 */
 		protected $query_args;
 
 		/**
-		 * @var string $query_url - URL for the query. Empty by default.
+		 * URL for the query. Empty by default
+		 *
+		 * @var string $query_url
 		 */
 		protected $query_url;
 
+		/**
+		 * The arguments supplied using the POST HTTP action
+		 *
+		 * @var array $post_args
+		 */
 		protected $post_args;
 
 		/**
