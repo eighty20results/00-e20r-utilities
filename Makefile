@@ -148,16 +148,23 @@ clean-inc:
 #
 # Log in to your Docker HUB account before performing pull/push operations
 #
-docker-hub-login:
+hub-login:
 	$(info Local network status is: '$(LOCAL_NETWORK_STATUS)' so we should continue?)
-	if ifconfig $(LOCAL_NETWORK_IF) 2>&1 > /dev/null; then \
-		if [[ "Xactive" == "X$(LOCAL_NETWORK_STATUS)" ]]; then \
-			echo "Yes, logging in to Docker Hub using the '$(DOCKER_USER)' account" ; \
-			echo $(CONTAINER_ACCESS_TOKEN) | docker login --username $(DOCKER_USER) --password-stdin ; \
-		else \
-			echo "Skipping docker-cli based hub login!" ; \
-		fi ; \
+	@if [[ "Xactive" == "X$(LOCAL_NETWORK_STATUS)" ]]; then \
+		echo "Yes, logging in to Docker Hub using the '$(DOCKER_USER)' account" ; \
+		echo $(CONTAINER_ACCESS_TOKEN) | docker login --username $(DOCKER_USER) --password-stdin ; \
+	else \
+		echo "Skipping docker-cli based hub login!" ; \
 	fi
+
+hub-nologin:
+	@echo "Skipping CLI based docker login operation"
+
+ifneq ($(LOCAL_NETWORK_STATUS), '')
+docker-hub-login: hub-login
+else
+docker-hub-login: hub-nologin
+endif
 
 #
 # (re)Build the Docker images for this development/test environment
