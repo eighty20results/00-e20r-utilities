@@ -3,7 +3,7 @@
 Plugin Name: E20R Utilities Module
 Plugin URI: https://eighty20results.com/
 Description: Provides functionality required by some of the Eighty/20 Results developed plugins
-Version: 2.0.6
+Version: 2.1.0
 Requires PHP: 7.3
 Author: Thomas Sjolshagen <thomas@eighty20results.com>
 Author URI: https://eighty20results.com/thomas-sjolshagen/

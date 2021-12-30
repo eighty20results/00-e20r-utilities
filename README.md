@@ -2,8 +2,8 @@
 `Contributors: eighty20results` <br />
 `Tags: utility functions, module, licensing tools` <br/>
 `Requires at least: 5.0` <br />
-`Tested up to: 5.7.2` <br />
-`Stable tag: 2.0.6` <br />
+`Tested up to: 5.8.1` <br />
+`Stable tag: 2.1.0` <br />
 
 Adds various utility functions and license capabilities needed by some Eighty/20 Results developed plugins
 

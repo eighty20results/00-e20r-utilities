@@ -1,8 +1,8 @@
 {
   "name": "Eighty/20 Results Utilities Module",
   "slug": "00-e20r-utilities",
-  "download_url": "https://eighty20results.com/protected-content/00-e20r-utilities/00-e20r-utilities-2.0.6.zip",
-  "version": "2.0.6",
+  "download_url": "https://eighty20results.com/protected-content/00-e20r-utilities/00-e20r-utilities-2.1.0.zip",
+  "version": "2.1.0",
   "tested": "5.7.2",
   "requires": "5.0",
   "author": "Thomas Sjolshagen <thomas@eighty20results.com>",
