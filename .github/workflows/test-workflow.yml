@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         php_version: [ 7.3, 7.4, 8.0 ]
-    name: "Plugin tests - PHP v{{ matrix.php_version }}"
+    name: "Plugin tests - PHP"
     runs-on: ubuntu-latest
     steps:
       - name: Setup PHP with Composer V2+
