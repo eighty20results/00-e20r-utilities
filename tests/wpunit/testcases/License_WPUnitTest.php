@@ -237,10 +237,8 @@ class License_WPUnitTest extends WPTestCase {
 	 */
 	public function fixture_activate() {
 		$defaults = new Defaults();
-		$active   = $defaults->constant( 'E20R_LICENSE_DOMAIN_ACTIVE' );
 		$blocked  = $defaults->constant( 'E20R_LICENSE_BLOCKED' );
 		$error    = $defaults->constant( 'E20R_LICENSE_ERROR' );
-		$lsc      = LicenseSettings::class;
 
 		// test_sku, plugin_defaults, status, decoded_payload, domain, thrown_exception, expected_status, expected_settings
 		return array(
@@ -548,8 +546,6 @@ class License_WPUnitTest extends WPTestCase {
 	 * @return array
 	 */
 	private function fixture_default_settings( $sku, $type = 'new', $status = 'cancelled' ) {
-		$all_settings = array();
-
 		if ( 'new' === $type ) {
 			$settings = array(
 				'expire'           => 0,
@@ -573,7 +569,7 @@ class License_WPUnitTest extends WPTestCase {
 				'product'     => $sku,
 				'key'         => $sku,
 				'renewed'     => null,
-				'domain'      => null,
+				'domain'      => 'example.com',
 				'domain_name' => '',
 				'expires'     => null,
 				'status'      => $status,
