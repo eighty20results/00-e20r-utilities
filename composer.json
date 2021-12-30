@@ -24,7 +24,7 @@
     }
     ],
     "require": {
-        "php": ">=7.2",
+        "php": ">=7.3",
         "yahnis-elsts/plugin-update-checker": ">=4.5",
         "10quality/license-keys-php-client": ">=v1.2.2",
         "mixpanel/mixpanel-php" : "2.*",
