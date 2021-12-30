@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
@@ -15,6 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Utilities\GDPR_Enablement
  */
 
 namespace E20R\Utilities;
@@ -23,10 +25,14 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 
 	/**
 	 * Class GDPR_Enablement
-	 * @package E20R\Utilities
 	 */
 	class GDPR_Enablement {
 
+		/**
+		 * Instance of this class (using singleton pattern)
+		 *
+		 * @var null|GDPR_Enablement $instance
+		 */
 		private static $instance = null;
 
 		/**
@@ -49,6 +55,11 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 			return self::$instance;
 		}
 
+		/**
+		 * The consent opt-in HTML
+		 *
+		 * @return string
+		 */
 		public static function add_consent_optin() {
 			// TODO: Make the opt-in do something
 			return '';
@@ -57,7 +68,7 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 		/**
 		 * Build the Eighty/20 Results by Wicked Strong Chicks, LLC data privacy policy
 		 *
-		 * @return mixed
+		 * @return bool
 		 */
 		public function e20r_data_privacy_policy() {
 
@@ -71,31 +82,34 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 			$why_text       = '';
 
 			/**
-			 * @filter e20r_utilities_collected_data_labels Identifying data collected by a plugin/add-on
+			 * Identifying data collected by a plugin/add-on
+			 *
+			 * @filter e20r_utilities_collected_data_labels
 			 */
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			$collected_data = apply_filters( 'e20r_utilities_collected_data_labels', array() );
 
 			/**
-			 * @filter e20r_utilities_collected_data_plugins Plugin name collecting/saving data above/beyond what WordPress collects
+			 * Plugin name collecting/saving data above/beyond what WordPress collects
+			 *
+			 * @filter e20r_utilities_collected_data_plugins
 			 */
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			$plugins = apply_filters( 'e20r_utilities_collected_data_plugins', array() );
 
 			/**
-			 * @filter e20r-Utilities-why-plugins-collected-data - Plain language explanation of what the collected data will be used for.
+			 * Plain language explanation of what the collected data will be used for.
+			 *
+			 * @filter e20r_utilities_why_plugins_collected_data
 			 */
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			$why_paragraphs = apply_filters( 'e20r_utilities_why_plugins_collected_data', array() );
 
 			/**
-			 * @filter e20r_utilities_collected_data_3rdparty_platform_text 3rd party site name(s) wrapped in a href/link to the 3rd party site where data is being transmitted
+			 * 3rd party site name(s) wrapped in a href/link to the 3rd party site where data is being transmitted
+			 *
+			 * @filter e20r_utilities_collected_data_3rdparty_platform_text
 			 */
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			$caveats = apply_filters( 'e20r_utilities_collected_data_3rdparty_platform_text', array() );
 
 			if ( empty( $collected_data ) ) {
-				// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
 				$collected_data = array( 'default' => array( esc_attr__( 'No extra data collected', '00-e20r-utilities' ) ) );
 			}
 
@@ -113,7 +127,7 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 			if ( empty( $plugins ) ) {
 				$plugins = array(
 					'default' => array(
-						__(
+						esc_attr__(
 							'No plugin developed by Eighty/20 Results by Wicked Strong Chicks was found',
 							'00-e20r-utilities'
 						),
@@ -123,9 +137,7 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 
 			// Process the list of plugins installed/active
 			foreach ( $plugins as $plugin_slug => $plugin_names ) {
-
 				foreach ( $plugin_names as $plugin_name ) {
-
 					$plugin_list .= sprintf( '<li>%s</li>', esc_attr( $plugin_name ) );
 				}
 			}
@@ -137,7 +149,6 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 
 				$caveat_text = sprintf(
 					'<h3>%1$s</h3><p>%2$s</p>',
-					// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
 					__( '3rd party services', '00-e20r-utilities' ),
 					__( 'The following 3rd party sites may receive information about the user/member as part of the registration process:' )
 				);
@@ -172,13 +183,14 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 
 			// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
 			wp_add_privacy_policy_content(
-				__(
+				esc_attr__(
 					'Eighty / 20 Results by Wicked Strong Chicks, LLC',
-					// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
 					'00-e20r-utilities'
 				),
 				$privacy_policy
 			);
+
+			return true;
 		}
 
 		/**
@@ -198,10 +210,7 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 				'done'               => false,
 			);
 
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			$erase_status = apply_filters( 'e20r_utilities_erase_personal_data', $default_status, $email_address, $page );
-
-			return $erase_status;
+			return apply_filters( 'e20r_utilities_erase_personal_data', $default_status, $email_address, $page );
 		}
 
 		/**
@@ -216,16 +225,13 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 
 			$user = get_user_by( 'email', $email_address );
 
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			$data_to_export = apply_filters( 'e20r_utilities_export_personal_data', array(), $user, $page );
-
-			return $data_to_export;
+			return apply_filters( 'e20r_utilities_export_personal_data', array(), $user, $page );
 		}
 
 		/**
 		 * Action hook for the WordPress GDPR data exporter functionality
 		 *
-		 * @param array $exporters
+		 * @param array $exporters The array of data exporter functions
 		 *
 		 * @return array
 		 */
@@ -234,7 +240,6 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 			$exporters[] = array(
 				'exporter_friendly_name' => esc_attr__(
 					'E20R Plugin Data',
-					// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralDomain
 					'00-e20r-utilities'
 				),
 				'callback'               => array( $this, 'export_personal_data' ),
@@ -246,7 +251,7 @@ if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
 		/**
 		 * Action hook for the WordPress GDPR data eraser functionality
 		 *
-		 * @param array $erasers
+		 * @param array $erasers The array of data eraser functions
 		 *
 		 * @return array
 		 */
