@@ -22,6 +22,7 @@
 namespace E20R\Licensing\Settings;
 
 use E20R\Licensing\Exceptions\InvalidSettingsVersion;
+use function wp_unslash;
 
 /**
  * Class OldSettings
@@ -156,11 +157,16 @@ class OldSettings extends BaseSettings {
 	 * @return array
 	 */
 	public function defaults(): array {
+		$domain = 'localhost.local';
+		if ( isset( $_SERVER['HTTP_HOST'] ) ) {
+			$domain = filter_var( wp_unslash( $_SERVER['HTTP_HOST'] ), FILTER_SANITIZE_URL );
+		}
+
 		return array(
 			'product'    => '',
 			'key'        => null,
 			'renewed'    => null,
-			'domain'     => filter_var( wp_unslash( $_SERVER['HTTP_HOST'] ), FILTER_SANITIZE_URL ) ?? 'localhost.local', // phpcs:ignore
+			'domain'     => $domain,
 			'expires'    => null,
 			'status'     => 'cancelled',
 			'first_name' => '',

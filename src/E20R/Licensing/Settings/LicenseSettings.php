@@ -131,13 +131,6 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		private $plugin_defaults;
 
 		/**
-		 * The license key these settings apply to
-		 *
-		 * @var null|string $license_key
-		 */
-		private $license_key = null;
-
-		/**
 		 * LicenseSettings constructor.
 		 *
 		 * @param string|null                  $product_sku     The SKU in the WooCommerce store for the product
@@ -451,7 +444,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @return bool
 		 */
 		private function is_setting( $property ) {
-			return property_exists( $this, $property );
+			return property_exists( $this, $property ) || 'license_key' === $property;
 		}
 
 		/**
@@ -495,6 +488,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		public function get( $key ) {
 			$value = null;
 			if (
+				'license_key' !== $key &&
 				! property_exists( $this, $key ) &&
 				! property_exists( $this->license_request_settings, $key ) &&
 				! property_exists( $this->plugin_defaults, $key )

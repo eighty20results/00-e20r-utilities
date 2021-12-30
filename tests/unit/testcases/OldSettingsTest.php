@@ -1,45 +1,62 @@
 <?php
-/*
- * *
- *   * Copyright (c) 2021. - Eighty / 20 Results by Wicked Strong Chicks.
- *   * ALL RIGHTS RESERVED
- *   *
- *   * This program is free software: you can redistribute it and/or modify
- *   * it under the terms of the GNU General Public License as published by
- *   * the Free Software Foundation, either version 3 of the License, or
- *   * (at your option) any later version.
- *   *
- *   * This program is distributed in the hope that it will be useful,
- *   * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   * GNU General Public License for more details.
- *   *
- *   * You should have received a copy of the GNU General Public License
- *   * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+/**
  *
+ * Copyright (c) 2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * ALL RIGHTS RESERVED
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Tests\Unit\OldSettingsTest
  */
 
 namespace E20R\Tests\Unit;
 
 use Codeception\AssertThrows;
+use Codeception\Test\Unit;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Licensing\Settings\Defaults;
-use E20R\Licensing\Settings\NewSettings;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use E20R\Licensing\Settings\OldSettings;
-use E20R\Utilities\Utilities;
+use Exception;
+use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-use Mockery\Mock;
+use PHPUnit\Framework\MockObject\MockObject;
+use stdClass;
+use Throwable;
 
-class OldSettingsTest extends \Codeception\Test\Unit {
+/**
+ * Unit testing the OldSettings() class
+ */
+class OldSettingsTest extends Unit {
 
 	use MockeryPHPUnitIntegration;
 	use AssertThrows;
 
+	/**
+	 * The mocked Defaults() class
+	 *
+	 * @var Defaults|MockObject|null
+	 */
 	private $m_default = null;
 
+	/**
+	 * The mocked expiration date
+	 *
+	 * @var string $exp_date
+	 */
 	private $exp_date;
 
 	/**
@@ -89,12 +106,25 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 			->returnArg( 1 );
 
 		Functions\expect( 'get_transient' )
-			->with( \Mockery::contains( 'err_info' ) )
+			->with( Mockery::contains( 'err_info' ) )
 			->andReturn( '' );
 
 		Functions\expect( 'set_transient' )
 			->with( 'err_info' )
 			->andreturn( true );
+
+		Functions\when( 'wp_unslash' )
+			->alias(
+				function( $value ) {
+					return $value;
+				}
+			);
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		$_SERVER['HTTP_HOST'] = $_SERVER['HTTP_HOST'] ?? 'localhost.local';
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		$_SERVER['SERVER_NAME'] = $_SERVER['SERVER_NAME'] ?? $_SERVER['HTTP_HOST'];
+
 		$this->loadFiles();
 	}
 
@@ -118,9 +148,9 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 	/**
 	 * Test create license settings class (new API)
 	 *
-	 * @param string $sku
-	 * @param array $license_settings
-	 * @param array $expected
+	 * @param string $sku The product SKU to test old settings model with
+	 * @param array  $license_settings The settings we want to apply
+	 * @param array  $expected The expected settings after the class is sintantiated with the new settings
 	 *
 	 * @dataProvider fixture_license_settings
 	 * @covers \E20R\Licensing\Settings\NewSettings()
@@ -143,7 +173,7 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 		global $current_user;
 		if ( empty( $current_user ) ) {
 			// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-			$current_user = new \stdClass();
+			$current_user = new stdClass();
 			// phpcs:ignore Squiz.PHP.DisallowMultipleAssignments.Found
 			$current_user->user_firstname = $current_user->first_name = 'Thomas';
 			// phpcs:ignore Squiz.PHP.DisallowMultipleAssignments.Found
@@ -157,13 +187,14 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 			}
 			self::assertSame( $expected['product'], $settings->get( 'product_sku' ), 'Error: Unexpected SKU returned' );
 			self::assertInstanceOf( OldSettings::class, $settings );
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			self::assertFalse( true, $e->getMessage() );
 		}
 	}
 
 	/**
 	 * Fixture for new License settings
+	 *
 	 * @return array[]
 	 */
 	public function fixture_license_settings() {
@@ -208,12 +239,12 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 	/**
 	 * Test both valid and invalid setting keys
 	 *
-	 * @param string $sku
-	 * @param array $license_settings
-	 * @param string $exception_class
+	 * @param string $sku The product SKU we use when testing
+	 * @param array  $license_settings The settings to apply when testing for invalid settings
+	 * @param string $exception_class The returned exception when using the invalid setting(s)
 	 *
-	 * @throws InvalidSettingsVersion
-	 * @throws \Throwable
+	 * @throws InvalidSettingsVersion Raised exception (expected)
+	 * @throws Throwable Default exception when running Codeception Unit tests
 	 *
 	 * @dataProvider fixture_invalid_settings
 	 * @covers \E20R\Licensing\Settings\NewSettings
@@ -223,7 +254,7 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 			$this->assertThrows(
 				$exception_class,
 				function() use ( $sku, $license_settings ) {
-					$settings = new OldSettings( $sku, $license_settings );
+					new OldSettings( $sku, $license_settings );
 				}
 			);
 		} else {
@@ -275,14 +306,14 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 	/**
 	 * Test the BaseSettings::set() function
 	 *
-	 * @param string $old_sku
-	 * @param string $new_sku
-	 * @param array  $updated_settings
-	 * @param array  $expected
+	 * @param string $old_sku The original SKU to use when instantiating the settings class
+	 * @param string $new_sku The new sku we update to and refresh settings for
+	 * @param array  $new_settings The refreshed settings we want
+	 * @param array  $expected The expected settings values after the refresh
 	 *
 	 * @covers       \E20R\Licensing\Settings\BaseSettings::set()
 	 * @dataProvider fixture_update_old_settings
-	 * @throws InvalidSettingsKey|InvalidSettingsVersion
+	 * @throws InvalidSettingsKey|InvalidSettingsVersion The possible exceptions raised during the test(s)
 	 */
 	public function test_set_old_license_parameters( $old_sku, $new_sku, $new_settings, $expected ) {
 
@@ -391,9 +422,9 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 	/**
 	 * Test the get() method
 	 *
-	 * @param string $property
-	 * @param mixed $expected_value
-	 * @param string $expected_exception
+	 * @param string $property The property to test the getter() method for
+	 * @param mixed  $expected_value The expected return value
+	 * @param string $expected_exception The expected exception if one is expected
 	 *
 	 * @dataProvider fixture_properties_to_get
 	 * @covers \E20R\Licensing\Settings\BaseSettings::get()
@@ -408,6 +439,11 @@ class OldSettingsTest extends \Codeception\Test\Unit {
 		}
 	}
 
+	/**
+	 * Fixtures for the test_get_old_settings() unit test
+	 *
+	 * @return array
+	 */
 	public function fixture_properties_to_get() {
 		return array(
 			array( 'expire', -1, InvalidSettingsKey::class ),

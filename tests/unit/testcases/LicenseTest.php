@@ -130,6 +130,9 @@ class LicenseTest extends Unit {
 		} catch ( Exception $e ) {
 			echo 'Error: ' . $e->getMessage(); // phpcs:ignore
 		}
+
+		Functions\when( 'wp_unslash' )
+			->returnArg( 1 );
 	}
 
 	/**
@@ -392,7 +395,7 @@ class LicenseTest extends Unit {
 		try {
 			$license = new License( null, $this->settings_mock, $this->server_mock, $this->page_mock, $this->m_utils, $this->ajax_mock );
 			self::assertEquals( $expected, $license->is_new_version() );
-		} catch ( InvalidSettingsKey | MissingServerURL | BadOperation | ConfigDataNotFound | InvalidSettingsVersion | ReflectionException | Exception $e ) {
+		} catch ( InvalidSettingsKey | MissingServerURL | BadOperation | ConfigDataNotFound | InvalidSettingsVersion | Exception $e ) {
 			self::assertFalse( true, $e->getMessage() );
 		}
 	}
@@ -478,7 +481,7 @@ class LicenseTest extends Unit {
 		$m_settings = $this->makeEmpty(
 			LicenseSettings::class,
 			array(
-				'get'      => function( $parameter ) use ( $m_defaults, $domain, $status ) {
+				'get'      => function( $parameter ) use ( $m_defaults, $domain, $status, $test_sku ) {
 					$value = null;
 					if ( 'plugin_defaults' === $parameter ) {
 						$value = $m_defaults;
@@ -495,6 +498,9 @@ class LicenseTest extends Unit {
 					if ( 'status' === $parameter ) {
 						$value = $status;
 					}
+					if ( 'license_key' === $parameter ) {
+						$value = $test_sku;
+					}
 					return $value;
 				},
 				'defaults' => array(),
@@ -510,8 +516,10 @@ class LicenseTest extends Unit {
 		if ( ! empty( $domain ) ) {
 			$this->m_utils->log( "Setting the SERVER_NAME to {$domain}" );
 			$_SERVER['SERVER_NAME'] = $domain;
+			$_SERVER['HTTP_HOST']   = $domain;
 		} else {
 			$_SERVER['SERVER_NAME'] = 'example.com';
+			$_SERVER['HTTP_HOST']   = 'example.com';
 		}
 
 		// Mocking parts of the License() so we can test the is_active() method
