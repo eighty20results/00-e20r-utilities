@@ -15,6 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Utilities\Cache
  */
 
 namespace E20R\Utilities;
@@ -26,19 +28,23 @@ if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 
 if ( ! class_exists( '\E20R\Utilities\Cache' ) ) {
 
+	/**
+	 * Cache handler
+	 */
 	class Cache {
 
 		/**
 		 * Default cache group
-		 * @var string
+		 *
+		 * @var string The default cache group to use (e20r_group)
 		 */
 		const CACHE_GROUP = 'e20r_group';
 
 		/**
 		 * Fetch entry from cache
 		 *
-		 * @param string $key
-		 * @param string $group
+		 * @param string $key The cache key to fetch for
+		 * @param string $group The cache group to fetch for (has default of 'e20r_group')
 		 *
 		 * @return bool|mixed|null
 		 */
@@ -57,10 +63,10 @@ if ( ! class_exists( '\E20R\Utilities\Cache' ) ) {
 		/**
 		 * Store entry in cache
 		 *
-		 * @param string $key
-		 * @param mixed  $value
-		 * @param int    $expires
-		 * @param string $group
+		 * @param string $key The cache key to store for
+		 * @param mixed  $value The value to store in the cache
+		 * @param int    $expires The timeout value for the cached value
+		 * @param string $group The cache group the value belongs to
 		 *
 		 * @return bool
 		 */
@@ -72,8 +78,8 @@ if ( ! class_exists( '\E20R\Utilities\Cache' ) ) {
 		/**
 		 * Delete a cache entry
 		 *
-		 * @param string $key
-		 * @param string $group
+		 * @param string $key The cache key to delete
+		 * @param string $group The group to delete cached values from (based on key)
 		 *
 		 * @return bool - True if successful, false otherwise
 		 */
