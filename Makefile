@@ -125,7 +125,9 @@ $(info Number of running docker images:$(STACK_RUNNING))
 	image-pull \
 	image-push \
 	image-scan \
-	docker-hub-login
+	docker-hub-login \
+	hub-login \
+	hub-nologin
 
 #
 # Clean up Codeception and GitHub action artifacts
@@ -160,10 +162,12 @@ hub-login:
 hub-nologin:
 	@echo "Skipping CLI based docker login operation"
 
-ifneq ($(LOCAL_NETWORK_STATUS), '')
-docker-hub-login: hub-login
-else
+ifeq ($(LOCAL_NETWORK_STATUS), "")
+$(info Using GitHub Action based login to Docker HUB)
 docker-hub-login: hub-nologin
+else
+$(info Using CLI based login to Docker HUB)
+docker-hub-login: hub-login
 endif
 
 #
