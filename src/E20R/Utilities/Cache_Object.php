@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
@@ -15,6 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Utilities\Cache_Object
  */
 
 namespace E20R\Utilities;
@@ -26,25 +28,30 @@ if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 
 if ( ! class_exists( '\E20R\Utilities\Cache_Object' ) ) {
 
+	/**
+	 * All cached values for this plugin are treated as objects. This is the cacheable entity (object)
+	 */
 	class Cache_Object {
 
 		/**
 		 * The Cache Key
-		 * @var string $key
+		 *
+		 * @var string $key The cache key to use for this object
 		 */
 		private $key = null;
 
 		/**
 		 * The Cached value
-		 * @var mixed $value
+		 *
+		 * @var mixed $value The value to store as the cacheable object
 		 */
 		private $value = null;
 
 		/**
 		 * Cache_Object constructor.
 		 *
-		 * @param string $key
-		 * @param mixed  $value
+		 * @param string $key The cache key to use for this cacheable object
+		 * @param mixed  $value The value to cache for this cacheable object
 		 */
 		public function __construct( $key, $value ) {
 
@@ -55,8 +62,8 @@ if ( ! class_exists( '\E20R\Utilities\Cache_Object' ) ) {
 		/**
 		 * Setter for the key and value properties
 		 *
-		 * @param string $name
-		 * @param mixed  $value
+		 * @param string $name The name of the property to link the cached value to
+		 * @param mixed  $value The value to cache
 		 */
 		public function set( $name, $value ) {
 
@@ -71,7 +78,7 @@ if ( ! class_exists( '\E20R\Utilities\Cache_Object' ) ) {
 		/**
 		 * Getter for the key and value properties
 		 *
-		 * @param string $name
+		 * @param string $name The name of the property to return the cached value of
 		 *
 		 * @return mixed|null - Property value (for Key or Value property)
 		 */
@@ -90,6 +97,13 @@ if ( ! class_exists( '\E20R\Utilities\Cache_Object' ) ) {
 			return $result;
 		}
 
+		/**
+		 * Default test method for whether the specified parameter is set/exists
+		 *
+		 * @param string $name The name of the property storing the cacheable value
+		 *
+		 * @return bool
+		 */
 		public function __isset( $name ) {
 
 			return isset( $this->{$name} );
