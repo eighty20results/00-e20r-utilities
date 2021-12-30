@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
@@ -15,16 +15,27 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Licensing\AjaxHandler
  */
 
 namespace E20R\Licensing;
 
+use E20R\Licensing\Exceptions\BadOperation;
+use E20R\Licensing\Exceptions\ConfigDataNotFound;
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Licensing\Exceptions\InvalidSettingsVersion;
+use E20R\Licensing\Exceptions\MissingServerURL;
+use E20R\Licensing\Exceptions\NoLicenseKeyFound;
 use E20R\Utilities\Utilities;
 use E20R\Licensing\Settings\LicenseSettings;
 use Exception;
 
 if ( ! class_exists( 'E20R\Licensing\AjaxHandler' ) ) {
 
+	/**
+	 * Handle AJAX based license checks and updates
+	 */
 	class AjaxHandler {
 
 		/**
@@ -35,6 +46,8 @@ if ( ! class_exists( 'E20R\Licensing\AjaxHandler' ) ) {
 		private $utils = null;
 
 		/**
+		 * Settings for the Licensing code
+		 *
 		 * @var LicenseSettings|null $settings
 		 */
 		private $settings = null;
@@ -77,7 +90,17 @@ if ( ! class_exists( 'E20R\Licensing\AjaxHandler' ) ) {
 		/**
 		 * Constructor for the AjaxHandler() class
 		 *
-		 * @throws \Exception
+		 * @param string|null          $product_sku The Product SKU from the licensing server
+		 * @param LicenseSettings|null $settings Instance of the LicenseSettings class
+		 * @param LicenseServer|null   $server Instance of the LicenseServer class
+		 * @param Utilities|null       $utils Instance of the Utilities class
+		 *
+		 * @throws NoLicenseKeyFound Raised if the specified key doesn't exist
+		 * @throws BadOperation Raised if attempting an invalid constant or default operation
+		 * @throws ConfigDataNotFound Raised if the JSON settings for the plugin are missing
+		 * @throws InvalidSettingsKey Raised when attempting to use an unsupported parameter key for the specific settings version being used
+		 * @throws InvalidSettingsVersion Raised when an unsupported settings version is attempted used
+		 * @throws MissingServerURL Raised when unable to determine the URL to the License server (default is eighty20results.com)
 		 */
 		public function __construct( ?string $product_sku = null, ?LicenseSettings $settings = null, ?LicenseServer $server = null, ?Utilities $utils = null ) {
 
@@ -104,11 +127,16 @@ if ( ! class_exists( 'E20R\Licensing\AjaxHandler' ) ) {
 			}
 
 			if ( empty( $this->key_to_check ) ) {
-				throw new \Exception( 'Error: Neither the license key nor product sku was received!' );
+				throw new NoLicenseKeyFound( $this->key_to_check );
 			}
 
 			if ( empty( $settings ) ) {
-				$settings = new LicenseSettings( $this->key_to_check );
+				try {
+					$settings = new LicenseSettings( $this->key_to_check );
+				} catch ( BadOperation | ConfigDataNotFound | InvalidSettingsKey | InvalidSettingsVersion | MissingServerURL $e ) {
+					$this->utils->add_message( 'Error: ' . $e->getMessage(), 'error', 'backend' );
+					throw $e;
+				}
 			}
 
 			$this->settings = $settings;
@@ -124,7 +152,6 @@ if ( ! class_exists( 'E20R\Licensing\AjaxHandler' ) ) {
 		 * Verify the specified license (AJAX call)
 		 */
 		public function ajax_handler_verify_license() {
-
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r, WordPress.Security.NonceVerification.Recommended
 			$this->utils->log( 'Received variables from request: ' . print_r( $_REQUEST, true ) );
 
@@ -179,7 +206,7 @@ if ( ! class_exists( 'E20R\Licensing\AjaxHandler' ) ) {
 			}
 
 			// Check the license status upstream
-			$status = $this->server->status( $this->key_to_check, $this->settings->all_settings(), true );
+			$status = $this->server->status( $this->key_to_check, true );
 
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 			$this->utils->log( 'License status: ' . print_r( $status, true ) );
