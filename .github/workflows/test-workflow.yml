@@ -20,6 +20,8 @@ jobs:
         with:
           repository: eighty20results/Utilities
       - name: Setup PHP with Composer V2+
+        env:
+          runner: self-hosted
         uses: shivammathur/setup-php@v2
         with:
           php-version: "{{ matrix.php_version }}"
