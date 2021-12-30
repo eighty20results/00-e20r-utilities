@@ -8,11 +8,11 @@ endif
 
 ifneq ($(LOCAL_NETWORK_IF), )
 LOCAL_NETWORK_STATUS ?= $(shell ifconfig $(LOCAL_NETWORK_IF) | awk '/status:/ { print $$2 }')
-$(info Setting local network interface status for $(LOCAL_NETWORK_IF): $(LOCAL_NETWORK_STATUS))
+$(info Setting local network interface status for $(LOCAL_NETWORK_IF): '$(LOCAL_NETWORK_STATUS)')
 endif
 
 ifeq ($(LOCAL_NETWORK_IF), )
-LOCAL_NETWORK_STATUS ?= ""
+LOCAL_NETWORK_STATUS ?=
 endif
 
 WP_DEPENDENCIES ?= paid-memberships-pro woocommerce
