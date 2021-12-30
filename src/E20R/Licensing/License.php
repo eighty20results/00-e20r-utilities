@@ -28,6 +28,7 @@ use E20R\Licensing\Exceptions\ErrorSavingSettings;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Licensing\Exceptions\MissingServerURL;
+use E20R\Licensing\Exceptions\NoLicenseKeyFound;
 use E20R\Licensing\Exceptions\ServerConnectionError;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Settings\LicenseSettings;
@@ -472,7 +473,8 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 * Activate the license key on the remote server
 		 *
 		 * @param string             $product_sku - The Product SKU in WooCommerce store from whence the product was licensed
-		 * @param LicenseServer|null $server - The License server connection class
+		 * @param LicenseServer|null $server      - The License server connection class
+		 *
 		 * @return array|bool
 		 *
 		 * @throws ServerConnectionError - Raised when the license Server isn't available
@@ -480,14 +482,13 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 * @throws Exceptions\BadOperation - Raised when attempting an unsupported action against a constant
 		 * @throws Exceptions\InvalidSettingsVersion - Raised when an unsupported version of the settings class is used
 		 * @throws MissingServerURL - Raised if the License server URL is missing
-		 * @throws ConfigDataNotFound | ReflectionException - Raised when the config data is missing
+		 * @throws ConfigDataNotFound | ReflectionException - Raised when the config data is missing*@throws Exceptions\NoLicenseKeyFound
 		 *
 		 * @since 1.8.4 - BUG FIX: Didn't save the license settings
 		 * @since 3.2 - BUG FIX: Use LicenseServer class as part of status and throw exceptions when things go sideways
 		 * @since 6.0 - ENHANCEMENT: Updated to support new licensing classes and unit/integration test framework
 		 */
 		public function activate( string $product_sku, $server = null ) {
-			$state           = null;
 			$plugin_defaults = $this->settings->get( 'plugin_defaults' );
 			$new_version     = $this->is_new_version();
 
@@ -522,7 +523,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				'action'      => 'license_key_activate',
 				'store_code'  => $plugin_defaults->get( 'store_code' ),
 				'sku'         => $this->settings->get( 'product_sku' ),
-				'license_key' => ( true === $new_version ? $this->settings->get( 'the_key' ) : $this->settings->get( 'key' ) ),
+				'license_key' => $this->settings->get( 'license_key' ),
 				'domain'      => $this->settings->get( 'domain_name' ),
 			);
 
@@ -590,18 +591,16 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			if ( isset( $decoded->status ) && 200 === (int) $decoded->status ) {
 
 				// $settings + $decoded->data == Merged settings
-
-				if ( isset( $settings[ $product_sku ] ) && ! empty( $settings[ $product_sku ] ) ) {
-					$existing_settings = $settings[ $product_sku ];
-				} elseif ( ! isset( $settings[ $product_sku ] ) && ! empty( $settings ) ) {
-					$existing_settings = $settings;
-				} else {
-					$existing_settings = $this->settings->defaults();
+				try {
+					$sku_settings = $this->settings->get_settings( $product_sku );
+				} catch ( NoLicenseKeyFound $e ) {
+					$sku_settings = $this->settings->defaults();
 				}
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-				$this->utils->log( 'FIXME: Need to do something with existing settings: ' . print_r( $existing_settings, true ) );
+
 				$new_settings = (array) $decoded->data;
 				try {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+					$this->utils->log( 'Merging feedback from license server with local settings: ' . print_r( $sku_settings, true ) );
 					$this->settings->merge( $new_settings );
 				} catch ( ErrorSavingSettings $e ) {
 					$this->utils->add_message(
@@ -618,15 +617,13 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 						'settings' => $this->settings,
 					);
 				}
-
 				$this->utils->add_message( $decoded->message, 'notice', 'backend' );
-				$state = $plugin_defaults->constant( 'E20R_LICENSE_DOMAIN_ACTIVE' );
 			}
 
 			$this->settings->save();
 
 			return array(
-				'status'   => $state,
+				'status'   => $plugin_defaults->constant( 'E20R_LICENSE_DOMAIN_ACTIVE' ),
 				'settings' => $this->settings,
 			);
 		}
