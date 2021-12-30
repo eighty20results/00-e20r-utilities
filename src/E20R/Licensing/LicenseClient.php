@@ -15,6 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Licensing\LicenseClient
  */
 
 namespace E20R\Licensing;
@@ -30,12 +32,13 @@ if ( ! class_exists( '\E20R\Licensing\LicenseClient' ) ) {
 
 	/**
 	 * Class LicenseClient
-	 * @package E20R\Utilities\Licensing
 	 */
 	abstract class LicenseClient {
 
 		/**
-		 * @var null|LicenseClient
+		 * Self-referential class instance
+		 *
+		 * @var null|LicenseClient Instance of this LicenseClient() class when loaded
 		 */
 		private static $instance = null;
 
@@ -49,7 +52,9 @@ if ( ! class_exists( '\E20R\Licensing\LicenseClient' ) ) {
 			}
 		}
 
-		// Load hooks to add new license info to license page
+		/**
+		 * Abstract WordPress action hook/filter hook loading method for this license client instance
+		 */
 		abstract public function load_hooks();
 
 		/**
@@ -67,6 +72,11 @@ if ( ! class_exists( '\E20R\Licensing\LicenseClient' ) ) {
 			return self::$instance;
 		}
 
+		/**
+		 * Abstract license check method for the licensing client
+		 *
+		 * @return mixed
+		 */
 		abstract public function check_licenses();
 
 		/**
@@ -74,8 +84,8 @@ if ( ! class_exists( '\E20R\Licensing\LicenseClient' ) ) {
 		 *
 		 * @filter e20r-license-add-new-licenses
 		 *
-		 * @param array $license_settings
-		 * @param array $plugin_settings
+		 * @param array $license_settings The license settings to use for the client class
+		 * @param array $plugin_settings The settings to use for the licensed plugin
 		 *
 		 * @return array
 		 */
