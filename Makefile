@@ -149,11 +149,10 @@ clean-inc:
 # Log in to your Docker HUB account before performing pull/push operations
 #
 docker-hub-login:
-	@if [[ "inactive" != "$(LOCAL_NETWORK_STATUS)" ]]; then \
-		echo "Login for Docker Hub" ; \
-		docker login --username ${DOCKER_USER} --password ${CONTAINER_ACCESS_TOKEN} ; \
+	@if [[ "$(LOCAL_NETWORK_STATUS)" != "inactive" ]]; then \
+		echo "Login for Docker Hub with $(DOCKER_USER) account" ; \
+		docker login --username "$(DOCKER_USER)" --password "$(CONTAINER_ACCESS_TOKEN)" ; \
 	fi
-
 
 #
 # (re)Build the Docker images for this development/test environment
