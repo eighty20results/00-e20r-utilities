@@ -151,7 +151,7 @@ clean-inc:
 docker-hub-login:
 	@if [ "${LOCAL_NETWORK_STATUS}" != "inactive" ]; then \
 		echo "Logging in to the Docker Hub using the '${DOCKER_USER}' account" && \
-		docker login --username ${DOCKER_USER} --password ${CONTAINER_ACCESS_TOKEN} \
+		docker login --username ${DOCKER_USER} --password ${CONTAINER_ACCESS_TOKEN} ; \
 	fi
 
 #
