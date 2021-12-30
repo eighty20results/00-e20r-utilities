@@ -17,15 +17,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *  You can contact us at mailto:info@eighty20results.com
+ *
+ * @package E20R\Licensing\LicensePage
  */
 
 namespace E20R\Licensing;
 
-use E20R\Licensing\License;
+use E20R\Licensing\Exceptions\ConfigDataNotFound;
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Settings\LicenseSettings;
 use E20R\Utilities\Utilities;
 use E20R\Utilities\Message;
+use Exception;
 
 // Deny direct access to the file
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
@@ -33,6 +38,9 @@ if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 }
 
 if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
+	/**
+	 * Class defining/displaying wp-admin/ settings page for the Licensing code
+	 */
 	class LicensePage {
 
 		/**
@@ -58,17 +66,21 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 
 		/**
 		 * License Settings object
-		 * @var LicenseSettings|null $settings
+		 *
+		 * @var LicenseSettings|null $settings The settings class (LicenseSettings()) to use by this page renderer
 		 */
 		private $settings = null;
 
 		/**
-		 * @param LicenseSettings|null $settings
-		 * @param Utilities|null       $utils
+		 * Constructor for the LicensePage() class
 		 *
-		 * @throws Exceptions\ConfigDataNotFound
-		 * @throws Exceptions\InvalidSettingsKey
-		 * @throws Exceptions\MissingServerURL
+		 * @param LicenseSettings|null $settings Settings to use for this page renderer
+		 * @param Utilities|null       $utils Utilities class instance to use for the page renderer
+		 *
+		 * @throws ConfigDataNotFound Raised when the JSON config file isn't present for the license server store settings
+		 * @throws InvalidSettingsKey Raised when attempting to use an unsupported settings key for the LicenseSettings version
+		 * @throws MissingServerURL Raised if the URL to the Licensing server is missing
+		 * @throws Exception Raised whenever we lack the appropriate exception (default exception)
 		 */
 		public function __construct( LicenseSettings $settings = null, Utilities $utils = null ) {
 			if ( empty( $utils ) ) {
@@ -81,14 +93,14 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 			if ( empty( $settings ) ) {
 				try {
 					$defaults = new Defaults( true, $this->utils );
-				} catch ( Exceptions\ConfigDataNotFound | Exceptions\InvalidSettingsKey $e ) {
+				} catch ( ConfigDataNotFound | InvalidSettingsKey | Exception $e ) {
 					$this->utils->log( $e->getMessage() );
 					throw $e;
 				}
 
 				try {
 					$settings = new LicenseSettings( null, $defaults, $this->utils );
-				} catch ( Exceptions\InvalidSettingsKey | Exceptions\MissingServerURL $e ) {
+				} catch ( InvalidSettingsKey | MissingServerURL $e ) {
 					$this->utils->log( $e->getMessage() );
 					throw $e;
 				}
@@ -111,8 +123,8 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 		/**
 		 * Check whether the Licensing page is already loaded or not
 		 *
-		 * @param string $handle
-		 * @param bool   $sub
+		 * @param string $handle The WordPress page handle to find
+		 * @param bool   $sub Whether we're looking for a sub-page or not
 		 *
 		 * @return bool
 		 */
@@ -262,7 +274,7 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 		/**
 		 * Show input row for License page
 		 *
-		 * @param array $args
+		 * @param array $args The arguments used by the HTML input tag renderer
 		 *
 		 * @since 1.6 - BUG FIX: Used incorrect product label for new licenses
 		 */
@@ -337,6 +349,7 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 					echo esc_html__(
 						// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
 						sprintf(
+								// phpcs:ignore
 							'<input name="%1$s[%2$s][%3$d]" type="%4$s" id="%5$s" value="%6$s" placeholder="%7$s" class="regular_text %8$s" />',
 							$args['option_name'],
 							$args['name'],
@@ -513,7 +526,7 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 
 			try {
 				$settings = $l_settings->get_settings();
-			} catch ( \Exception $e ) {
+			} catch ( Exception $e ) {
 				$this->utils->add_message( $e->getMessage(), 'error', 'backend' );
 			}
 
