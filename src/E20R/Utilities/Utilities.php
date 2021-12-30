@@ -691,7 +691,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			if ( empty( $upload_dir_info ) ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( 'Error: Unable to define the upload directory information for WordPress!' );
+				error_log( 'Warning: Unable to identify the upload directory information for WordPress!' );
 				return false;
 			}
 
@@ -702,7 +702,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			if ( ! file_exists( $log_directory ) ) {
 				if ( ! mkdir( $log_directory, 0750, true ) ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( "Unable to create the E20R Debug logging location: {$log_directory}" );
+					error_log( "Warning: Unable to create the E20R Debug logging location: {$log_directory}" );
 					return false;
 				}
 			}
