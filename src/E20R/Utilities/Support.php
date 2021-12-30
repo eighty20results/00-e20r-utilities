@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
@@ -15,6 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Utilities\Support
  */
 
 namespace E20R\Utilities;
@@ -22,10 +24,12 @@ namespace E20R\Utilities;
 if ( ! class_exists( '\E20R\Utilities\Support' ) ) {
 
 	/**
-	 * Class Support
-	 * @package E20R\Utilities
+	 * Generic WP Support functionality for E20R plugins
 	 */
 	class Support {
+		/**
+		 * The Support() constructor
+		 */
 		public function __construct() {
 			// TODO: Implement support functionality
 		}
