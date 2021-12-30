@@ -376,9 +376,6 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				return false;
 			}
 
-			$domain          = '';
-			$status          = 'cancelled';
-			$license_key     = null;
 			$new_version     = $this->is_new_version();
 			$domain          = isset( $_SERVER['SERVER_NAME'] ) ? filter_var( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : 'eighty20results.com';
 			$active_statuses = apply_filters( 'e20r_license_active_statuses', array( 'active' ) );
@@ -392,6 +389,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 
 			$status      = $this->settings->get( 'status' );
 			$license_key = $this->settings->get( 'license_key' );
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidatedNotSanitized
 			$this->utils->log( "Status for {$license_key} is {$status} at {$domain} vs {$_SERVER['SERVER_NAME']}" );
 
 			$is_active = (
@@ -637,13 +635,20 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 * Deactivate the specified license (product/license key)
 		 *
 		 * @param string     $product_sku - The SKU for the licensed product/software
-		 * @param array|null $settings - List of settings to use
+		 * @param array|null $settings    - List of settings to use
 		 *
 		 * @return bool
+		 *
+		 * @throws InvalidSettingsKey Raised when the license_key setting doesn't exist for an unknown reason
 		 */
 		public function deactivate( $product_sku, $settings = null ) : bool {
 
-			$license_key = $$this->settings->get( 'key' );
+			try {
+				$license_key = $this->settings->get( 'license_key' );
+			} catch ( InvalidSettingsKey $e ) {
+				$this->utils->add_message( 'Deactivation error: ' . $e->getMessage(), 'error', 'backend' );
+				return false;
+			}
 
 			if ( empty( $license_key ) ) {
 				if ( $this->log_debug ) {
@@ -707,7 +712,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			}
 
 			if ( false === $decoded ) {
-				return $decoded;
+				return false;
 			}
 
 			if ( ! $this->is_new_version() ) {
@@ -745,7 +750,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				return true;
 			} elseif ( isset( $decoded->status ) ) {
 
-				if ( isset( $decoded->status ) && 500 === (int) $decoded->status ) {
+				if ( 500 === (int) $decoded->status ) {
 					// translators: Error message supplied from decoded request object
 					$error_message = esc_attr__( 'Deactivation error: %s', '00-e20r-utilities' );
 
