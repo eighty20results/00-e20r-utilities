@@ -150,7 +150,7 @@ clean-inc:
 #
 docker-hub-login:
 	$(info Local network status is: '$(LOCAL_NETWORK_STATUS)' so we should continue?)
-	@if [[ "X$(LOCAL_NETWORK_STATUS)" != "Xinactive" ]]; then \
+	@if [[ "X$(LOCAL_NETWORK_STATUS)" == "Xactive" && $$(ifconfig | grep en0 | wc -l) -ne 0 ]]; then \
 		echo "Yes, logging in to Docker Hub using the '$(DOCKER_USER)' account" ; \
 		echo $(CONTAINER_ACCESS_TOKEN) | docker login --username $(DOCKER_USER) --password-stdin ; \
 	fi
