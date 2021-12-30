@@ -393,7 +393,7 @@ if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
 		 * @param int    $operation - The operation to apply (read/update)
 		 * @param mixed  $value - The value to set the named constant to
 		 *
-		 * @return bool - Return true if successful, false or raise exception if not
+		 * @return bool|string - Return true if successful, false or raise exception if not
 		 * @throws InvalidSettingsKey - Raised if the specified parameter name doesn't exist in this class
 		 * @throws BadOperation - Attempted to perform an unsupported operation on a constant
 		 */

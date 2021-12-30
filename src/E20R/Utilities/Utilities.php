@@ -83,7 +83,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * The error message text
 		 *
-		 * @var null|string $msg
+		 * @var null|array $msg
 		 */
 		private $msg = null;
 

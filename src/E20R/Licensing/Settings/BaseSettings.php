@@ -54,6 +54,13 @@ abstract class BaseSettings {
 	protected $defaults = array();
 
 	/**
+	 * Class member variable names to ignore when getting/setting settings
+	 *
+	 * @var array $excluded
+	 */
+	protected $excluded = array();
+
+	/**
 	 * BaseSettings constructor.
 	 *
 	 * @param null|string $product_sku - The product SKU (from WooCommerce)
@@ -61,6 +68,11 @@ abstract class BaseSettings {
 	 */
 	public function __construct( ?string $product_sku = 'e20r_default_license', $settings = null ) {
 		$this->product_sku = $product_sku;
+		if ( ! isset( $settings[ $product_sku ] ) ) {
+			$this->all_settings[ $product_sku ] = $settings;
+		} else {
+			$this->all_settings = $settings;
+		}
 	}
 
 	/**

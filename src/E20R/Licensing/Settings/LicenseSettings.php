@@ -873,7 +873,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @return bool
 		 */
 		public function save() {
-			// TODO: This function needs to load the existing settings from the DB and then and saves the current settings
+			// TODO: This function needs to load the existing settings from the DB and then and saves the current setting
 
 			try {
 				$license_settings = $this->all_settings();
@@ -887,7 +887,9 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 					'error',
 					'backend'
 				);
+				$license_settings = array();
 			}
+
 			/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 			if ( $this->to_debug ) {
 				$this->utils->log( "Settings before update: " . print_r( $license_settings, true ) );
