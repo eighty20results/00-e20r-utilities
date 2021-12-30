@@ -69,10 +69,10 @@ endif
 
 $(info Download the E20R Utilities module: $(DOWNLOAD_MODULE))
 
-#ifeq ($(CONTAINER_ACCESS_TOKEN),)
-#	echo "Error: Docker login token is not defined!"
-#	exit 1
-#endif
+ifeq ($(CONTAINER_ACCESS_TOKEN),)
+	echo "Error: Docker login token is not defined!"
+	exit 1
+endif
 
 # PROJECT := $(shell basename ${PWD}) # This is the default as long as the plugin name matches
 PROJECT := $(E20R_PLUGIN_NAME)
@@ -149,16 +149,16 @@ clean-inc:
 # Log in to your Docker HUB account before performing pull/push operations
 #
 docker-hub-login:
-	@if [[ "$(LOCAL_NETWORK_STATUS)" != "inactive" ]]; then \
-		echo "Login for Docker Hub with $(DOCKER_USER) account" ; \
-		docker login --username "$(DOCKER_USER)" --password "$(CONTAINER_ACCESS_TOKEN)" ; \
+	@if [[ $(LOCAL_NETWORK_STATUS) != "inactive" ]]; then \
+		echo 'Login for Docker Hub with "${DOCKER_USER}" account' ; \
+		docker login --username $(DOCKER_USER) --password $(CONTAINER_ACCESS_TOKEN) ; \
 	fi
 
 #
 # (re)Build the Docker images for this development/test environment
 #
 image-build: docker-deps
-	@if [[ "$(LOCAL_NETWORK_STATUS)" != "inactive" ]]; then \
+	@if [[ $(LOCAL_NETWORK_STATUS) != "inactive" ]]; then \
 		echo "Building the docker container stack for $(PROJECT)" ; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
   		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
