@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
@@ -16,9 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
+ * @package E20R\Utilities\E20R_Background_Process
  */
 
 namespace E20R\Utilities;
+
+use stdClass;
 
 /**
  * WP Background Process
@@ -78,12 +81,16 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 		protected $cron_interval_identifier;
 
 		/**
-		 * @var string $active_queue - Either 'a' or 'b' depending on running queue
+		 * Either 'a' or 'b' depending on running queue
+		 *
+		 * @var string $active_queue
 		 */
 		protected $active_queue;
 
 		/**
-		 * @var string $second_queue - Either 'b' or 'a', depending on running queue
+		 * Either 'b' or 'a', depending on running queue
+		 *
+		 * @var string $second_queue
 		 */
 		protected $second_queue;
 
@@ -117,7 +124,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 		 */
 		public function dispatch() {
 
-			// Schedule the cron healthcheck.
+			// Schedule the cron health check.
 			$this->schedule_event();
 
 			// Perform remote post.
@@ -154,8 +161,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 
 				$utils->log( 'Found ' . count( $this->data ) . " items in the queue to save/process for {$key}" );
 
-				// phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-				/*
+				/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 				$existing_data = get_option( $key );
 
 				if ( ! empty( $existing_data ) ) {
@@ -240,6 +246,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 		 *
 		 * Checks whether data exists within the queue and that
 		 * the process is not already running.
+		 *
 		 * @since   1.9.15 - ENHANCEMENT: Exit maybe_handle() if queue is invalid (clear the queue too)
 		 */
 		public function maybe_handle() {
@@ -293,6 +300,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 
 			$utils->log( "Checking for content in {$key} variable from {$wpdb->options} in option_value while looking for option_name" );
 
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$result = $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT option_value
@@ -316,8 +324,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 			global $wpdb;
 			$utils = Utilities::get_instance();
 
-			// phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-			/*
+			/* phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 						if ( is_multisite() ) {
 							$table  = $wpdb->sitemeta;
 							$column = 'meta_key';
@@ -327,6 +334,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 
 			$utils->log( "Checking for content in {$key} variable from {$wpdb->options} in option_value while looking for option_name" );
 
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$count = $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT COUNT(*)
@@ -339,7 +347,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 
 			$utils->log( "Found {$count} entries" );
 
-			return ( intval( $count ) > 0 ) ? false : true;
+			return ! ( ( intval( $count ) > 0 ) );
 		}
 
 		/**
@@ -380,7 +388,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 		/**
 		 * Verify whether the specified Queue is active
 		 *
-		 * @param string $queue_id
+		 * @param string $queue_id The ID of the queue we're checking (A or B)
 		 *
 		 * @return bool
 		 */
@@ -390,7 +398,8 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 			$utils = Utilities::get_instance();
 
 			$lock_transient = "_transient_{$this->identifier}_process_lock";
-			$db_id          = $wpdb->get_var(
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$db_id = $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT option_value FROM {$wpdb->options} WHERE option_name LIKE %s",
 					$lock_transient
@@ -470,15 +479,16 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 		/**
 		 * Get batch
 		 *
-		 * @return \stdClass Return the first batch from the queue
+		 * @return stdClass Return the first batch from the queue
 		 */
 		protected function get_batch() {
 
 			global $wpdb;
 
 			$utils = Utilities::get_instance();
-
 			$key   = $wpdb->esc_like( "{$this->identifier}_batch_" ) . '%';
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$query = $wpdb->get_row(
 				$wpdb->prepare(
 					"SELECT *
@@ -492,7 +502,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 
 			$utils->log( "Will fetch batch: {$query->option_name}" );
 
-			$batch       = new \stdClass();
+			$batch       = new stdClass();
 			$batch->key  = $query->option_name;
 			$batch->data = maybe_unserialize( $query->option_value );
 
@@ -686,7 +696,7 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 		/**
 		 * Modify the lock timeout based on the duration of the lock
 		 *
-		 * @param int $lock_duration
+		 * @param int $lock_duration The current lock timeout value (possibly being modified)
 		 *
 		 * @return int
 		 */
@@ -746,6 +756,8 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 
 			$key = $this->identifier . '_batch_%';
 			$utils->log( "Attempting to manually clear the job queue for {$key}. Has " . count( $this->data ) . ' data/job entries left' );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$is_deleted = $wpdb->query(
 				$wpdb->prepare(
 					//phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -857,7 +869,6 @@ if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
 		 * Cancel Process
 		 *
 		 * Stop processing queue items, clear cronjob and delete batch.
-		 *
 		 */
 		public function cancel_process() {
 
