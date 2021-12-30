@@ -11,7 +11,7 @@ jobs:
   plugin_tests:
     strategy:
       matrix:
-        php_version: [ '7.3', '7.4', '8.0' ]
+        php_version: [ '7.3', '7.4' ]
     name: "Plugin tests - PHP"
     runs-on: ubuntu-18.04
     steps:
