@@ -154,7 +154,7 @@ hub-login:
 	$(info Local network status is: '$(LOCAL_NETWORK_STATUS)' so we should continue?)
 	@if [[ "Xactive" == "X$(LOCAL_NETWORK_STATUS)" ]]; then \
 		echo "Yes, logging in to Docker Hub using the '$(DOCKER_USER)' account" ; \
-		docker login --username $(DOCKER_USER) --password-stdin <<< $(CONTAINER_ACCESS_TOKEN) -- ; \
+		docker login --username $(DOCKER_USER) --password $(CONTAINER_ACCESS_TOKEN) ; \
 	else \
 		echo "Skipping docker-cli based hub login!" ; \
 	fi
@@ -163,10 +163,10 @@ hub-nologin:
 	@echo "Skipping CLI based docker login operation"
 
 ifeq ($(LOCAL_NETWORK_STATUS), )
-$(info Using GitHub Action based login to Docker HUB)
+$(info Using GitHub Action based login for Docker HUB)
 docker-hub-login: hub-nologin
 else
-$(info Using CLI based login to Docker HUB)
+$(info Using CLI based login for Docker HUB)
 docker-hub-login: hub-login
 endif
 
