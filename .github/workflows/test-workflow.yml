@@ -26,13 +26,18 @@ jobs:
           extensions: mbstring, xdebug
           tools: composer:v2
           coverage: pcov
+      - name: Login to Docker HUB
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
       - name: Run all Standard Tests
         run: make test
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
-          DOCKER_USER: ${{ secrets.DOCKER_USER }}
-          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+#          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+#          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
 
   build_i18n:
     name: Build the I18N translation files
@@ -70,7 +75,6 @@ jobs:
         with:
           repository: eighty20results/Utilities
           ref: main
-
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
         with:
@@ -79,6 +83,12 @@ jobs:
 
       - name: Adding deployment target to known_hosts file
         run: ssh-keyscan -H -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+     - name: Login to Docker HUB
+       uses: docker/login-action@v1
+       with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
 
       - name: Build and test plugin before deployment
         run: make build
