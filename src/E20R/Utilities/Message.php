@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
@@ -15,6 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Utilities\Message
  */
 
 namespace E20R\Utilities;
@@ -22,8 +24,7 @@ namespace E20R\Utilities;
 if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 
 	/**
-	 * Class Message
-	 * @package E20R\Utilities
+	 * Stores message(s) for use by the WP Backend alert notices
 	 */
 	class Message {
 
@@ -66,9 +67,9 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Message constructor.
 		 *
-		 * @param string $message
-		 * @param string $type
-		 * @param string $location
+		 * @param string $message The message text
+		 * @param string $type The type of message (notice|warning|error)
+		 * @param string $location Where to display the message (backend|frontend)
 		 */
 		public function __construct( $message = null, $type = 'notice', $location = 'backend' ) {
 
@@ -136,7 +137,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Return the correct Destination constant value
 		 *
-		 * @param string|int $destination
+		 * @param string|int $destination The location where we intend to show the message(s)
 		 *
 		 * @return int
 		 */
@@ -182,7 +183,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Minimize duplication of WooCommerce alert messages
 		 *
-		 * @param null|bool $passthrough
+		 * @param null|bool $passthrough Ignored parameter
 		 *
 		 * @return bool
 		 */
@@ -195,7 +196,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Display the error/warning/notice messages in the appropriate destination
 		 *
-		 * @param string|null|int $destination
+		 * @param string|null|int $destination Where we intend to display the message(s)
 		 */
 		public function display( $destination = null ) {
 
@@ -289,7 +290,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Return list of message keys that match the specified destination
 		 *
-		 * @param int $destination
+		 * @param int $destination Where we intend to display the message(s)
 		 *
 		 * @return array
 		 */
@@ -310,8 +311,8 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Display on the front-end of the site (if using WooCommerce or PMPro)
 		 *
-		 * @param string $message
-		 * @param string $type
+		 * @param string $message The message to display on the front-end of the website (if it supports this)
+		 * @param string $type The type of message to display
 		 */
 		private function display_frontend( $message, $type ) {
 
@@ -343,12 +344,12 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Passthrough for some of the PMPro filters so we can display error message(s) on the
 		 *
-		 * @param mixed $arg1
-		 * @param mixed $arg2
-		 * @param mixed $arg3
-		 * @param mixed $arg4
-		 * @param mixed $arg5
-		 * @param mixed $arg6
+		 * @param mixed $arg1 Argument to pass through (ignored)
+		 * @param mixed $arg2 Argument to pass through (ignored)
+		 * @param mixed $arg3 Argument to pass through (ignored)
+		 * @param mixed $arg4 Argument to pass through (ignored)
+		 * @param mixed $arg5 Argument to pass through (ignored)
+		 * @param mixed $arg6 Argument to pass through (ignored)
 		 *
 		 * @return mixed
 		 */
@@ -365,9 +366,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 			);
 
 			if ( ! isset( $post->post_content ) || ( isset( $post->post_content ) && ! is_page( $page_list ) ) ) {
-
 				$utils->log( 'Not on billing or account shortcode/page' );
-
 				return $arg1;
 			}
 
@@ -399,8 +398,8 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Display the PMPro error message(s)
 		 *
-		 * @param string $message
-		 * @param string $message_type
+		 * @param string $message The message to add to the PMPro page(s)
+		 * @param string $message_type The type of message to add to the PMPro page(s)
 		 */
 		public function add_pmpro_message( $message, $message_type ) {
 
@@ -422,9 +421,8 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Display in WP Admin (the backend)
 		 *
-		 * @param string $msg
-		 * @param string $type
-		 *
+		 * @param string $msg The message to add to the WP backend (/wp-admin/)
+		 * @param string $type The type of message to add to the WP backend (/wp-admin/)
 		 */
 		private function display_backend( $msg, $type ) {
 
@@ -442,7 +440,7 @@ if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
 		/**
 		 * Return all messages of a specific type
 		 *
-		 * @param string $type
+		 * @param string $type The message type to retrieve
 		 *
 		 * @return string[]
 		 */
