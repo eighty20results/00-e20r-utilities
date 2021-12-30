@@ -159,8 +159,9 @@ docker-hub-login:
 # (re)Build the Docker images for this development/test environment
 #
 image-build: docker-deps
-	@echo "Building the docker container stack for $(PROJECT)"
+	$(info Building the docker container stack for $(PROJECT)?)
 	@if [[ "X$(LOCAL_NETWORK_STATUS)" != "Xinactive" ]]; then \
+  		echo "Yes, building containers for Unit and Functional testing!" ; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
   		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
   		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) build --pull --progress tty ; \
@@ -190,9 +191,10 @@ image-push: docker-hub-login # image-scan
 # Attempt to pull (download) the plugin specific Docker images for the test/development environment
 #
 image-pull: docker-hub-login
+	$(info Downloading $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION)?)
 	@if docker manifest inspect $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION) > /dev/null; then \
   		if [[ "X$(LOCAL_NETWORK_STATUS)" != "Xinactive" ]]; then \
-			echo "Pulling image from Docker repo" ; \
+			echo "Yes, pulling $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION) image from Docker repo" ; \
 			APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
       			DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
         		docker pull $(CONTAINER_REPO)/$(PROJECT)_wordpress:$(WP_IMAGE_VERSION); \
