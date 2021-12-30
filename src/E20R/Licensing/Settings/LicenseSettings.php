@@ -682,12 +682,17 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 								$this->utils->log( 'Loading updated settings from server' );
 							}
 
-							$server = new LicenseServer( $this );
+							try {
+								$server = new LicenseServer( $this );
+							} catch ( InvalidSettingsKey $e ) {
+								$this->utils->log( $e->getMessage() );
+								throw $e;
+							}
 
 							if ( true === $server->status( $product, true ) ) {
 								try {
 									$settings_obj = $this->merge( $license_settings[ $product ] );
-								} catch ( ErrorSavingSettings | InvalidSettingsKey $e ) {
+								} catch ( ErrorSavingSettings $e ) {
 									$this->utils->log( $e->getMessage() );
 									throw $e;
 								}
@@ -792,7 +797,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 *
 		 * @return LicenseSettings
 		 *
-		 * @throws ErrorSavingSettings|ReflectionException Thrown when we cannot save the License specific settings for the product
+		 * @throws ErrorSavingSettings Thrown when we cannot save the License specific settings for the product
+		 * @throws ReflectionException Thrown when there are problems identifying parameters for the New or Old Settings class
 		 */
 		public function merge( $new_settings ) {
 
@@ -852,7 +858,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			if ( ! empty( $settings ) ) {
 				try {
 					$this->merge( $settings );
-				} catch ( ErrorSavingSettings | InvalidSettingsKey $e ) {
+				} catch ( ErrorSavingSettings | ReflectionException $e ) {
 					$this->utils->log( sprintf( 'Error for %1$s: %2$s', $sku, $e->getMessage() ) );
 					$this->utils->add_message( 'Error: ' . $e->getMessage(), 'error', 'backend' );
 					return false;
