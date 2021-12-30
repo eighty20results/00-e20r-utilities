@@ -1,5 +1,6 @@
 parameters:
     level: 5
+    treatPhpDocTypesAsCertain: false
     dynamicConstantNames:
     	- E20R_LICENSING_VERSION
     	- E20R_LICENSE_SERVER_URL
