@@ -79,7 +79,7 @@ class License_IntegrationTest extends WPTestCase {
 	}
 
 	/**
-	 * Unit test the License::is_active method
+	 * Integration test for the License::is_active() method
 	 *
 	 * @param string      $test_sku The test product sku to use
 	 * @param bool|null   $is_new_version Using new or old licensing plugin during test
@@ -91,6 +91,7 @@ class License_IntegrationTest extends WPTestCase {
 	 * @covers       \E20R\Licensing\License::is_active
 	 * @dataProvider fixture_is_active
 	 * @throws Exception Generic exception handler
+	 * @test
 	 */
 	public function it_should_be_active( string $test_sku, ?bool $is_new_version, $is_licensed, $domain, $status, $expected ) {
 		if ( empty( $this->utils ) ) {
@@ -174,6 +175,7 @@ class License_IntegrationTest extends WPTestCase {
 	 * @throws InvalidSettingsKey|MissingServerURL|ServerConnectionError|BadOperation|ConfigDataNotFound|\Throwable Exceptions thrown by the test
 	 * @covers \E20R\Licensing\License::activate
 	 * @dataProvider fixture_activate
+	 * @test
 	 */
 	public function it_should_become_activated( $test_sku, $plugin_defaults, $status, $decoded_payload, $domain, $thrown_exception, $expected_status, ?string $expected_settings ) {
 		if ( empty( $this->utils ) ) {
@@ -406,6 +408,7 @@ class License_IntegrationTest extends WPTestCase {
 	 *
 	 * @dataProvider fixture_is_licensed
 	 * @covers \E20R\Licensing\License::is_licensed
+	 * @test
 	 */
 	public function it_should_be_licensed( $defaults, $is_active, $license_status, $is_local_server, $test_sku, $force, $settings_array, $version, $expected ) {
 
@@ -593,6 +596,7 @@ class License_IntegrationTest extends WPTestCase {
 	 * @dataProvider fixture_ssl_verify
 	 *
 	 * @throws Exception The exception thrown by the makeEmpty() mockery class
+	 * @test
 	 */
 	public function it_should_show_the_SSL_as_verified( ?string $sku, ?LicenseSettings $settings, bool $expected ) {
 		$m_server = $this->makeEmpty(
@@ -636,6 +640,8 @@ class License_IntegrationTest extends WPTestCase {
 
 	/**
 	 * Integration test of the is_expiring() method
+	 *
+	 * @test
 	 */
 	public function it_should_expire_the_license() {
 
@@ -643,6 +649,8 @@ class License_IntegrationTest extends WPTestCase {
 
 	/**
 	 * Integration test of the is_new_version() method
+	 *
+	 * @test
 	 */
 	public function it_should_show_that_we_are_using_the_new_licensing_code() {
 
@@ -650,6 +658,8 @@ class License_IntegrationTest extends WPTestCase {
 
 	/**
 	 * Integration test of the deactivate() method
+	 *
+	 * @test
 	 */
 	public function it_should_deactivate_the_license() {
 
@@ -657,6 +667,8 @@ class License_IntegrationTest extends WPTestCase {
 
 	/**
 	 * Integration test of the register() method
+	 *
+	 * @test
 	 */
 	public function it_should_register_the_license_with_the_license_server() {
 

@@ -85,8 +85,9 @@ class Loader_IntegrationTest extends WPTestCase {
 	 * @param int      $execution_count The number of executions
 	 *
 	 * @dataProvider fixture_loaded_actions
+	 * @test
 	 */
-	public function test_are_actions_loaded( $action_name, $hook_function, $expected, $execution_count ) {
+	public function it_instantiates_the_class_and_verifies_the_plugins_loaded_action_ran( $action_name, $hook_function, $expected, $execution_count ) {
 		$run_count = did_action( 'plugins_loaded' );
 		self::assertSame( $execution_count, $run_count, "Error: {$run_count} is an unexpected number of executions for the 'plugins_loaded' action hook" );
 		$result = has_action( $action_name, $hook_function );
@@ -116,8 +117,9 @@ class Loader_IntegrationTest extends WPTestCase {
 	 *
 	 * @dataProvider fixture_utilities_loaded
 	 * @covers \E20R\Utilities\Loader::utilities_loaded()
+	 * @test
 	 */
-	public function test_utilities_loaded( $test_value, $expected ) {
+	public function it_instantiates_the_utilities_class( $test_value, $expected ) {
 		$utils  = new Utilities();
 		$loader = new Loader( $utils );
 		$loader->utilities_loaded();
@@ -154,8 +156,9 @@ class Loader_IntegrationTest extends WPTestCase {
 	 * @param bool $expected The value we expect the filters to return in the end
 	 *
 	 * @dataProvider fixture_loaded_filter
+	 * @test
 	 */
-	public function test_module_loaded_filter( $first_filter_value, $first_priority, $second_filter_value, $second_priority, $expected ) {
+	public function it_verifies_the_e20r_utilities_module_installed_filter_ran( $first_filter_value, $first_priority, $second_filter_value, $second_priority, $expected ) {
 		add_filter(
 			'e20r_utilities_module_installed',
 			function ( $received_value ) use ( $first_filter_value ) {
@@ -202,8 +205,9 @@ class Loader_IntegrationTest extends WPTestCase {
 	 *
 	 * @covers \E20R\Utilities\Loader::making_sure_we_win
 	 * @dataProvider fixture_install_handler
+	 * @test
 	 */
-	public function test_making_sure_we_win( $custom_hook, $priority, $expected_result, $expected_priority ) {
+	public function it_makes_sure_we_always_return_true_that_the_module_is_installed_when_the_plugin_is_active( $custom_hook, $priority, $expected_result, $expected_priority ) {
 		$this->utils = new Utilities();
 		$loader      = new Loader( $this->utils );
 		add_filter( 'e20r_utilities_module_installed', $custom_hook, $priority, 1 );
@@ -278,8 +282,9 @@ class Loader_IntegrationTest extends WPTestCase {
 	 *
 	 * @covers \E20R\Utilities\Loader::get_max_hook_priority()
 	 * @dataProvider fixture_hook_priority
+	 * @test
 	 */
-	public function test_get_max_hook_priority( $hook_priority, $expected ) {
+	public function it_makes_sure_we_return_the_expected_filter_priority( $hook_priority, $expected ) {
 		$utils  = new Utilities();
 		$loader = new Loader( $utils );
 		// Add a hook with a given priority & then trigger Loader::making_sure_we_win()
