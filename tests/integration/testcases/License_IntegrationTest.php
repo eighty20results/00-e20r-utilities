@@ -16,10 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Tests\WPUnit\License_WPUnitTest
+ * @package E20R\Tests\Integration\License_IntegrationTest
  */
 
-namespace E20R\Tests\WPUnit;
+namespace E20R\Tests\Integration;
 
 use Codeception\AssertThrows;
 use Codeception\TestCase\WPTestCase;
@@ -42,9 +42,9 @@ use Mockery;
 use stdClass;
 
 /**
- * WPUnit tests for the License() class
+ * Integration tests for the License() class
  */
-class License_WPUnitTest extends WPTestCase {
+class License_IntegrationTest extends WPTestCase {
 
 	use AssertThrows;
 
@@ -92,7 +92,7 @@ class License_WPUnitTest extends WPTestCase {
 	 * @dataProvider fixture_is_active
 	 * @throws Exception Generic exception handler
 	 */
-	public function test_is_active( string $test_sku, ?bool $is_new_version, $is_licensed, $domain, $status, $expected ) {
+	public function it_should_be_active( string $test_sku, ?bool $is_new_version, $is_licensed, $domain, $status, $expected ) {
 		if ( empty( $this->utils ) ) {
 			$message     = new Message();
 			$this->utils = new Utilities( $message );
@@ -160,7 +160,7 @@ class License_WPUnitTest extends WPTestCase {
 	}
 
 	/**
-	 * Unit-test the License::activate() method
+	 * Integration test for the License::activate() method
 	 *
 	 * @param string        $test_sku Product SKU to use for testing
 	 * @param array         $plugin_defaults Default settings for the Licensing plugin
@@ -175,7 +175,7 @@ class License_WPUnitTest extends WPTestCase {
 	 * @covers \E20R\Licensing\License::activate
 	 * @dataProvider fixture_activate
 	 */
-	public function test_activate_license( $test_sku, $plugin_defaults, $status, $decoded_payload, $domain, $thrown_exception, $expected_status, ?string $expected_settings ) {
+	public function it_should_become_activated( $test_sku, $plugin_defaults, $status, $decoded_payload, $domain, $thrown_exception, $expected_status, ?string $expected_settings ) {
 		if ( empty( $this->utils ) ) {
 			$message     = new Message();
 			$this->utils = new Utilities( $message );
@@ -229,7 +229,7 @@ class License_WPUnitTest extends WPTestCase {
 	}
 
 	/**
-	 * Fixture for the License::activate() WPUnit test
+	 * Fixture for the License::activate() Integration test
 	 *
 	 * @return array
 	 *
@@ -407,7 +407,7 @@ class License_WPUnitTest extends WPTestCase {
 	 * @dataProvider fixture_is_licensed
 	 * @covers \E20R\Licensing\License::is_licensed
 	 */
-	public function test_is_licensed( $defaults, $is_active, $license_status, $is_local_server, $test_sku, $force, $settings_array, $version, $expected ) {
+	public function it_should_be_licensed( $defaults, $is_active, $license_status, $is_local_server, $test_sku, $force, $settings_array, $version, $expected ) {
 
 		preg_match( '/https:\/\/(.*)\//', $defaults->get( 'server_url' ), $match );
 
@@ -594,7 +594,7 @@ class License_WPUnitTest extends WPTestCase {
 	 *
 	 * @throws Exception The exception thrown by the makeEmpty() mockery class
 	 */
-	public function test_get_ssl_verify( ?string $sku, ?LicenseSettings $settings, bool $expected ) {
+	public function it_should_show_the_SSL_as_verified( ?string $sku, ?LicenseSettings $settings, bool $expected ) {
 		$m_server = $this->makeEmpty(
 			LicenseServer::class
 		);
@@ -635,30 +635,30 @@ class License_WPUnitTest extends WPTestCase {
 	}
 
 	/**
-	 * WPUnit test of the is_expiring() method
+	 * Integration test of the is_expiring() method
 	 */
-	public function test_is_expiring() {
+	public function it_should_expire_the_license() {
 
 	}
 
 	/**
-	 * WPUnit test of the is_new_version() method
+	 * Integration test of the is_new_version() method
 	 */
-	public function test_is_new_version() {
+	public function it_should_show_that_we_are_using_the_new_licensing_code() {
 
 	}
 
 	/**
-	 * WPUnit test of the deactivate() method
+	 * Integration test of the deactivate() method
 	 */
-	public function test_deactivate() {
+	public function it_should_deactivate_the_license() {
 
 	}
 
 	/**
-	 * WPUnit test of the register() method
+	 * Integration test of the register() method
 	 */
-	public function test_register() {
+	public function it_should_register_the_license_with_the_license_server() {
 
 	}
 }

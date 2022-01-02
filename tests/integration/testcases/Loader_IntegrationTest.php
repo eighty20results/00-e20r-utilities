@@ -19,7 +19,7 @@
  * @package E20R\Tests\WPUnit\Loader_WPUnitTest
  */
 
-namespace E20R\Tests\WPUnit;
+namespace E20R\Tests\Integration;
 
 use Codeception\TestCase\WPTestCase;
 use E20R\Utilities\Loader;
@@ -30,7 +30,7 @@ use Exception;
 /**
  * WP tests ("unit") for testing the Loader class
  */
-class Loader_WPUnitTest extends WPTestCase {
+class Loader_IntegrationTest extends WPTestCase {
 
 	use MockeryPHPUnitIntegration;
 

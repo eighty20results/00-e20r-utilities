@@ -72,7 +72,7 @@
         "psr-4": {
             "E20R\\Tests\\": "tests/",
             "E20R\\Tests\\Unit\\": "tests/unit/testcases/",
-            "E20R\\Tests\\WPUnit\\": "tests/wpunit/testcases/",
+            "E20R\\Tests\\Integration\\": "tests/integration/testcases/",
             "E20R\\Tests\\Functional\\": "tests/functional/testcases/",
             "E20R\\Tests\\Acceptance\\": "tests/acceptance/testcases/",
             "E20R\\Tests\\Api\\": "tests/api/testcases/"
