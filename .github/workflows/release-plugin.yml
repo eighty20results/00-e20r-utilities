@@ -25,16 +25,13 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: eighty20results/Utilities
-      - name: Run Code Standard Tests
-        run: make code-standard-test
-      - name: Run PHP Stan Tests
-        run: make phpstan-test
-      - name: Run the unit tests with coverage
-        run: make coverage
-      - name: Run the WP unit tests
-        run: make wp-unit-test
-      - name: Run the Functional tests
-        run: make functional
+      - name: Run all Standard Tests
+        run: make tests
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
+          GITHUB_TOKEN: ${{ secrets.GITHUB }}
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
 
   build_i18n:
     name: Build the I18N translation files

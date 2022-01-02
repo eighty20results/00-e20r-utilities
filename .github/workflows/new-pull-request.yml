@@ -29,11 +29,14 @@ jobs:
         with:
           repository: eighty20results/Utilities
       - name: Run Code Standard Tests
-        run: make code-standard-test
+        run: make code-standard-tests
       - name: Run PHP Stan Tests
-        run: make phpstan-test
+        run: make phpstan-tests
       - name: Run the unit tests with coverage
         run: make coverage
-      - name: Run the WP unit tests
-        run: make wp-unit-test
-
+      - name: Run the Integration tests
+        run: make integration-tests
+      - name: Run the Functional tests
+        run: make functional-tests
+      - name: Run the Acceptance tests
+        run: make acceptance-tests
