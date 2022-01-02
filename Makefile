@@ -177,7 +177,7 @@ endif
 image-build: docker-deps
 	$(info Building the docker container stack for $(PROJECT)?)
 	@if [[ "X$(LOCAL_NETWORK_STATUS)" != "Xinactive" ]]; then \
-  		echo "Yes, building containers for Unit and Functional testing!" ; \
+  		echo "Yes, building containers for Unit, Integration and Functional testing!" ; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) \
   		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
   		docker-compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) build --pull --progress tty ; \
