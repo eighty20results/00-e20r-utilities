@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package Helper\API
+ * @package Helper\Integration
  */
 
 namespace Helper;
@@ -26,8 +26,8 @@ namespace Helper;
 use Codeception\Module;
 
 /**
- * API Test Helper
+ * Integration test helper
  */
-class Api extends Module {
+class Integration extends Module {
 
 }
