@@ -583,12 +583,12 @@ build: $(E20R_PLUGIN_BASE_FILE)
 
 deploy:
 	@echo "Deploy ${E20R_PLUGIN_NAME}.zip to ${E20R_DEPLOYMENT_SERVER}"
-	@E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh "$(E20R_PLUGIN_BASE_FILE)") && \
-	if [[ -f ${E20R_PLUGIN_NAME}-$${E20R_PLUGIN_VERSION}.zip ]]; then \
-  		echo "Preparing to deploy the ${E20R_PLUGIN_NAME}-$${E20R_PLUGIN_VERSION}.zip plugin archive to the Deployment Server" ; \
+	@if [[ -f ${E20R_PLUGIN_NAME}-*.zip ]]; then \
+  		echo "Preparing to deploy the ${E20R_PLUGIN_NAME}-*.zip plugin archive to the Deployment Server" ; \
 		./bin/deploy.sh "${E20R_PLUGIN_BASE_FILE}" "${E20R_DEPLOYMENT_SERVER}" ; \
 	else \
-	  	echo "Error: ${E20R_PLUGIN_NAME}-$${E20R_PLUGIN_VERSION}.zip not found!" ; \
+	  	echo "Error: ${E20R_PLUGIN_NAME}-*.zip not found!" ; \
+	  	ls -l ; \
 	fi
 
 #new-release: test composer-prod
