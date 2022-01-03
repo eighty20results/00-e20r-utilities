@@ -44,7 +44,7 @@ jobs:
         uses: actions/cache@v2
         with:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+          restore-keys: ${{ runner.os }}-composer-${{ env.E20R_PLUGIN_NAME }}
           path: |
             inc/
             build/kits/*.zip
@@ -132,7 +132,7 @@ jobs:
         uses: actions/cache@v2
         with:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+          restore-keys: ${{ runner.os }}-composer-${{ env.E20R_PLUGIN_NAME }}
           path: |
             inc/
             build/kits/*.zip
@@ -199,7 +199,7 @@ jobs:
         uses: actions/cache@v2
         with:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+          restore-keys: ${{ runner.os }}-composer-${{ env.E20R_PLUGIN_NAME }}
           path: |
             inc/
             build/kits/*.zip
