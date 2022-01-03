@@ -146,7 +146,14 @@ clean:
 # Remove all installed composer, WordPress and E20R plugins/components from the $(COMPOSER_DIR) - /inc - directory
 #
 clean-inc:
-	@find $(COMPOSER_DIR)/* -type d -maxdepth 0 -exec rm -rf {} \; && rm $(COMPOSER_DIR)/*.php
+	@if [[ -d $(COMPOSER_DIR) ]]; then \
+  	  echo "Removing existing composer packages from $(COMPOSER_DIR)" ; \
+  	  find $(COMPOSER_DIR)/* -type d -maxdepth 0 -exec rm -rf {} \; && rm $(COMPOSER_DIR)/*.php ; \
+  	else \
+  	  echo "No existing composer packages to remove from $(COMPOSER_DIR)" ; \
+  	  mkdir -p $(COMPOSER_DIR) ; \
+  	fi
+
 
 #
 # Log in to your Docker HUB account before performing pull/push operations

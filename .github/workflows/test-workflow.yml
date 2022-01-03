@@ -1,5 +1,6 @@
 name: Test of "Release to Eighty20Results.com" workflows
 
+# TODO: Add support for caching of build and composer (if needed)
 on:
   push:
     branches:
