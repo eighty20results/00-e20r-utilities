@@ -36,17 +36,13 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
 
-      - name: Use cache for Composer and test related dependencies
+      - name: Load cached Composer and test related dependencies
         uses: actions/cache@v2
         id: composer-cache
         with:
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-${{ env.E20R_PLUGIN_NAME }}
-          path: |
-            **/inc/
-            **/build/kits/**.zip
-
-      # FIXME: Not able to locate both directory targets for the caching action
+          key: ${{ runner.os }}-composer-cache-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-cache
+          path: inc/**
 
       - name: Install all needed dependencies for Composer
         if: steps.restore-cache.outputs.cache-hit != 'true'
@@ -123,17 +119,13 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
 
-      - name: Use cache for Composer and test related dependencies
+      - name: Load cached Composer and test related dependencies
         uses: actions/cache@v2
         id: composer-cache
         with:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-${{ env.E20R_PLUGIN_NAME }}
-          path: |
-            **/inc/
-            **/build/kits/**.zip
-
-      # FIXME: Not able to locate both directory targets for the caching action
+          restore-keys: ${{ runner.os }}-composer-cache
+          path: inc/
 
       - name: Install all needed dependencies for Composer
         if: steps.composer-cache.outputs.cache-hit != 'true'
@@ -146,6 +138,14 @@ jobs:
       - name: Install all needed dependencies for Docker
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: make docker-deps
+
+      - name: Cache the built plugin package
+        uses: actions/cache@v2
+        id: plugin-package-cache
+        with:
+          key: ${{ runner.os }}-plugin-package-${{ hashFiles('**/build/kits/**.zip') }}
+          restore-keys: ${{ runner.os }}-plugin-package
+          path: build/kits/**.zip
 
       - name: Build and test plugin before deployment
         run: make build
@@ -189,29 +189,33 @@ jobs:
           tools: composer:v2
           coverage: pcov
 
-      - name: Use cache for Composer and test related dependencies
+      - name: Use cache for Composer and test related dependencies (Production)
         uses: actions/cache@v2
-        id: composer-cache
+        id: composer-cache-prod
         with:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-${{ env.E20R_PLUGIN_NAME }}
-          path: |
-            **/inc/
-            **/build/kits/**.zip
-
-      # FIXME: Not able to locate both directory targets for the caching action
+          restore-keys: ${{ runner.os }}-composer-cache
+          path: inc/
 
       - name: Install all needed dependencies for Composer
-        if: steps.composer-cache.outputs.cache-hit != 'true'
+        if: steps.composer-cache-prod.outputs.cache-hit != 'true'
         run: make composer-dev
 
       - name: Install all needed WordPress plugin dependencies
-        if: steps.composer-cache.outputs.cache-hit != 'true'
+        if: steps.composer-cache-prod.outputs.cache-hit != 'true'
         run: make wp-deps
 
       - name: Install all needed dependencies for Docker
-        if: steps.composer-cache.outputs.cache-hit != 'true'
+        if: steps.composer-cache-prod.outputs.cache-hit != 'true'
         run: make docker-deps
+
+      - name: Cache the built plugin package
+        uses: actions/cache@v2
+        id: plugin-package-cache
+        with:
+          key: ${{ runner.os }}-plugin-package-${{ hashFiles('**/build/kits/**.zip') }}
+          restore-keys: ${{ runner.os }}-plugin-package
+          path: build/kits/**.zip
 
       - name: Deploy plugin to WooCommerce store
         run: echo "make deploy"
