@@ -587,7 +587,7 @@ deploy:
   		echo "Preparing to deploy the $(E20R_PLUGIN_BASE_FILE) plugin archive to the Deployment Server" ; \
 		./bin/deploy.sh "${E20R_PLUGIN_BASE_FILE}" "${E20R_DEPLOYMENT_SERVER}" ; \
 	else \
-	  	echo "Error: $(E20R_PLUGIN_BASE_FILE) not found!"
+	  	echo "Error: $(E20R_PLUGIN_BASE_FILE) not found!" ; \
 	fi
 
 #new-release: test composer-prod
