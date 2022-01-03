@@ -43,9 +43,11 @@ jobs:
       - name: Set or fetch cache for Composer and test related dependencies
         uses: actions/cache@v2
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
+          path: |
+            inc/
+            build/kits/*.zip
 
       - name: Install all needed dependencies for Composer
         run: make composer-dev
@@ -129,9 +131,11 @@ jobs:
       - name: Set or fetch cache for Composer and test related dependencies
         uses: actions/cache@v2
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
+          path: |
+            inc/
+            build/kits/*.zip
 
       - name: Install all needed dependencies for Composer
         run: make composer-dev
@@ -194,9 +198,11 @@ jobs:
       - name: Set or fetch cache for Composer and test related dependencies
         uses: actions/cache@v2
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
+          path: |
+            inc/
+            build/kits/*.zip
 
       - name: Install all needed dependencies for Composer
         run: make composer-dev
