@@ -583,7 +583,7 @@ build: $(E20R_PLUGIN_BASE_FILE)
 
 deploy:
 	@echo "Deploy ${E20R_PLUGIN_NAME}.zip to ${E20R_DEPLOYMENT_SERVER}"
-	@if [[ -f ${E20R_PLUGIN_NAME}-*.zip ]]; then \
+	@if [[ -f build/kits/${E20R_PLUGIN_NAME}-*.zip ]]; then \
   		echo "Preparing to deploy the ${E20R_PLUGIN_NAME}-*.zip plugin archive to the Deployment Server" ; \
 		./bin/deploy.sh "${E20R_PLUGIN_BASE_FILE}" "${E20R_DEPLOYMENT_SERVER}" ; \
 	else \
