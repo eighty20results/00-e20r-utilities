@@ -65,7 +65,13 @@
             "E20R\\Licensing\\": "src/E20R/Licensing/",
             "E20R\\Metrics\\": "src/E20R/Metrics/",
             "E20R\\Licensing\\Exceptions\\": "src/E20R/Licensing/Exceptions/",
-            "E20R\\Licensing\\Settings\\": "src/E20R/Licensing/Settings/"
+            "E20R\\Licensing\\Settings\\": "src/E20R/Licensing/Settings/",
+            "E20R\\Tests\\": "tests/",
+            "E20R\\Tests\\Unit\\": "tests/unit/testcases/",
+            "E20R\\Tests\\Integration\\": "tests/integration/testcases/",
+            "E20R\\Tests\\Functional\\": "tests/functional/testcases/",
+            "E20R\\Tests\\Acceptance\\": "tests/acceptance/testcases/",
+            "E20R\\Tests\\Api\\": "tests/api/testcases/"
         }
     },
     "autoload-dev": {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2016 - 2022 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,8 +24,8 @@ namespace E20R\Tests\Integration;
 use Codeception\TestCase\WPTestCase;
 use E20R\Utilities\Loader;
 use E20R\Utilities\Utilities;
-use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Exception;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
 /**
  * WP tests ("unit") for testing the Loader class
@@ -49,10 +49,20 @@ class Loader_IntegrationTest extends WPTestCase {
 	private $utils = null;
 
 	/**
+	 * The Loader class
+	 *
+	 * @var null|Loader $loader
+	 */
+	private $loader = null;
+
+	/**
 	 * Test setup
 	 */
 	protected function setUp(): void {
 		parent::setUp();
+		$this->utils  = Utilities::get_instance();
+		$this->loader = new Loader( $this->utils );
+		$this->loader->utilities_loaded();
 		$this->loadMocks();
 	}
 
@@ -65,6 +75,10 @@ class Loader_IntegrationTest extends WPTestCase {
 			$this->m_utils = $this->makeEmpty(
 				Utilities::class,
 				array(
+					'log'              => function( $msg ) {
+						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+						error_log( "Mocked log: {$msg}" );
+					},
 					'load_text_domain' => null,
 					'configure_update' => null,
 					'dummy_function'   => null,
@@ -87,11 +101,17 @@ class Loader_IntegrationTest extends WPTestCase {
 	 * @dataProvider fixture_loaded_actions
 	 * @test
 	 */
-	public function it_instantiates_the_class_and_verifies_the_plugins_loaded_action_ran( $action_name, $hook_function, $expected, $execution_count ) {
+	public function it_instantiates_the_class_and_verifies_the_plugins_loaded_action_ran(
+		$action_name,
+		$hook_function,
+		$expected,
+		$execution_count
+	) {
 		$run_count = did_action( 'plugins_loaded' );
 		self::assertSame( $execution_count, $run_count, "Error: {$run_count} is an unexpected number of executions for the 'plugins_loaded' action hook" );
 		$result = has_action( $action_name, $hook_function );
-		self::assertSame( $expected, $result, "Error: has_action() should return '{$expected}' but we got '{$result}'" );
+		$this->utils->log( "Expecting has_action('{$action_name}') to return '{$expected}' and is returning '{$result}'" );
+		self::assertSame( $expected, $result, "Error: has_action('{$action_name}') should return '{$expected}' but we got '{$result}'" );
 	}
 
 	/**
@@ -100,12 +120,10 @@ class Loader_IntegrationTest extends WPTestCase {
 	 * @return string[][]
 	 */
 	public function fixture_loaded_actions() {
-		$utils  = new Utilities();
-		$loader = new Loader( $utils );
 		return array(
-			array( 'plugins_loaded', array( $utils, 'load_text_domain' ), 11, 1 ),
-			array( 'init', array( $utils, 'dummy_function' ), false, 1 ),
-			array( 'plugins_loaded', array( $loader, 'utilities_loaded' ), false, 1 ),
+			array( 'e20r_utilities_module_installed', array( $this->loader, 'making_sure_we_win' ), false, 1 ),
+			array( 'init', array( $this->utils, 'dummy_function' ), false, 1 ),
+			array( 'plugins_loaded', array( $this->loader, 'utilities_loaded' ), false, 1 ),
 		);
 	}
 
@@ -119,18 +137,14 @@ class Loader_IntegrationTest extends WPTestCase {
 	 * @covers \E20R\Utilities\Loader::utilities_loaded()
 	 * @test
 	 */
-	public function it_instantiates_the_utilities_class( $test_value, $expected ) {
-		$utils  = new Utilities();
-		$loader = new Loader( $utils );
-		$loader->utilities_loaded();
-
-		$priority = has_filter( 'e20r_utilities_module_installed', array( $loader, 'making_sure_we_win' ) );
+	public function it_makes_sure_the_filter_is_loaded_when_00_e20r_utilities_starts_up( $test_value, $expected ) {
+		$priority = has_filter( 'e20r_utilities_module_installed', array( $this->loader, 'making_sure_we_win' ) );
 		$default  = 99999;
 
 		self::assertSame( $default, $priority, "Error: Expected filter priority for 'making_sure_we_win' hook to be {$default}, but it is: '{$priority}'" );
-		$utils->log( "Running apply_filters() to see if we get the expected '{$expected}' test result" );
+		$this->utils->log( "Running apply_filters() to see if we get the expected ('{$expected}') test result" );
 		$result = apply_filters( 'e20r_utilities_module_installed', $test_value );
-		$utils->log( "Filter execution returns '{$result}' and we expected '{$expected}'" );
+		$this->utils->log( "Filter execution returns '{$result}' and we expected '{$expected}'" );
 		self::assertSame( $expected, $result, "Error: Expected return value to be '{$expected}' but got '{$result}'" );
 	}
 
@@ -158,19 +172,30 @@ class Loader_IntegrationTest extends WPTestCase {
 	 * @dataProvider fixture_loaded_filter
 	 * @test
 	 */
-	public function it_verifies_the_e20r_utilities_module_installed_filter_ran( $first_filter_value, $first_priority, $second_filter_value, $second_priority, $expected ) {
+	public function it_verifies_the_e20r_utilities_module_installed_filter_ran(
+		$first_filter_value,
+		$first_priority,
+		$second_filter_value,
+		$second_priority,
+		$expected
+	) {
+
+		$this->utils->log( "Adding 'e20r_utilities_module_installed' filter with '{$first_filter_value}'  and priority '{$first_priority}'." );
 		add_filter(
 			'e20r_utilities_module_installed',
-			function ( $received_value ) use ( $first_filter_value ) {
+			function ( $received_value ) use ( $first_filter_value, $first_priority ) {
+				$this->utils->log( "Will return '{$received_value}' from first filter hook ('{$first_filter_value}'/'{$first_priority}')" );
 				return $received_value;
 			},
 			$first_priority,
 			1
 		);
 
+		$this->utils->log( "Adding 'e20r_utilities_module_installed' filter with '{$second_filter_value}' and priority '{$second_priority}'." );
 		add_filter(
 			'e20r_utilities_module_installed',
-			function ( $received_value ) use ( $second_filter_value ) {
+			function ( $received_value ) use ( $second_filter_value, $second_priority ) {
+				$this->utils->log( "Will return '{$received_value}' from second filter hook ('{$second_filter_value}'/'{$second_priority}')" );
 				return $received_value;
 			},
 			$second_priority,
@@ -179,6 +204,7 @@ class Loader_IntegrationTest extends WPTestCase {
 
 		// Then run our filter(s)
 		$result = apply_filters( 'e20r_utilities_module_installed', false );
+		$this->utils->log( "We're expecting the 'e20r_utilities_module_installed' filter to return '{$expected}' and it is returning '{$result}'" );
 		self::assertSame( $expected, $result );
 	}
 
@@ -189,9 +215,10 @@ class Loader_IntegrationTest extends WPTestCase {
 	 */
 	public function fixture_loaded_filter() {
 		return array(
+			// First filter value, priority, second filter value, priority, expected value
 			array( true, 1, false, 100000, true ),
-			array( false, 10, false, -1, true ),
-			array( false, 20, false, 30, true ),
+			array( true, 10, false, -1, true ),
+			array( false, 20, true, 30, true ),
 		);
 	}
 
@@ -207,14 +234,17 @@ class Loader_IntegrationTest extends WPTestCase {
 	 * @dataProvider fixture_install_handler
 	 * @test
 	 */
-	public function it_makes_sure_we_always_return_true_that_the_module_is_installed_when_the_plugin_is_active( $custom_hook, $priority, $expected_result, $expected_priority ) {
-		$this->utils = new Utilities();
-		$loader      = new Loader( $this->utils );
+	public function it_makes_sure_the_default_plugin_filter_hook_always_runs_last(
+		$custom_hook,
+		$priority,
+		$expected_result,
+		$expected_priority
+	) {
 		add_filter( 'e20r_utilities_module_installed', $custom_hook, $priority, 1 );
 
 		$filter_priority = has_filter( 'e20r_utilities_module_installed', $custom_hook );
-		$result          = $loader->making_sure_we_win( false );
-		$max_priority    = $loader->get_max_hook_priority();
+		$result          = $this->loader->making_sure_we_win( false );
+		$max_priority    = $this->loader->get_max_hook_priority();
 
 		self::assertSame( $priority, $filter_priority, "Error: Priority for the custom hook saved as '{$filter_priority}' but we gave it '{$priority}'" );
 		self::assertSame( $expected_priority, $max_priority, "Error: Expected max priority for hook: '{$expected_priority}' but the priority is '{$max_priority}'" );
@@ -285,13 +315,12 @@ class Loader_IntegrationTest extends WPTestCase {
 	 * @test
 	 */
 	public function it_makes_sure_we_return_the_expected_filter_priority( $hook_priority, $expected ) {
-		$utils  = new Utilities();
-		$loader = new Loader( $utils );
-		// Add a hook with a given priority & then trigger Loader::making_sure_we_win()
+
+		$this->utils->log( "Add a hook with a given priority ('{$hook_priority}') & then trigger Loader::making_sure_we_win()" );
 		add_filter( 'e20r_utilities_module_installed', '__return_false', $hook_priority );
-		$loader->making_sure_we_win( false );
-		$result = $loader->get_max_hook_priority();
-		self::assertSame( $expected, $result );
+		$this->loader->making_sure_we_win( false );
+		$result = $this->loader->get_max_hook_priority();
+		self::assertSame( $expected, $result, "Ran get_max_hook_priority and expected '{$expected}' but got '{$result}' back" );
 		self::assertTrue(
 			remove_filter(
 				'e20r_utilities_module_installed',

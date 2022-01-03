@@ -11,7 +11,7 @@ License: GPLv2
 Text Domain: 00-e20r-utilities
 Domain Path: languages/
 
- * Copyright (c) 2014 - 2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2014 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -111,7 +111,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 * Add filter to indicate this plugin is active
 		 */
 		public function utilities_loaded() {
-			$this->utils->log( 'Confirms we loaded this E20R Utilities module' );
+			$this->utils->log( 'Confirms we loaded the E20R Utilities module' );
 			// (try to) make sure this executes last
 			add_filter( 'e20r_utilities_module_installed', array( $this, 'making_sure_we_win' ), $this->default_priority, 1 );
 		}
@@ -120,14 +120,14 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 * Function to make sure the last filter hook executed for
 		 * 'e20r_utilities_module_installed' returns true (since this plugin is active)
 		 *
-		 * @param bool $is_installed - Force setting that Utilities module as installed
+		 * @param bool $is_installed - Force-setting Utilities module as being installed
 		 *
 		 * @return bool
 		 */
 		public function making_sure_we_win( $is_installed = false ): bool {
 			// No need to keep looping if we already established that the plugin has been installed on this server
 			if ( true === $is_installed ) {
-				return $is_installed;
+				return true;
 			}
 			global $wp_filter;
 
@@ -149,7 +149,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 					}
 				}
 
-				// Clean up so we don't go bananas with adding extra insurance handlers.
+				// Clean up so we don't go bananas with adding extra handlers.
 				if ( count( $same_hook ) >= 1 ) {
 					foreach ( $same_hook as $hook_key ) {
 						unset( $wp_filter['e20r_utilities_module_installed']->callbacks[ $this->default_priority ][ $hook_handlers[ $hook_key ] ] );
@@ -161,11 +161,13 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 			// Latest (highest) priority hook is above the default value
 			// and the handler has a hook priority less or same as latest hook handler.
 			if ( ( $this->default_priority < $max_priority ) && ( $default_handler <= $max_priority ) ) {
+				$this->utils->log( "Because the default priority {$this->default_priority} is less than the max priority ({$max_priority}) and the default handler's priority {$default_handler} is LE than {$max_priority}, we need to bump the default handler's priority!" );
 				// Need to bump priority and make sure we always return true.
 				$bump_priority = true;
 			}
 
 			if ( false === $bump_priority && 1 < $filter_count ) {
+				$this->utils->log( "Because we do not (yet) need to bump the priority and the filter count is {$filter_count}, override the bump flag!" );
 				// Have more than a single hook at the default (high) priority, so need make sure we always return true.
 				$bump_priority = true;
 			}
@@ -178,6 +180,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 				$this->default_priority = 99999;
 			}
 
+			$this->utils->log( 'And then we return the expected true value!' );
 			return true;
 		}
 
@@ -238,7 +241,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 	}
 }
 
-if ( function_exists( '\add_action' ) ) {
+if ( defined( 'ABSPATH' ) ) {
 	$loader = new Loader();
 	register_activation_hook( __FILE__, array( $loader, 'utilities_installed' ) );
 	register_deactivation_hook( __FILE__, array( $loader, 'utilities_uninstalled' ) );
