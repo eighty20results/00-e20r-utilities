@@ -143,8 +143,8 @@ jobs:
         uses: actions/cache@v2
         id: plugin-package-cache
         with:
-          key: ${{ runner.os }}-plugin-package-${{ hashFiles('**/build/kits/**.zip') }}
-          restore-keys: ${{ runner.os }}-plugin-package
+          key: ${{ runner.os }}-plugin-package-cache-${{ hashFiles('**/build/kits/**.zip') }}
+          restore-keys: ${{ runner.os }}-plugin-package-cache
           path: build/kits/**.zip
 
       - name: Build and test plugin before deployment
@@ -189,12 +189,12 @@ jobs:
           tools: composer:v2
           coverage: pcov
 
-      - name: Use cache for Composer and test related dependencies (Production)
+      - name: Load cached Composer and test related dependencies (Production)
         uses: actions/cache@v2
         id: composer-cache-prod
         with:
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-cache
+          key: ${{ runner.os }}-composer-cache-prod-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-cache-prod
           path: inc/
 
       - name: Install all needed dependencies for Composer
@@ -213,8 +213,8 @@ jobs:
         uses: actions/cache@v2
         id: plugin-package-cache
         with:
-          key: ${{ runner.os }}-plugin-package-${{ hashFiles('**/build/kits/**.zip') }}
-          restore-keys: ${{ runner.os }}-plugin-package
+          key: ${{ runner.os }}-plugin-package-cache-${{ hashFiles('**/build/kits/**.zip') }}
+          restore-keys: ${{ runner.os }}-plugin-package-cache
           path: build/kits/**.zip
 
       - name: Deploy plugin to WooCommerce store
