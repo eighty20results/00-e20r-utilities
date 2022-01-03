@@ -583,7 +583,12 @@ build: $(E20R_PLUGIN_BASE_FILE)
 
 deploy:
 	@echo "Deploy ${E20R_PLUGIN_NAME}.zip to ${E20R_DEPLOYMENT_SERVER}"
-	@./bin/deploy.sh "${E20R_PLUGIN_BASE_FILE}" "${E20R_DEPLOYMENT_SERVER}"
+	@if [[ -f $(E20R_PLUGIN_BASE_FILE) ]]; then \
+  		echo "Preparing to deploy the $(E20R_PLUGIN_BASE_FILE) plugin archive to the Deployment Server" ; \
+		./bin/deploy.sh "${E20R_PLUGIN_BASE_FILE}" "${E20R_DEPLOYMENT_SERVER}" ; \
+	else \
+	  	echo "Error: $(E20R_PLUGIN_BASE_FILE) not found!"
+	fi
 
 #new-release: test composer-prod
 #	@./build_env/get_version.sh && \
