@@ -85,6 +85,12 @@ jobs:
       - name: Adding deployment target to known_hosts file
         run: ssh-keyscan -H -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Login to Docker HUB
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
       - name: Build and test plugin before deployment
         run: make build
         env:
@@ -120,6 +126,12 @@ jobs:
           extensions: mbstring, xdebug
           tools: composer:v2
           coverage: pcov
+
+      - name: Login to Docker HUB
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
 
       - name: Deploy plugin to WooCommerce store
         run: make deploy
