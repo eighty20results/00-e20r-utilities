@@ -36,29 +36,28 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
 
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-
-      - name: Set or fetch cache for Composer and test related dependencies
+      - name: Use cache for Composer and test related dependencies
         uses: actions/cache@v2
+        id: ${{ env.E20R_PLUGIN_NAME }}-cache
         with:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-${{ env.E20R_PLUGIN_NAME }}
           path: |
-            inc/
-            build/kits/*.zip
+            **/inc/
+            **/build/kits/**.zip
+
+      # FIXME: Not able to locate both directory targets for the caching action
 
       - name: Install all needed dependencies for Composer
-        run: make composer-dev
         if: steps.restore-cache.outputs.cache-hit != 'true'
+        run: make composer-dev
 
       - name: Install all needed WordPress plugin dependencies
-        if: steps.restore-cache.outputs.cache-hit != 'true'
+        if: steps.${{ env.E20R_PLUGIN_NAME }}-cache.outputs.cache-hit != 'true'
         run: make wp-deps
 
       - name: Install all needed dependencies for Docker
-        if: steps.restore-cache.outputs.cache-hit != 'true'
+        if: steps.${{ env.E20R_PLUGIN_NAME }}-cache.outputs.cache-hit != 'true'
         run: make docker-deps
 
       - name: Run all Standard Tests
@@ -124,29 +123,28 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
 
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-
-      - name: Set or fetch cache for Composer and test related dependencies
+      - name: Use cache for Composer and test related dependencies
         uses: actions/cache@v2
+        id: ${{ env.E20R_PLUGIN_NAME }}-cache
         with:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-${{ env.E20R_PLUGIN_NAME }}
           path: |
-            inc/
-            build/kits/*.zip
+            **/inc/
+            **/build/kits/**.zip
+
+      # FIXME: Not able to locate both directory targets for the caching action
 
       - name: Install all needed dependencies for Composer
+        if: steps.${{ env.E20R_PLUGIN_NAME }}-cache.outputs.cache-hit != 'true'
         run: make composer-dev
-        if: steps.restore-cache.outputs.cache-hit != 'true'
 
       - name: Install all needed WordPress plugin dependencies
-        if: steps.restore-cache.outputs.cache-hit != 'true'
+        if: steps.${{ env.E20R_PLUGIN_NAME }}-cache.outputs.cache-hit != 'true'
         run: make wp-deps
 
       - name: Install all needed dependencies for Docker
-        if: steps.restore-cache.outputs.cache-hit != 'true'
+        if: steps.${{ env.E20R_PLUGIN_NAME }}-cache.outputs.cache-hit != 'true'
         run: make docker-deps
 
       - name: Build and test plugin before deployment
@@ -191,33 +189,32 @@ jobs:
           tools: composer:v2
           coverage: pcov
 
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-
-      - name: Set or fetch cache for Composer and test related dependencies
+      - name: Use cache for Composer and test related dependencies
         uses: actions/cache@v2
+        id: ${{ env.E20R_PLUGIN_NAME }}-cache
         with:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-${{ env.E20R_PLUGIN_NAME }}
           path: |
-            inc/
-            build/kits/*.zip
+            **/inc/
+            **/build/kits/**.zip
+
+      # FIXME: Not able to locate both directory targets for the caching action
 
       - name: Install all needed dependencies for Composer
+        if: steps.${{ env.E20R_PLUGIN_NAME }}-cache.outputs.cache-hit != 'true'
         run: make composer-dev
-        if: steps.restore-cache.outputs.cache-hit != 'true'
 
       - name: Install all needed WordPress plugin dependencies
-        if: steps.restore-cache.outputs.cache-hit != 'true'
+        if: steps.${{ env.E20R_PLUGIN_NAME }}-cache.outputs.cache-hit != 'true'
         run: make wp-deps
 
       - name: Install all needed dependencies for Docker
-        if: steps.restore-cache.outputs.cache-hit != 'true'
+        if: steps.${{ env.E20R_PLUGIN_NAME }}-cache.outputs.cache-hit != 'true'
         run: make docker-deps
 
       - name: Deploy plugin to WooCommerce store
-        run: make deploy
+        run: echo "make deploy"
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
