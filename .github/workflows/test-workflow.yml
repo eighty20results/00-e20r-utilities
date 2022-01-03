@@ -11,7 +11,7 @@ jobs:
   plugin_tests:
     strategy:
       matrix:
-        php_version: [ '7.3', '7.4' ]
+        php_version: [ '7.3', '7.4', '8.0' ]
     name: "Plugin tests - PHP"
     runs-on: ubuntu-18.04
     steps:
@@ -19,6 +19,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: eighty20results/Utilities
+          # ref: main
       - name: Setup PHP with Composer V2+
         uses: shivammathur/setup-php@v2
         with:
@@ -48,7 +49,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: eighty20results/Utilities
-      - name: WordPress .pot File Generator
+          # ref: main
+      - name: WordPress .pot File Generator for 00-e20r-utilities
         uses: iamdharmesh/action-wordpress-pot-generator@main
         with:
           destination_path: './languages'
@@ -57,12 +59,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # To push the release to the plugin store
-  release:
-    name: Deploy plugin package to the plugin repository (Our License server or WordPress.org)
+  # To create the plugin .zip archive
+  build_plugin:
+    name: Build plugin package to the plugin repository (Our License server or WordPress.org)
     needs: [plugin_tests, build_i18n]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: eighty20results/Utilities
+          # ref: main
+
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
+
+      - name: Adding deployment target to known_hosts file
+        run: ssh-keyscan -H -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
       - name: "Setup PHP with Composer V2+"
         uses: shivammathur/setup-php@v2
         with:
@@ -70,11 +87,25 @@ jobs:
           extensions: mbstring, xdebug
           tools: composer:v2
           coverage: pcov
+
+      - name: Build and test plugin before deployment
+        run: make build
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
+          GITHUB_TOKEN: ${{ secrets.GITHUB }}
+          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
+  # To push the release to the plugin store
+  release:
+    name: Deploy plugin package to the plugin repository (Our License server or WordPress.org)
+    needs: [plugin_tests, build_i18n, build_plugin]
+    runs-on: ubuntu-18.04
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
           repository: eighty20results/Utilities
-          ref: main
+          # ref: main
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
         with:
@@ -90,12 +121,13 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
 
-      - name: Build and test plugin before deployment
-        run: make build
-        env:
-          E20R_PLUGIN_NAME: 00-e20r-utilities
-          GITHUB_TOKEN: ${{ secrets.GITHUB }}
-          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+      - name: Setup PHP with Composer V2+
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, xdebug
+          tools: composer:v2
+          coverage: pcov
 
       - name: Deploy plugin to WooCommerce store
         run: make deploy
