@@ -60,19 +60,12 @@ endif
 
 DOWNLOAD_MODULE := 1
 
-$(info Wildcard result: $(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php))
-
 # Determine if there is a local (to this system) instance of the E20R Utilities module repository
 ifneq ($(wildcard $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php),)
 DOWNLOAD_MODULE := $(shell grep -q 'public function __construct' $(E20R_UTILITIES_PATH)/src/licensing/class-licensing.php 2>/dev/null && echo "0")
 endif
 
 $(info Download the E20R Utilities module: $(DOWNLOAD_MODULE))
-
-ifeq ($(CONTAINER_ACCESS_TOKEN),)
-	echo "Error: Docker login token is not defined!"
-	exit 1
-endif
 
 # PROJECT := $(shell basename ${PWD}) # This is the default as long as the plugin name matches
 PROJECT := $(E20R_PLUGIN_NAME)
@@ -154,7 +147,6 @@ clean-inc:
   	  mkdir -p $(COMPOSER_DIR) ; \
   	fi
 
-
 #
 # Log in to your Docker HUB account before performing pull/push operations
 #
@@ -167,9 +159,16 @@ hub-login:
 		echo "Skipping docker-cli based hub login!" ; \
 	fi
 
+#
+# Target to use when not running locally
+#
 hub-nologin:
 	@echo "Skipping CLI based docker login operation"
 
+#
+# Conditional execution based on whether or not we're running on a MacOS based host with
+# it's network interface up and running
+#
 ifeq ($(LOCAL_NETWORK_STATUS), )
 $(info Using GitHub Action based login for Docker HUB)
 docker-hub-login: hub-nologin
