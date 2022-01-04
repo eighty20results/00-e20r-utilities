@@ -3,7 +3,7 @@
   "slug": "00-e20r-utilities",
   "download_url": "https://eighty20results.com/protected-content/00-e20r-utilities/00-e20r-utilities-2.1.0.zip",
   "version": "2.1.0",
-  "tested": "",
+  "tested": "5.8.1",
   "requires": "5.0",
   "author": "Thomas Sjolshagen <thomas@eighty20results.com>",
   "author_homepage": "https://eighty20results.com/thomas-sjolshagen",
