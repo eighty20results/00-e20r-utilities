@@ -1,4 +1,4 @@
-name: Release plugin to WooCommerce store
+name: Release (and deploy) plugin package
 
 # Deploy when a new release is created in the Main branch
 on:

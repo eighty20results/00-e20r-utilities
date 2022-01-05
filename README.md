@@ -1,11 +1,13 @@
 ### Eighty/20 Results Utilities Module
 `Contributors: eighty20results` <br />
-`Tags: e20r` <br />-utilities, module, licensing, tools
+`Tags: e20r-utilities, module, licensing, tools` <br />
 `Requires at least: 5.0` <br />
 `Tested up to: 5.8.1` <br />
 `Stable tag: 2.1.0` <br />
 
 Adds various utility functions and license capabilities needed by some Eighty/20 Results developed plugins
+
+![Release Plugin](https://github.com/eighty20results/Utilities/actions/workflows/release-plugin.yml/badge.svg) ![Test Release Plugin](https://github.com/eighty20results/Utilities/actions/workflows/test-workflow.yml/badge.svg)
 
 ### Description
 The plugin consolidates required functionality for a number of Eighty / 20 Results developed plugins.
