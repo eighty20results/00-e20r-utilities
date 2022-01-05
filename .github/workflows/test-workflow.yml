@@ -1,6 +1,7 @@
 name: Test of "Release to Eighty20Results.com" workflows
 
-# TODO: Add support for caching of build and composer (if needed)
+# This is used to test changes to the test/build/deploy workflow for the plugin so only applies if the
+# branch is named test_workflow<something>
 on:
   push:
     branches:
