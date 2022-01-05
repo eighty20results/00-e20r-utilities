@@ -60,7 +60,7 @@ function main() {
 	fi
 
 	target_server="${ssh_user}@${ssh_host}"
-	remote_path="./www/eighty20results.com/public_html/protected-content/"
+	remote_path="./www/eighty20results.com/public_html/protected-content"
 	metadata="${src_path}/metadata.json"
 
 	# We _want_ to expand the variables on the client side
