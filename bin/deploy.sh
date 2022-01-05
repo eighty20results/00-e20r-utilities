@@ -19,6 +19,16 @@ function main() {
 
 	source build_config/helper_config "${@}"
 
+# FIXME: Should only be used when running as a github action for a test_workflow* branch
+	function ssh() {
+		echo "$@"
+	}
+
+	# FIXME: Should only be used when running as a github action for a test_workflow* branch
+	function scp() {
+		echo "$@"
+	}
+
 	src_path="$(pwd)"
 	plugin_path="${short_name}"
 	dst_path="${src_path}/build/${plugin_path}"
