@@ -20,7 +20,7 @@ function main() {
 	source build_config/helper_config "${@}"
 
 	# Should only be used when running as a GitHub action for a non-main branch
-	if [[ -z "${E20R_PLUGIN_DEPLOYMENT}" && "prod" == "${E20R_PLUGIN_DEPLOYMENT}" ]]; then
+	if [[ -n "${BRANCH_NAME}" && "${BRANCH_NAME}" != "main" ]]; then
 		echo "Creating mocked ssh and scp command so we won't actually deploy anything"
 
 		function ssh() {
@@ -30,6 +30,8 @@ function main() {
 		function scp() {
 			echo scp "$@"
 		}
+	else
+		echo "Not sure what the BRANCH_NAME environment variable is..? '${BRANCH_NAME}'"
 	fi
 
 	src_path="$(pwd)"

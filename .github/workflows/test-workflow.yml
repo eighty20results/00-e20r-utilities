@@ -219,14 +219,25 @@ jobs:
           restore-keys: ${{ runner.os }}-plugin-package-cache
           path: build/kits/**.zip
 
-      - name: Set production specific environment variables
-        if: github.ref == 'refs/heads/main'
-        env:
-          E20R_PLUGIN_DEPLOYMENT: 'prod'
+      # Extract the branch name for all events except for pull requests
+      - name: Extract branch name
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: echo "::set-env name=BRANCH_NAME::$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
+      # Extract the branch name on pull request
+      - name: Print branch name
+        if: github.event_name == 'pull_request'
+        run: echo "::set-env name=BRANCH_NAME::$(echo ${GITHUB_HEAD_REF})"
+
+      - name: Show the branch name
+        run: echo 'The branch name is ' $BRANCH_NAME
 
       - name: Deploy plugin to WooCommerce store
         run: make deploy
         env:
+          BRANCH_NAME: ${{ }}
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
           DOCKER_USER: ${{ secrets.DOCKER_USER }}
