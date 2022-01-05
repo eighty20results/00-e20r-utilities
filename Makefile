@@ -588,7 +588,7 @@ deploy:
 		./bin/deploy.sh "${E20R_PLUGIN_BASE_FILE}" "${E20R_DEPLOYMENT_SERVER}" ; \
 	else \
 	  	echo "Error: ${E20R_PLUGIN_NAME}-*.zip not found!" ; \
-	  	ls -l "${PWD}/build/kits/"
+	  	ls -l "${PWD}/build/kits/" ; \
 	  	exit 1; \
 	fi
 
