@@ -165,6 +165,8 @@ jobs:
         with:
           repository: eighty20results/Utilities
           # ref: main
+        env:
+          E20R_PLUGIN_DEPLOYMENT: 'test'
 
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
@@ -209,13 +211,18 @@ jobs:
         if: steps.composer-cache-prod.outputs.cache-hit != 'true'
         run: make docker-deps
 
-      - name: Cache the built plugin package
+      - name: Restore the built plugin package
         uses: actions/cache@v2
         id: plugin-package-cache
         with:
           key: ${{ runner.os }}-plugin-package-cache-${{ hashFiles('**/build/kits/**.zip') }}
           restore-keys: ${{ runner.os }}-plugin-package-cache
           path: build/kits/**.zip
+
+      - name: Set production specific environment variables
+        if: github.ref == 'refs/heads/main'
+        env:
+          E20R_PLUGIN_DEPLOYMENT: 'prod'
 
       - name: Deploy plugin to WooCommerce store
         run: make deploy

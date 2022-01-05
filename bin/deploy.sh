@@ -19,15 +19,18 @@ function main() {
 
 	source build_config/helper_config "${@}"
 
-# FIXME: Should only be used when running as a github action for a test_workflow* branch
-	function ssh() {
-		echo "$@"
-	}
+	# Should only be used when running as a GitHub action for a non-main branch
+	if [[ -z "${E20R_PLUGIN_DEPLOYMENT}" && "prod" == "${E20R_PLUGIN_DEPLOYMENT}" ]]; then
+		echo "Creating mocked ssh and scp command so we won't actually deploy anything"
 
-	# FIXME: Should only be used when running as a github action for a test_workflow* branch
-	function scp() {
-		echo "$@"
-	}
+		function ssh() {
+			echo ssh "$@"
+		}
+
+		function scp() {
+			echo scp "$@"
+		}
+	fi
 
 	src_path="$(pwd)"
 	plugin_path="${short_name}"
