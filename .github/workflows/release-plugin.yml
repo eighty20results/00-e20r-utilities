@@ -217,6 +217,11 @@ jobs:
           restore-keys: ${{ runner.os }}-plugin-package-cache
           path: build/kits/**.zip
 
+      # Extract the branch name for all events except for pull requests
+      - name: Decide whether to run deploy action
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
+
       - name: Deploy plugin to production (WooCommerce Store or Wordpress.org repo)
         if: steps.branch-name.outputs.is_default == 'true'
         shell: bash
