@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v2.1.0 - 2022-01-06
 - 🔄 Generated POT File (WordPress .pot File Generator)
+- BUG FIX: Updated CHANGELOG (v2.1.0 for WP 5.8.2)
+- BUG FIX: Updated README info (v2.1.0 for WP 5.8.2)
+- BUG FIX: Updated metadata.json for v2.1.0 and WP 5.8.2
+- BUG FIX: Doesn't handle the tag
+- BUG FIX: Incorrect info in Copyright notice
+- BUG FIX: Don't use variable in action name
+- BUG FIX: Didn't hide the makefile script
+- BUG FIX: Only run i18n build for a push or when creating a pull request
+- BUG FIX: Don't run the i18n stuff in the test workflow for Releases
+- BUG FIX: Forgot to remove the build_i18n dependency
 - BUG FIX: Updated copyright notices (Thomas Sjolshagen)
 - BUG FIX: Clean up the path (Thomas Sjolshagen)
 - BUG FIX: Use compgen with wildcard to check for .zip archive presence (Thomas Sjolshagen)
@@ -57,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BUG FIX: Updated copyright notices and documentation (Thomas Sjolshagen)
 - BUG FIX: Remove .gitignore for the *TesterActions classes in the repo (Thomas Sjolshagen)
 - BUG FIX: Updated copyright notices and documentation (Thomas Sjolshagen)
+- Updated to version 2.1.0 (Thomas Sjolshagen)
 - BUG FIX: Problem with PHP8.0 during WPUnit tests (Thomas Sjolshagen)
 - BUG FIX: Another attempt at cleaning up the Docker HUB login process (Thomas Sjolshagen)
 - BUG FIX: Clean up makefile interface handling (Thomas Sjolshagen)
@@ -366,7 +377,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BUG FIX: Error when trying to commit the current.txt file as part of the docs targer (Thomas Sjolshagen)
 - BUG FIX: Adding New PR workflow (Thomas Sjolshagen)
 - BUG FIX: Wrong variable definition in Makefile settings (Thomas Sjolshagen)
-N/A
 
 ## v2.0.6 - 2021-07-19
 - BUG FIX: Updated release workflow for deployment support
