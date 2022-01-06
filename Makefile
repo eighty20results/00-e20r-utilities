@@ -583,7 +583,7 @@ build: $(E20R_PLUGIN_BASE_FILE)
 
 deploy:
 	@echo "Deploy ${E20R_PLUGIN_NAME}.zip to ${E20R_DEPLOYMENT_SERVER}"
-	if ! compgen -G "build/kits/${E20R_PLUGIN_NAME}-*.zip" > /dev/null; then \
+	@if ! compgen -G "build/kits/${E20R_PLUGIN_NAME}-*.zip" > /dev/null; then \
 	  	echo "Error: ${PWD}/build/kits/${E20R_PLUGIN_NAME}*.zip not found!" ; \
 	  	ls -l "${PWD}/build/kits/" ; \
 	  	exit 1; \
