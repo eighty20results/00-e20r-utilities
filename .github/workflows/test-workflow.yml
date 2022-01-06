@@ -72,7 +72,7 @@ jobs:
   # To create the plugin .zip archive
   build_plugin:
     name: Build plugin package to the plugin repository (Our License server or WordPress.org)
-    needs: [plugin_tests, build_i18n]
+    needs: [plugin_tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -146,7 +146,7 @@ jobs:
   # To push the release to the plugin store
   release:
     name: Deploy plugin package to the plugin repository (Our License server or WordPress.org)
-    needs: [plugin_tests, build_i18n, build_plugin]
+    needs: [plugin_tests, build_plugin]
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout repository
