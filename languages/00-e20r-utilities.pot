@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2022-01-06T06:52:20+00:00\n"
+"POT-Creation-Date: 2022-01-06T14:33:28+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.5.0\n"
 "X-Domain: 00-e20r-utilities\n"
@@ -336,16 +336,17 @@ msgstr ""
 msgid "The supplied settings are not the correct settings for the current license management version"
 msgstr ""
 
-#: src/E20R/Metrics/MixpanelConnector.php:71
+#: src/E20R/Metrics/MixpanelConnector.php:72
 msgid "No API key found for the Mixpanel connector"
 msgstr ""
 
-#: src/E20R/Metrics/MixpanelConnector.php:94
+#: src/E20R/Metrics/MixpanelConnector.php:95
 msgid "Current user not yet identified"
 msgstr ""
 
-#: src/E20R/Metrics/MixpanelConnector.php:147
-msgid "Invalid parameter for MixpanelConnector() class"
+#. translators: %1$s The parameter name
+#: src/E20R/Metrics/MixpanelConnector.php:151
+msgid "Invalid parameter (%1$s) for the MixpanelConnector() class"
 msgstr ""
 
 #: src/E20R/Utilities/GDPR_Enablement.php:113

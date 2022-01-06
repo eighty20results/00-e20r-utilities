@@ -385,7 +385,7 @@ class LicenseTest extends Unit {
 	public function test_is_new_version( $expected ) {
 
 		if ( ! extension_loaded( 'runkit' ) ) {
-			self::markTestSkipped( 'This test requires the runkit extension.' );
+			self::markTestSkipped( 'test_is_new_version() requires the runkit extension.' );
 		}
 
 		if ( function_exists( 'runkit_constant_remove' ) ) {

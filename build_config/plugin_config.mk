@@ -1,4 +1,4 @@
-E20R_PLUGIN_NAME ?= 00-e20r-utilities
+E20R_PLUGIN_NAME ?= default-plugin-name # We need to/should use a shell environment variable to set this value!
 E20R_PLUGIN_BASE_FILE ?= class-loader.php
 LOCAL_NETWORK_IF ?= en0
 

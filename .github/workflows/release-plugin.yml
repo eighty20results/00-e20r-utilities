@@ -4,6 +4,11 @@ name: Release (and deploy) plugin package
 on:
   release:
     # Only deploy when the admin creates/publishes/edits/pre-releases from GitHub
+    branches:
+      - '*'         # matches every branch that doesn't contain a '/'
+      - '*/*'       # matches every branch containing a single '/'
+      - '**'        # matches every branch
+      - '!main'     # excludes main branch
     types: [edited, published]
 
 jobs:
@@ -19,6 +24,11 @@ jobs:
         with:
           repository: eighty20results/Utilities
           ref: main
+
+      # Extract the branch name for all events except for pull requests
+      - name: Extract branch or tag name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
 
       - name: Setup PHP with Composer V2+
         uses: shivammathur/setup-php@v2
@@ -207,27 +217,12 @@ jobs:
           restore-keys: ${{ runner.os }}-plugin-package-cache
           path: build/kits/**.zip
 
-      # Extract the branch name for all events except for pull requests
-      - name: Extract branch name
-        id: extract_branch
-        shell: bash
-        if: github.event_name != 'pull_request'
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-
-      # Extract the branch name on pull request
-      - name: Extract branch name when creating a pull request
-        shell: bash
-        if: github.event_name == 'pull_request'
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
-
-      - name: Debug - Display the branch name
-        shell: bash
-        run: echo "The branch name is ${{ env.BRANCH_NAME }}"
-
       - name: Deploy plugin to production (WooCommerce Store or Wordpress.org repo)
+        if: steps.branch-name.outputs.is_default == 'true'
         shell: bash
-        run: BRANCH_NAME="${{ env.BRANCH_NAME }}" make deploy
+        run: make deploy
         env:
+          BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
           DOCKER_USER: ${{ secrets.DOCKER_USER }}
