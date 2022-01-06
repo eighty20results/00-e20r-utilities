@@ -2,8 +2,6 @@ name: Release (and deploy) plugin package
 
 # Deploy when a new release is created in the Main branch
 on:
-  branches:
-    - main
   release:
     # Only deploy when the admin creates/publishes/edits/pre-releases from GitHub
     types: [edited, published]
