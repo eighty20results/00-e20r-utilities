@@ -4,6 +4,11 @@ name: Release (and deploy) plugin package
 on:
   release:
     # Only deploy when the admin creates/publishes/edits/pre-releases from GitHub
+    branches:
+      - '*'         # matches every branch that doesn't contain a '/'
+      - '*/*'       # matches every branch containing a single '/'
+      - '**'        # matches every branch
+      - '!main'     # excludes main branch
     types: [edited, published]
 
 jobs:

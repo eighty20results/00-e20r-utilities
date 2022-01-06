@@ -5,10 +5,10 @@ name: Test of "Release to Eighty20Results.com" workflows
 on:
   push:
     branches:
-      - test_workflow*
-      - !main
+      - 'test_workflow*'
+      - '!main'   # excludes main (default) branch
     tags:
-      - test_workflow*
+      - 'test_workflow*'
 
 jobs:
   plugin_tests:
