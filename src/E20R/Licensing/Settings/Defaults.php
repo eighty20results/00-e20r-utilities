@@ -1,7 +1,6 @@
 <?php
 /**
- *
- * Copyright (c) 2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2021 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
