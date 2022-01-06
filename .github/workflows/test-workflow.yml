@@ -216,7 +216,7 @@ jobs:
         uses: tj-actions/branch-names@v5.1
 
       - name: Deploy plugin to production (WooCommerce Store or Wordpress.org repo)
-        if: steps.branch-name.outputs.is_default == 'false'
+        if: steps.branch-name.outputs.current_branch == 'main'
         shell: bash
         run: make deploy
         env:

@@ -5,10 +5,7 @@ on:
   release:
     # Only deploy when the admin creates/publishes/edits/pre-releases from GitHub
     branches:
-      - '*'         # matches every branch that doesn't contain a '/'
-      - '*/*'       # matches every branch containing a single '/'
-      - '**'        # matches every branch
-      - '!main'     # excludes main branch
+      - main     # Only for MAIN branch
     types: [edited, published]
 
 jobs:
@@ -222,8 +219,14 @@ jobs:
         id: branch-name
         uses: tj-actions/branch-names@v5.1
 
+      - name: Show me the branch
+        shell: bash
+        run: |
+          echo "Current branch is: ${{ steps.branch-name.outputs.current_branch }}" ;
+
+      # And then deploy the package if it exists _and_ we're on the main branch
       - name: Deploy plugin to production (WooCommerce Store or Wordpress.org repo)
-        if: steps.branch-name.outputs.is_default == 'true'
+        if: steps.branch-name.outputs.current_branch == 'main'
         shell: bash
         run: make deploy
         env:
