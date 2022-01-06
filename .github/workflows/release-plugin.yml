@@ -1,15 +1,71 @@
-name: Release plugin to WooCommerce store
+name: Release (and deploy) plugin package
 
+# Deploy when a new release is created in the Main branch
 on:
-  # Deploy when a new release is created
   release:
     # Only deploy when the admin creates/publishes/edits/pre-releases from GitHub
     types: [edited, published]
 
 jobs:
-  # To push the release to the plugin store
-  release:
-    name: Deploy plugin package to WooCommerce download server
+  plugin_tests:
+      strategy:
+        matrix:
+          php_version: [ '7.3', '7.4', '8.0' ]
+      name: "Plugin tests - PHP"
+      runs-on: ubuntu-18.04
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v2
+          with:
+            repository: eighty20results/Utilities
+            # ref: main
+
+        - name: Setup PHP with Composer V2+
+          uses: shivammathur/setup-php@v2
+          with:
+            php-version: ${{ matrix.php_version }}
+            extensions: mbstring, xdebug
+            tools: composer:v2
+            coverage: pcov
+
+        - name: Login to Docker HUB
+          uses: docker/login-action@v1
+          with:
+            username: ${{ secrets.DOCKER_USER }}
+            password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
+        - name: Run all Standard Tests
+          run: make tests
+          env:
+            E20R_PLUGIN_NAME: 00-e20r-utilities
+            GITHUB_TOKEN: ${{ secrets.GITHUB }}
+            DOCKER_USER: ${{ secrets.DOCKER_USER }}
+            CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
+  build_i18n:
+    name: Build the I18N translation files
+    needs: plugin_tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: eighty20results/Utilities
+          # ref: main
+
+      - name: WordPress .pot File Generator
+        uses: iamdharmesh/action-wordpress-pot-generator@main
+        with:
+          destination_path: './languages'
+          slug: '00-e20r-utilities'
+          text_domain: '00-e20r-utilities'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # To create the plugin .zip archive
+  build_plugin:
+    name: Build plugin package to the plugin repository (Our License server or WordPress.org)
+    needs: [plugin_tests, build_i18n]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -27,12 +83,61 @@ jobs:
       - name: Adding deployment target to known_hosts file
         run: ssh-keyscan -H -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
+      - name: "Setup PHP with Composer V2+"
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, xdebug
+          tools: composer:v2
+          coverage: pcov
+
+      - name: Login to Docker HUB
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
       - name: Build and test plugin before deployment
         run: make build
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
           CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
+  # To create the plugin .zip archive
+  release:
+    name: Deploy the plugin package to the repository (Our License server or WordPress.org)
+    needs: [plugin_tests, build_i18n, build_plugin]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: eighty20results/Utilities
+          ref: main
+
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
+
+      - name: Adding deployment target to known_hosts file
+        run: ssh-keyscan -H -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: "Setup PHP with Composer V2+"
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, xdebug
+          tools: composer:v2
+          coverage: pcov
+
+      - name: Login to Docker HUB
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
 
       - name: Deploy plugin to WooCommerce store
         run: make deploy

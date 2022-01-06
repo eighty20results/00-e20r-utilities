@@ -4,6 +4,10 @@
 #
 source build_config/helper_config "${@}"
 
+if [[ -z "${wordpress_version}"  ]]; then
+	echo "Error: Cannot find version number for WordPress. Exiting!"
+	exit 1
+fi
 #
 # Define all needed variables for the metadata.json file creation/update
 #
@@ -49,5 +53,3 @@ if ! git commit -m "BUG FIX: Updated metadata.json for v${version} and WP ${word
   echo "No need to commit metadata.json (no changes recorded)"
   exit 0
 fi
-
-

@@ -1,15 +1,17 @@
 <?php
-/*
+/**
 Plugin Name: E20R Utilities Module
 Plugin URI: https://eighty20results.com/
 Description: Provides functionality required by some of the Eighty/20 Results developed plugins
-Version: 2.0.6
+Version: 2.1.0
 Requires PHP: 7.3
 Author: Thomas Sjolshagen <thomas@eighty20results.com>
 Author URI: https://eighty20results.com/thomas-sjolshagen/
 License: GPLv2
+Text Domain: 00-e20r-utilities
+Domain Path: languages/
 
- * Copyright (c) 2014 - 2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2014 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,14 +27,15 @@ License: GPLv2
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
+ * @package E20R\Utilities\Utilities
  */
 
 namespace E20R\Utilities;
 
-use RecursiveCallbackFilterIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use UnexpectedValueException;
+use E20R\Licensing\Exceptions\BadOperation;
+use E20R\Metrics\MixpanelConnector;
+use function \add_action;
+use function \add_filter;
 
 // Deny direct access to the file
 if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
@@ -43,142 +46,209 @@ if ( ! defined( 'E20R_UTILITIES_BASE_FILE' ) ) {
 	define( 'E20R_UTILITIES_BASE_FILE', __FILE__ );
 }
 
+// Load the PSR-4 Autoloader
+require_once __DIR__ . '/inc/autoload.php';
+
 if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 
+	/**
+	 * Class Loader
+	 *
+	 * @package E20R\Utilities
+	 */
 	class Loader {
 
-		public function __construct() {
-
-			// Load the composer autoloader for the 10quality utilities
-			if ( function_exists( 'plugin_dir_path' ) ) {
-				require_once \plugin_dir_path( __FILE__ ) . 'inc/autoload.php';
-			} else {
-				require_once __DIR__ . '/inc/autoload.php';
-			}
-		}
 		/**
-		 * Class auto-loader for the Utilities Module
+		 * Instance of the Utilities class.
 		 *
-		 * @param string $class_name Name of the class to auto-load
-		 *
-		 * @since  1.0
-		 * @access public static
+		 * @var Utilities|null $utils
 		 */
-		public static function auto_load( $class_name ) {
+		private $utils = null;
 
-			if ( false === stripos( $class_name, 'e20r' ) ) {
-				return false;
-			}
+		/**
+		 * The priority for the 'e20r_utilities_module_installed' filter handler
+		 *
+		 * @var int $default_priority
+		 */
+		private $default_priority = 99999;
 
-			$parts  = explode( '\\', $class_name );
-			$c_name = preg_replace( '/_/', '-', $parts[ ( count( $parts ) - 1 ) ] );
-			$c_name = strtolower( $c_name );
+		/**
+		 * Link to registering metrics for MixPanel
+		 *
+		 * @var MixpanelConnector|null $metrics
+		 */
+		private $metrics = null;
 
-			if ( function_exists( 'plugin_dir_path' ) ) {
-				$base_path = \plugin_dir_path( __FILE__ );
-				$src_path  = \plugin_dir_path( __FILE__ ) . 'src/';
-			} else {
-				$base_path = __DIR__;
-				$src_path  = __DIR__ . '/src/';
-			}
-
-			if ( file_exists( $src_path ) ) {
-				$base_path = $src_path;
-			}
-
-			$filename = "class-{$c_name}.php";
-
-			try {
-				$iterator = new RecursiveDirectoryIterator(
-					$base_path,
-					RecursiveDirectoryIterator::SKIP_DOTS |
-					RecursiveIteratorIterator::SELF_FIRST |
-					RecursiveIteratorIterator::CATCH_GET_CHILD |
-					RecursiveDirectoryIterator::FOLLOW_SYMLINKS
-				);
-			} catch ( \Exception $e ) {
-				print 'Error: ' . $e->getMessage(); // phpcs:ignore
-				return false;
-			}
-
-			try {
-				// Locate class member files, recursively
-				$filter = new RecursiveCallbackFilterIterator(
-					$iterator,
-					function ( $current, $key, $iterator ) use ( $filename ) {
-
-						// Skip hidden files and directories.
-						if ( '.' === $current->getFilename()[0] || '..' === $current->getFilename() ) {
-							return false;
-						}
-
-						if ( $current->isDir() ) {
-							// Only recurse into intended subdirectories.
-							return $current->getFilename() === $filename;
-						} else {
-							// Only consume files of interest.
-							return str_starts_with( $current->getFilename(), $filename );
-						}
-					}
-				);
-			} catch ( \Exception $e ) {
-				echo 'Autoloader error: ' . $e->getMessage(); // phpcs:ignore
-				return false;
-			}
-
-			try {
-				/** @SuppressWarnings("unused") */
-				$rec_iterator = new RecursiveIteratorIterator(
-					$iterator,
-					RecursiveIteratorIterator::LEAVES_ONLY,
-					RecursiveIteratorIterator::CATCH_GET_CHILD
-				);
-			} catch ( UnexpectedValueException $uvexception ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log(
-					sprintf(
-						"Error: %s.\nState: %s",
-						$uvexception->getMessage(),
-						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-						print_r( $iterator, true )
+		/**
+		 * Loader constructor.
+		 * Loads the default PSR-4 Autoloader and configures a couple of required action handlers
+		 *
+		 * @param Utilities $utils - An instance of the Utilities class.
+		 */
+		public function __construct( $utils = null ) {
+			if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
+				wp_die(
+					esc_attr__(
+						"Error: Couldn't load the Utilities class included in this module. Please deactivate the E20R Utilities Module plugin!",
+						'00-e20r-utilities'
 					)
 				);
-				return false;
 			}
 
-			// Walk through filesystem looking for our class file
-			foreach ( $rec_iterator as $f_filename => $f_file ) {
-
-				$class_path = sprintf( '%s/%s', $f_file->getPath(), basename( $f_filename ) );
-
-				if ( $f_file->isFile() && false !== strpos( $class_path, $filename ) ) {
-					/** @noinspection PhpIncludeInspection */
-					require_once $class_path;
-				}
+			// The loader uses the Utilities class to load action handlers,
+			// so we need it for testing purposes.
+			if ( empty( $utils ) ) {
+				$message = new Message();
+				$utils   = new Utilities( $message );
 			}
+			$this->utils = $utils;
 
-			return true;
+			// Add required action for language modules (I18N).
+			add_action( 'plugins_loaded', array( $this->utils, 'load_text_domain' ), 11 );
 		}
 
 		/**
 		 * Add filter to indicate this plugin is active
 		 */
-		public static function utilities_loaded() {
-			add_filter( 'e20r_utilities_module_installed', '__return_true', -1, 1 );
+		public function utilities_loaded() {
+			$this->utils->log( 'Confirms we loaded the E20R Utilities module' );
+			// (try to) make sure this executes last
+			add_filter( 'e20r_utilities_module_installed', array( $this, 'making_sure_we_win' ), $this->default_priority, 1 );
+		}
+
+		/**
+		 * Function to make sure the last filter hook executed for
+		 * 'e20r_utilities_module_installed' returns true (since this plugin is active)
+		 *
+		 * @param bool $is_installed - Force-setting Utilities module as being installed
+		 *
+		 * @return bool
+		 */
+		public function making_sure_we_win( $is_installed = false ): bool {
+			// No need to keep looping if we already established that the plugin has been installed on this server
+			if ( true === $is_installed ) {
+				return true;
+			}
+			global $wp_filter;
+
+			$max_priority    = $this->get_max_hook_priority();
+			$bump_priority   = false;
+			$default_handler = has_filter( 'e20r_utilities_module_installed', array( $this, 'making_sure_we_win' ) );
+			$filter_count    = isset( $wp_filter['e20r_utilities_module_installed']->callbacks[ $this->default_priority ] ) ?
+				count( $wp_filter['e20r_utilities_module_installed']->callbacks[ $this->default_priority ] ) :
+				0;
+
+			// Remove unnecessary executions of extra instance of the 'making_sure_we_win' hook handler (in case it's executed more than once).
+			if ( $filter_count > 1 ) {
+				$hook_handlers = array_keys( $wp_filter['e20r_utilities_module_installed']->callbacks[ $this->default_priority ] );
+				$same_hook     = array();
+
+				foreach ( $hook_handlers as $key_id => $hook_id ) {
+					if ( 1 === preg_match( '/making_sure_we_win/', $hook_id ) && 0 !== $key_id ) {
+						$same_hook[] = $key_id;
+					}
+				}
+
+				// Clean up so we don't go bananas with adding extra handlers.
+				if ( count( $same_hook ) >= 1 ) {
+					foreach ( $same_hook as $hook_key ) {
+						unset( $wp_filter['e20r_utilities_module_installed']->callbacks[ $this->default_priority ][ $hook_handlers[ $hook_key ] ] );
+					}
+					$filter_count = 1;
+				}
+			}
+
+			// Latest (highest) priority hook is above the default value
+			// and the handler has a hook priority less or same as latest hook handler.
+			if ( ( $this->default_priority < $max_priority ) && ( $default_handler <= $max_priority ) ) {
+				$this->utils->log( "Because the default priority {$this->default_priority} is less than the max priority ({$max_priority}) and the default handler's priority {$default_handler} is LE than {$max_priority}, we need to bump the default handler's priority!" );
+				// Need to bump priority and make sure we always return true.
+				$bump_priority = true;
+			}
+
+			if ( false === $bump_priority && 1 < $filter_count ) {
+				$this->utils->log( "Because we do not (yet) need to bump the priority and the filter count is {$filter_count}, override the bump flag!" );
+				// Have more than a single hook at the default (high) priority, so need make sure we always return true.
+				$bump_priority = true;
+			}
+
+			if ( true === $bump_priority ) {
+				$this->default_priority = ( (int) $max_priority + 10 );
+				$this->utils->log( "Bumping filter priority to {$this->default_priority} so we make sure we always return true since this plugin _is_ activated!" );
+				add_filter( 'e20r_utilities_module_installed', '__return_true', $this->default_priority, 1 );
+				ksort( $wp_filter );
+				$this->default_priority = 99999;
+			}
+
+			$this->utils->log( 'And then we return the expected true value!' );
+			return true;
+		}
+
+		/**
+		 * Returns the (current) default priority for the final 'e20r_utilities_module_installed' hook
+		 *
+		 * @return int
+		 */
+		public function get_default_priority() : int {
+			return $this->default_priority;
+		}
+
+		/**
+		 * Set the default priority for the default 'e20r_utilities_module_installed' hook to 99999
+		 */
+		public function reset_priority() {
+			$this->default_priority = 99999;
+		}
+
+		/**
+		 * Returns the highest priority value for the 'e20r_utilities_module_installed' filter hooks
+		 *
+		 * @return int
+		 */
+		public function get_max_hook_priority(): int {
+			global $wp_filter;
+			$filter_priority_list = array_keys( $wp_filter['e20r_utilities_module_installed']->callbacks );
+			rsort( $filter_priority_list );
+			return (int) $filter_priority_list[0];
+		}
+
+		/**
+		 * Instantiate and register with MixPanel when activating the plugin
+		 */
+		public function utilities_installed() {
+			$this->metrics = new MixpanelConnector( 'a14f11781866c2117ab6487792e4ebfd' );
+
+			$mp_events = array(
+				'installed' => true,
+				'activated' => true,
+			);
+
+			try {
+				$this->metrics->get()->registerAllOnce( $mp_events );
+			} catch ( BadOperation $exception ) {
+				$this->utils->log( $exception->getMessage() );
+			}
+
+			$this->metrics->increment_activations();
+		}
+
+		/**
+		 * Various actions when deactivating the plugin
+		 */
+		public function utilities_uninstalled() {
+			$this->metrics->decrement_activations();
 		}
 	}
 }
 
-try {
-	spl_autoload_register( '\\E20R\\Utilities\\Loader::auto_load' );
-} catch ( \Exception $exception ) {
-	// phpcs:ignore
-	error_log( 'Unable to register autoloader: ' . $exception->getMessage(), E_USER_ERROR );
-	return false;
+if ( defined( 'ABSPATH' ) ) {
+	$loader = new Loader();
+	register_activation_hook( __FILE__, array( $loader, 'utilities_installed' ) );
+	register_deactivation_hook( __FILE__, array( $loader, 'utilities_uninstalled' ) );
+	add_action( 'plugins_loaded', array( $loader, 'utilities_loaded' ), 10 );
 }
 
-\add_action( 'plugins_loaded', 'E20R\\Utilities\\Loader::utilities_loaded', -1 );
-
-if ( class_exists( 'Utilities' ) ) {
+// One-click update support for the plugin.
+if ( class_exists( '\E20R\Utilities\Utilities' ) && defined( 'WP_PLUGIN_DIR' ) ) {
 	Utilities::configure_update( '00-e20r-utilities', __FILE__ );
 }

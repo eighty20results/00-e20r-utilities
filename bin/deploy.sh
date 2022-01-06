@@ -19,6 +19,21 @@ function main() {
 
 	source build_config/helper_config "${@}"
 
+	# Should only be used when running as a GitHub action for a non-main branch
+	if [[ -n "${BRANCH_NAME}" && "${BRANCH_NAME}" != "main" ]]; then
+		echo "Creating mocked ssh and scp command so we won't actually deploy anything"
+
+		function ssh() {
+			echo ssh "$@"
+		}
+
+		function scp() {
+			echo scp "$@"
+		}
+	else
+		echo "Not sure what the BRANCH_NAME environment variable is..? '${BRANCH_NAME}'"
+	fi
+
 	src_path="$(pwd)"
 	plugin_path="${short_name}"
 	dst_path="${src_path}/build/${plugin_path}"
@@ -45,7 +60,7 @@ function main() {
 	fi
 
 	target_server="${ssh_user}@${ssh_host}"
-	remote_path="./www/eighty20results.com/public_html/protected-content/"
+	remote_path="./www/eighty20results.com/public_html/protected-content"
 	metadata="${src_path}/metadata.json"
 
 	# We _want_ to expand the variables on the client side

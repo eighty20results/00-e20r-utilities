@@ -35,9 +35,14 @@ github_url="https://github.com/eighty20results/${short_name}/"
 # Plugin specific files to include/exclude and move if necessary during build
 declare -x -a include=( \
 	"docs" \
-	"inc" \
+	"inc/composer" \
+	"inc/yahnis-elsts" \
+	"inc/10quality"
+	"inc/autoload.php" \
 	"src" \
 	"class-loader.php" \
+	"composer.json" \
+	"composer.phar" \
 	"README.txt" \
 	"CHANGELOG.md"
 	)
@@ -54,11 +59,12 @@ declare -x -a exclude=( \
 	".circleci" \
 	"docker-compose.yml" \
 	"build_readmes" \
+	"build_config" \
 	"build" \
 	".idea" \
 	"*.yml" \
-	"*.phar" \
-	"composer.*" \
+	"composer.lock" \
+	"docker.hub.key" \
 	"vendor" \
 	)
 declare -x -a build=()

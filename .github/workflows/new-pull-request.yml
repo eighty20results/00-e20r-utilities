@@ -1,0 +1,50 @@
+name: Run Unit Tests when creating a PR
+
+# Run Unit Test when new PR is created
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  pr_tests:
+    strategy:
+      matrix:
+        php_version: [ '7.3', '7.4', '8.0' ]
+    name: Pull Request related testing - PHP
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: eighty20results/Utilities
+
+      - name: Login to Docker HUB
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
+      - name: Setup PHP with Composer V2+
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php_version }}
+          extensions: mbstring, xdebug
+          tools: composer:v2
+          coverage: pcov
+
+      - name: Run Code Standard Tests
+        run: make code-standard-tests
+      - name: Run PHP Stan Tests
+        run: make phpstan-tests
+      - name: Run the unit tests with coverage
+        run: make coverage
+      - name: Run the Integration tests
+        run: make integration-tests
+      - name: Run the Functional tests
+        run: make functional-tests
+      - name: Run the Acceptance tests
+        run: make acceptance-tests

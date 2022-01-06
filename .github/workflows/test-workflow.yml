@@ -1,5 +1,7 @@
 name: Test of "Release to Eighty20Results.com" workflows
 
+# This is used to test changes to the test/build/deploy workflow for the plugin so only applies if the
+# branch is named test_workflow<something>
 on:
   push:
     branches:
@@ -8,31 +10,246 @@ on:
       - test_workflow*
 
 jobs:
-  # To push the release (sources) to the Eighty20Results.com plugin store
-  test_workflow:
-    name: Push plugin to eighty20results.com
+  plugin_tests:
+    strategy:
+      matrix:
+        php_version: [ '7.3', '7.4', '8.0' ]
+    name: "Plugin tests - PHP"
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: eighty20results/Utilities
+          # ref: main
+
+      - name: Setup PHP with Composer V2+
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php_version }}
+          extensions: mbstring, xdebug
+          tools: composer:v2
+          coverage: pcov
+
+      - name: Login to Docker HUB
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
+      - name: Load cached Composer and test related dependencies
+        uses: actions/cache@v2
+        id: composer-cache
+        with:
+          key: ${{ runner.os }}-composer-cache-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-cache
+          path: inc/**
+
+      - name: Install all needed dependencies for Composer
+        shell: bash
+        if: steps.restore-cache.outputs.cache-hit != 'true'
+        run: make composer-dev
+
+      - name: Install all needed WordPress plugin dependencies
+        shell: bash
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: make wp-deps
+
+      - name: Install all needed dependencies for Docker
+        shell: bash
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: make docker-deps
+
+      - name: Run all Standard Tests
+        shell: bash
+        run: make tests
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
+          GITHUB_TOKEN: ${{ secrets.GITHUB }}
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
+  build_i18n:
+    name: Build the I18N translation files
+    needs: plugin_tests
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: eighty20results/Utilities
+          # ref: main
+
+      - name: WordPress .pot File Generator for 00-e20r-utilities
+        uses: iamdharmesh/action-wordpress-pot-generator@main
+        with:
+          destination_path: './languages'
+          slug: '00-e20r-utilities'
+          text_domain: '00-e20r-utilities'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # To create the plugin .zip archive
+  build_plugin:
+    name: Build plugin package to the plugin repository (Our License server or WordPress.org)
+    needs: [plugin_tests, build_i18n]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
           repository: eighty20results/Utilities
-          ref: test_workflow
+          # ref: main
+
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
-      - name: Adding Known Hosts
+
+      - name: Adding deployment target to known_hosts file
         run: ssh-keyscan -H -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-      - name: Build and test plugin
+
+      - name: "Setup PHP with Composer V2+"
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, xdebug
+          tools: composer:v2
+          coverage: pcov
+
+      - name: Login to Docker HUB
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
+      - name: Load cached Composer and test related dependencies
+        uses: actions/cache@v2
+        id: composer-cache
+        with:
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-cache
+          path: inc/
+
+      - name: Install all needed dependencies for Composer
+        shell: bash
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: make composer-dev
+
+      - name: Install all needed WordPress plugin dependencies
+        shell: bash
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: make wp-deps
+
+      - name: Install all needed dependencies for Docker
+        shell: bash
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: make docker-deps
+
+      - name: Cache the built plugin package
+        uses: actions/cache@v2
+        id: plugin-package-cache
+        with:
+          key: ${{ runner.os }}-plugin-package-cache-${{ hashFiles('**/build/kits/**.zip') }}
+          restore-keys: ${{ runner.os }}-plugin-package-cache
+          path: build/kits/**.zip
+
+      - name: Build and test plugin before deployment
+        shell: bash
         run: make build
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
           CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
-      - name: Deploy plugin to download server
-        run: make deploy
+
+  # To push the release to the plugin store
+  release:
+    name: Deploy plugin package to the plugin repository (Our License server or WordPress.org)
+    needs: [plugin_tests, build_i18n, build_plugin]
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: eighty20results/Utilities
+          # ref: main
+
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
+
+      - name: Adding deployment target to known_hosts file
+        shell: bash
+        run: ssh-keyscan -H -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Login to Docker HUB
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
+      - name: Setup PHP with Composer V2+
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, xdebug
+          tools: composer:v2
+          coverage: pcov
+
+      - name: Load cached Composer and test related dependencies (Production)
+        uses: actions/cache@v2
+        id: composer-cache-prod
+        with:
+          key: ${{ runner.os }}-composer-cache-prod-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-cache-prod
+          path: inc/
+
+      - name: Install all needed dependencies for Composer
+        if: steps.composer-cache-prod.outputs.cache-hit != 'true'
+        shell: bash
+        run: make composer-dev
+
+      - name: Install all needed WordPress plugin dependencies
+        if: steps.composer-cache-prod.outputs.cache-hit != 'true'
+        shell: bash
+        run: make wp-deps
+
+      - name: Install all needed dependencies for Docker
+        if: steps.composer-cache-prod.outputs.cache-hit != 'true'
+        shell: bash
+        run: make docker-deps
+
+      - name: Restore the built plugin package
+        id: plugin-package-cache
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-plugin-package-cache-${{ hashFiles('**/build/kits/**.zip') }}
+          restore-keys: ${{ runner.os }}-plugin-package-cache
+          path: build/kits/**.zip
+
+      # Extract the branch name for all events except for pull requests
+      - name: Extract branch name
+        id: extract_branch
+        shell: bash
+        if: github.event_name != 'pull_request'
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
+      # Extract the branch name on pull request
+      - name: Extract branch name when creating a pull request
+        shell: bash
+        if: github.event_name == 'pull_request'
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+
+      - name: Debug - Display the branch name
+        shell: bash
+        run: echo "The branch name is ${{ env.BRANCH_NAME }}"
+
+      - name: Deploy plugin to production (WooCommerce Store or Wordpress.org repo)
+        shell: bash
+        run: BRANCH_NAME="${{ env.BRANCH_NAME }}" make deploy
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}

@@ -5,9 +5,11 @@ services:
     container_name: codecep-wp-${E20R_PLUGIN_NAME}
     build:
       context: .
-      dockerfile: tests/docker/Dockerfile.unittest
+      dockerfile: tests/_docker/Dockerfile.unittest
       args:
         WP_RELEASE: ${WP_RELEASE}
+        APACHE_RUN_GROUP: ${APACHE_RUN_GROUP}
+        APACHE_RUN_USER: ${APACHE_RUN_USER}
     restart: always
     ports:
       - ${WP_PORT}:80

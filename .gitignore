@@ -53,10 +53,10 @@ fabric.properties
 .idea/
 /composer.phar
 /composer.lock
-/build/
 /inc/
 /build_readmes/
 /.phpunit.result.cache
 .DS_Store
 
 /docker.hub.key
+/tests/docker/docker.hub.key
