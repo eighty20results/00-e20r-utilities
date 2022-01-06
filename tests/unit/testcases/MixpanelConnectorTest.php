@@ -53,6 +53,13 @@ class MixpanelConnectorTest extends Unit {
 	private $mock_mp = null;
 
 	/**
+	 * The ID of the User as implemented by MixPanel()
+	 *
+	 * @var string|null $user_id
+	 */
+	private $user_id = null;
+
+	/**
 	 * The setup function for this Unit Test suite
 	 */
 	protected function setUp(): void {
@@ -67,6 +74,8 @@ class MixpanelConnectorTest extends Unit {
 
 		$this->loadFiles();
 		$this->loadStubbedFunctions();
+
+		$this->user_id = uniqid( 'e20rutil', true );
 	}
 
 	/**
@@ -133,7 +142,7 @@ class MixpanelConnectorTest extends Unit {
 			->with( Mockery::contains( 'e20r_mp_userid' ) )
 			->andReturn(
 				function( $option_name, $option_default ) {
-					return uniqid( 'e20rutil', true );
+					return $this->user_id;
 				}
 			);
 
@@ -229,7 +238,12 @@ class MixpanelConnectorTest extends Unit {
 	 *
 	 * @test
 	 */
-	public function test_successful_get_operations( $parameter, $expected, $token = null, $config = array( 'host' => 'api-eu.mixpanel.com' ) ) {
+	public function test_successful_get_operations(
+		$parameter,
+		$expected,
+		$token = null,
+		$config = array( 'host' => 'api-eu.mixpanel.com' )
+	) {
 		$result = null;
 
 		try {
@@ -270,7 +284,7 @@ class MixpanelConnectorTest extends Unit {
 	 */
 	public function fixture_successful_get() {
 		return array(
-			array( 'user_id', null, 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ) ),
+			array( 'user_id', $this->user_id, 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ) ),
 		);
 	}
 	/**
@@ -279,6 +293,7 @@ class MixpanelConnectorTest extends Unit {
 	 * @param string $parameter The parameter name to attempt fetching data for
 	 * @param mixed  $expected The expected return value
 	 * @param mixed  $expected_exception The anticipated exception returned
+	 * @param string $user_id The ID of the un-identified User (Mixpanel)
 	 * @param string $token The Mixpanel server API token (mocked)
 	 * @param array  $config The Mixpanel server API configuration (mocked)
 	 *
@@ -291,6 +306,7 @@ class MixpanelConnectorTest extends Unit {
 		$parameter,
 		$expected,
 		$expected_exception,
+		$user_id,
 		$token = null,
 		$config = array( 'host' => 'api-eu.mixpanel.com' )
 	) {
@@ -303,7 +319,7 @@ class MixpanelConnectorTest extends Unit {
 				Mixpanel::class,
 				array( $token, $config ),
 				array(
-					'get_user_id' => 10024,
+					'get_user_id' => $user_id,
 				)
 			);
 		} catch ( Exception $e ) {
@@ -322,7 +338,8 @@ class MixpanelConnectorTest extends Unit {
 	 */
 	public function fixture_unsuccessful_get() {
 		return array(
-			array( 'not_a_valid_class_property', null, InvalidSettingsKey::class, 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ) ),
+			array( 'not_a_valid_class_property', null, InvalidSettingsKey::class, null, 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ) ),
+			array( 'not_a_valid_class_property', null, InvalidMixpanelKey::class, $this->user_id, null, array( 'host' => 'api-eu.mixpanel.com' ) ),
 		);
 	}
 }
