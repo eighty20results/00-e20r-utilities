@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v2.1.0 - 2022-01-06
 - 🔄 Generated POT File (WordPress .pot File Generator)
+- BUG FIX: Didn't exclude execution when running against main branch
+- BUG FIX: Didn't cache dependencies during workflow
+- BUG FIX: Only run deploy target if we're on a main branch
+- BUG FIX: Revert branch limitation
+- BUG FIX: Attempt to deal with branches better
+- BUG FIX: Very basic unit testing for MixpanelConnector()
+- BUG FIX: Standardize the user ID info for the MixpanelConnector Tests
+- BUG FIX: Clean up test workflow for PRs
+- BUG FIX: Bad parsing of README file
+- BUG FIX: Run deploy in test if we're not on the default (main) branch
 - BUG FIX: Updated CHANGELOG (v2.1.0 for WP 5.8.2)
 - BUG FIX: Updated README info (v2.1.0 for WP 5.8.2)
 - BUG FIX: Updated metadata.json for v2.1.0 and WP 5.8.2
