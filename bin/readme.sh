@@ -33,7 +33,7 @@ if [[ -f ./README.txt ]]; then
 		 -e "s/^\=\= (.*) \=\=/### \1/g" \
 		 -e "s/^\=\=\= (.*) \=\=\=/### \1/g" \
 		 -e "s/^\* (.*)$/- \1/g" \
-		 -e "s/^([A-zA-Z ]*): ([A-zA-Z0-9\.\,\\\/: ]*)/\`\1\: \2\` <br \/>/g" \
+		 -e "s/^([a-zA-Z ]*): ([A-zA-Z0-9\.\,\\\/: -]*)/\`\1\: \2\` <br \/>/g" \
 		 ./README.md > NEW_README.md
 	mv ./NEW_README.md ./README.md
 fi
