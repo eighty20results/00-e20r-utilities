@@ -2,6 +2,8 @@ name: Release (and deploy) plugin package
 
 # Deploy when a new release is created in the Main branch
 on:
+  branches:
+    - main
   release:
     # Only deploy when the admin creates/publishes/edits/pre-releases from GitHub
     types: [edited, published]
@@ -19,6 +21,11 @@ jobs:
         with:
           repository: eighty20results/Utilities
           ref: main
+
+      # Extract the branch name for all events except for pull requests
+      - name: Extract branch or tag name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
 
       - name: Setup PHP with Composer V2+
         uses: shivammathur/setup-php@v2
@@ -206,15 +213,6 @@ jobs:
           key: ${{ runner.os }}-plugin-package-cache-${{ hashFiles('**/build/kits/**.zip') }}
           restore-keys: ${{ runner.os }}-plugin-package-cache
           path: build/kits/**.zip
-
-      # Extract the branch name for all events except for pull requests
-      - name: Extract branch or tag name
-        id: branch-name
-        uses: tj-actions/branch-names@v5.1
-
-      - name: Running on the default branch.
-        if: steps.branch-name.outputs.is_default == 'true'
-        run: echo "Running on default: ${{ steps.branch-name.outputs.current_branch }}"
 
       - name: Deploy plugin to production (WooCommerce Store or Wordpress.org repo)
         if: steps.branch-name.outputs.is_default == 'true'
