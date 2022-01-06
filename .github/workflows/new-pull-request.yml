@@ -36,22 +36,47 @@ jobs:
           tools: composer:v2
           coverage: pcov
 
+      - name: Load cached Composer and test related dependencies
+        uses: actions/cache@v2
+        id: composer-cache
+        with:
+          key: ${{ runner.os }}-composer-cache-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-cache
+          path: inc/**
+
       - name: Run Code Standard Tests
+        shell: bash
+        if: steps.restore-cache.outputs.cache-hit != 'true'
         run: make code-standard-tests
+
       - name: Run PHP Stan Tests
+        shell: bash
+        if: steps.restore-cache.outputs.cache-hit != 'true'
         run: make phpstan-tests
+
       - name: Run the unit tests with coverage
+        shell: bash
+        if: steps.restore-cache.outputs.cache-hit != 'true'
         run: make coverage
+
       - name: Run the Integration tests
+        shell: bash
+        if: steps.restore-cache.outputs.cache-hit != 'true'
         run: make integration-tests
+
       - name: Run the Functional tests
+        shell: bash
+        if: steps.restore-cache.outputs.cache-hit != 'true'
         run: make functional-tests
+
       - name: Run the Acceptance tests
+        shell: bash
+        if: steps.restore-cache.outputs.cache-hit != 'true'
         run: make acceptance-tests
 
   build_i18n:
     name: Build the I18N translation files
-    needs: pr_tests
+    needs: [pr_tests]
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout repository
