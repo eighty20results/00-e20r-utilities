@@ -18,11 +18,18 @@
  *
  * @package E20R\Tests\Unit\Fixtures
  */
+
 namespace E20R\Tests\Unit\Fixtures;
 
 use Brain\Monkey\Functions;
+use Exception;
 use Mockery;
 
+/**
+ * Create stubs for the required WP defined functions
+ *
+ * @return void
+ */
 function e20r_unittest_stubs() {
 	Functions\when( 'wp_die' )
 		->justReturn(
@@ -69,13 +76,13 @@ function e20r_unittest_stubs() {
 
 	try {
 		Functions\expect( 'admin_url' )
-			->with( \Mockery::contains( 'options-general.php' ) )
+			->with( Mockery::contains( 'options-general.php' ) )
 			->andReturnUsing(
 				function() {
 					return 'https://localhost:7254/wp-admin/options-general.php';
 				}
 			);
-	} catch ( \Exception $e ) {
+	} catch ( Exception $e ) {
 		echo 'Error: ' . $e->getMessage(); // phpcs:ignore
 	}
 
@@ -83,7 +90,7 @@ function e20r_unittest_stubs() {
 		Functions\expect( 'esc_url_raw' )
 			->zeroOrMoreTimes()
 			->andReturnFirstArg();
-	} catch ( \Exception $e ) {
+	} catch ( Exception $e ) {
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		error_log( 'esc_url_raw() mock error: ' . esc_attr( $e->getMessage() ) );
 	}
