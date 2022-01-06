@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - test_workflow*
+      - !main
     tags:
       - test_workflow*
 
@@ -210,33 +211,12 @@ jobs:
           path: build/kits/**.zip
 
       # Extract the branch name for all events except for pull requests
-      - name: Extract branch name
-        id: extract_branch
-        shell: bash
-        if: github.event_name != 'pull_request'
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-
-      # Extract the branch name on pull request
-      - name: Extract branch name when creating a pull request
-        shell: bash
-        if: github.event_name == 'pull_request'
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
-
-      - name: Debug - Display the branch name
-        shell: bash
-        run: echo "The branch name is ${{ env.BRANCH_NAME }}"
-
-      # Extract the branch name for all events except for pull requests
       - name: Extract branch or tag name
         id: branch-name
         uses: tj-actions/branch-names@v5.1
 
-      - name: Running on the default branch?
-        if: steps.branch-name.outputs.is_default == 'false'
-        run: echo "Not running on default: ${{ steps.branch-name.outputs.current_branch }}"
-
-
       - name: Deploy plugin to production (WooCommerce Store or Wordpress.org repo)
+        if: steps.branch-name.outputs.is_default == 'false'
         shell: bash
         run: make deploy
         env:
