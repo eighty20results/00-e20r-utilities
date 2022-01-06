@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2022-01-05T17:02:51+00:00\n"
+"POT-Creation-Date: 2022-01-06T05:45:33+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.5.0\n"
 "X-Domain: 00-e20r-utilities\n"
@@ -260,51 +260,51 @@ msgstr ""
 msgid "\"%1$s\" is not a valid setting for this version of the licensing solution"
 msgstr ""
 
-#: src/E20R/Licensing/Settings/Defaults.php:303
+#: src/E20R/Licensing/Settings/Defaults.php:302
 msgid "No configuration data found"
 msgstr ""
 
-#: src/E20R/Licensing/Settings/Defaults.php:311
+#: src/E20R/Licensing/Settings/Defaults.php:310
 msgid "Unable to decode the configuration data"
 msgstr ""
 
 #. translators: %1$s - the parameter name provided by the caller
-#: src/E20R/Licensing/Settings/Defaults.php:352
+#: src/E20R/Licensing/Settings/Defaults.php:351
 msgid "Error: Cannot lock \"%1$s\". Invalid parameter name"
 msgstr ""
 
 #. translators: %1$s - the parameter name provided by the caller
-#: src/E20R/Licensing/Settings/Defaults.php:377
+#: src/E20R/Licensing/Settings/Defaults.php:376
 msgid "Error: Cannot unlock \"%1$s\". Invalid parameter name"
 msgstr ""
 
 #. translators: %1$s - Name of requested constant
-#: src/E20R/Licensing/Settings/Defaults.php:406
+#: src/E20R/Licensing/Settings/Defaults.php:405
 msgid "\"%1$s\" is not a valid Defaults() constant!"
 msgstr ""
 
 #. translators: %d - the operation constant to perform
-#: src/E20R/Licensing/Settings/Defaults.php:416
+#: src/E20R/Licensing/Settings/Defaults.php:415
 msgid "%d is an invalid operation"
 msgstr ""
 
 #. translators: %1$s - the supplied setting name, %2$s - constant name
-#: src/E20R/Licensing/Settings/Defaults.php:476
+#: src/E20R/Licensing/Settings/Defaults.php:475
 msgid "%1$s is already defined by the \"%2$s\" constant"
 msgstr ""
 
 #. translators: %1$s - the supplied setting name
-#: src/E20R/Licensing/Settings/Defaults.php:505
+#: src/E20R/Licensing/Settings/Defaults.php:504
 msgid "\"%1$s\" is a default setting and cannot be updated"
 msgstr ""
 
 #. translators: %1$s - Supplied parameter name
-#: src/E20R/Licensing/Settings/Defaults.php:547
+#: src/E20R/Licensing/Settings/Defaults.php:546
 msgid "\"%1$s\" is not a valid default setting"
 msgstr ""
 
 #. translators: %s - The parameter given by the calling function
-#: src/E20R/Licensing/Settings/Defaults.php:584
+#: src/E20R/Licensing/Settings/Defaults.php:583
 msgid "Error: \"%1$s\" is not a valid parameter"
 msgstr ""
 
