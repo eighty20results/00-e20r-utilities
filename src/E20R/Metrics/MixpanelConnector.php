@@ -21,10 +21,11 @@
 
 namespace E20R\Metrics;
 
-use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Exceptions\InvalidMixpanelKey;
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\UserNotDefined;
 use Mixpanel;
+use function esc_attr__;
 
 if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 
@@ -140,11 +141,20 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 		 * @param string $parameter - the class parameter to return the value of.
 		 *
 		 * @return Mixpanel|null
-		 * @throws BadOperation - Incorrect/unexpected variable to get for this class.
+		 * @throws InvalidSettingsKey - Incorrect/unexpected variable to get for this class.
 		 */
 		public function get( $parameter = 'instance' ) {
 			if ( ! property_exists( $this, $parameter ) ) {
-				throw new BadOperation( esc_attr__( 'Invalid parameter for MixpanelConnector() class', '00-e20r-utilities' ) );
+				throw new InvalidSettingsKey(
+					sprintf(
+						// translators: %1$s The parameter name
+						esc_attr__(
+							'Invalid parameter (%1$s) for the MixpanelConnector() class',
+							'00-e20r-utilities'
+						),
+						$parameter
+					)
+				);
 			}
 
 			return $this->{$parameter};

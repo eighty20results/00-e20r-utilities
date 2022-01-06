@@ -5,7 +5,9 @@ name: Build I18N files for repository
 on:
   push:
     branches:
-     - '**'
+     - refs/heads/*
+     - !main
+     - !master
 
 jobs:
   plugin_tests:
