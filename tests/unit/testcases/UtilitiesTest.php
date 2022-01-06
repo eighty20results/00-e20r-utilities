@@ -1,7 +1,7 @@
 <?php
-/*
+/**
  *
- * Copyright (c) 2021. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2021 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
+ * @package E20R\Tests\Unit\UtilitiesTest
  */
 
 namespace E20R\Tests\Unit;
@@ -39,16 +40,23 @@ if ( ! defined( 'PLUGIN_PHPUNIT' ) ) {
 	define( 'PLUGIN_PHPUNIT', true );
 }
 
+/**
+ * Test class for the Utilities module
+ */
 class UtilitiesTest extends Unit {
 
 	use MockeryPHPUnitIntegration;
 	use AssertThrows;
 
+	/**
+	 * The mocked Message() class
+	 *
+	 * @var Mockery|Message
+	 */
 	private $m_message;
 
 	/**
 	 * The setup function for this Unit Test suite
-	 *
 	 */
 	protected function setUp(): void {
 
@@ -81,7 +89,7 @@ class UtilitiesTest extends Unit {
 	/**
 	 * Define Mocked classes
 	 *
-	 * @throws \Exception
+	 * @throws \Exception Raised when unable to create the mocked class
 	 */
 	public function loadStubbedClasses() {
 		$this->m_message = $this->makeEmpty(
@@ -93,14 +101,16 @@ class UtilitiesTest extends Unit {
 			)
 		);
 	}
+
 	/**
 	 * Test the instantiation of the Utilities class
 	 *
-	 * @param bool $is_admin
-	 * @param bool $use_debug_logging
-	 * @param bool $has_action
+	 * @param bool $is_admin          Is the user supposed to be an admin
+	 * @param bool $use_debug_logging Did we want to enable debug logging
+	 * @param bool $has_action        Action to test for
 	 *
 	 * @dataProvider fixtures_constructor
+	 * @throws \Exception Raised if a mocked class can't be created
 	 */
 	public function test_class_is_instantiated( $is_admin, $use_debug_logging, $has_action ) {
 
@@ -148,6 +158,7 @@ class UtilitiesTest extends Unit {
 
 	/**
 	 * Fixture for testing the Utilities constructor (filter/action checks)
+	 *
 	 * @return array
 	 */
 	public function fixtures_constructor() {
@@ -163,11 +174,14 @@ class UtilitiesTest extends Unit {
 	/**
 	 * Tests the is_valid_date() function
 	 *
-	 * @param string $date
-	 * @param bool $expected
+	 * @param string $date     Date string to test validity of
+	 * @param bool   $expected The expected result
 	 *
 	 * @dataProvider fixture_test_dates
-	 * @covers \E20R\Utilities\Utilities::is_valid_date
+	 * @covers       \E20R\Utilities\Utilities::is_valid_date
+	 * @test
+	 *
+	 * @throws \Exception Raised when class can't be mocked
 	 */
 	public function test_is_valid_date( $date, $expected ) {
 
@@ -214,14 +228,16 @@ class UtilitiesTest extends Unit {
 	/**
 	 * Test if the specified plugin is considered "active" by WordPress
 	 *
-	 * @param string|null $plugin_name
-	 * @param string|null $function_name
-	 * @param bool        $is_admin
-	 * @param bool        $expected
+	 * @param string|null $plugin_name Name of plugin to check for the presence/activation of
+	 * @param string|null $function_name Function name to use when testing for plugin presence/activation
+	 * @param bool        $is_admin Test environment supposed to be in admin state
+	 * @param bool        $expected Expected return value
 	 *
 	 * @dataProvider pluginListData
 	 * @covers \E20R\Utilities\Utilities::plugin_is_active
-	 * @throws \Exception
+	 * @throws \Exception Raised when mocked class cannot be created
+	 *
+	 * @test
 	 */
 	public function test_plugin_is_active( ?string $plugin_name, ?string $function_name, bool $is_admin, bool $expected ) {
 
@@ -288,14 +304,16 @@ class UtilitiesTest extends Unit {
 	/**
 	 * Test the Utilities::is_license_server() function
 	 *
-	 * @param string $url
-	 * @param string $home_url
-	 * @param string $license_server
-	 * @param bool $expected
+	 * @param string $url URL string to test
+	 * @param string $home_url Expected WP home() URL
+	 * @param string $license_server License server hostname
+	 * @param bool   $expected Expected return value
 	 *
-	 * @throws \Exception
+	 * @throws \Exception Raised when class cannot be mocked
 	 * @covers \E20R\Utilities\Utilities::is_license_server
 	 * @dataProvider fixture_is_license_server
+	 *
+	 * @test
 	 */
 	public function test_is_license_server( $url, $home_url, $license_server, $expected ) {
 

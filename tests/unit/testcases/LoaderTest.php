@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
@@ -15,6 +15,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Tests\Unit\LoaderTest
  */
 
 namespace E20R\Tests\Unit;
@@ -32,14 +34,32 @@ use Brain\Monkey\Actions;
 
 use function E20R\Tests\Unit\Fixtures\e20r_unittest_stubs;
 
-
+/**
+ * Tests the Loader() class
+ */
 class LoaderTest extends Unit {
 
 	use MockeryPHPUnitIntegration;
 
+	/**
+	 * Mock for the Utilities class
+	 *
+	 * @var null|\Mockery
+	 */
 	private $m_utils = null;
-	private $loader  = null;
 
+	/**
+	 * Instance of the Loader class
+	 *
+	 * @var null|Loader
+	 */
+	private $loader = null;
+
+	/**
+	 * Test setup
+	 *
+	 * @return void
+	 */
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
@@ -49,6 +69,11 @@ class LoaderTest extends Unit {
 		$this->loadStubbedClasses();
 	}
 
+	/**
+	 * Test tear-down
+	 *
+	 * @return void
+	 */
 	protected function tearDown(): void {
 		Monkey\tearDown();
 		parent::tearDown();
@@ -85,9 +110,10 @@ class LoaderTest extends Unit {
 
 	/**
 	 * Unit test for the Loader() class instantiation
-	 * @param string $class_name
-	 * @param int    $priority
-	 * @param int    $init_priority
+	 *
+	 * @param string $class_name Name of the class
+	 * @param int    $priority The priority of the callback(s)
+	 * @param int    $init_priority The priority used when loading the init action
 	 *
 	 * @dataProvider fixture_instantiated
 	 */
@@ -104,6 +130,7 @@ class LoaderTest extends Unit {
 
 	/**
 	 * Fixture for the Loader() class constructor test
+	 *
 	 * @return \string[][]
 	 */
 	public function fixture_instantiated() {
@@ -114,11 +141,14 @@ class LoaderTest extends Unit {
 
 
 	/**
-	 * @param $test_value
-	 * @param $expected
+	 * Tests that the Utilities class has been loaded
+	 *
+	 * @param bool $test_value The value to pass to the e20r_utilities_module_installed filter
+	 * @param bool $expected The expected return value
 	 *
 	 * @dataProvider fixture_utilities_loaded
 	 * @covers \E20R\Utilities\Loader::utilities_loaded
+	 * @test
 	 */
 	public function test_utilities_loaded( $test_value, $expected ) {
 		$this->loader = new Loader( $this->m_utils );

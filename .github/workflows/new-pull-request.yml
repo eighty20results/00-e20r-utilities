@@ -1,6 +1,6 @@
-name: Run Unit Tests when creating a PR
+name: Run Unit Tests and create translations when creating a PR
 
-# Run Unit Test when new PR is created
+# Run Unit Test and POT files when new PR is created
 on:
   push:
     branches:
@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         php_version: [ '7.3', '7.4', '8.0' ]
-    name: Pull Request related testing - PHP {{ matrix.php_version }}
+    name: Pull Request related testing - PHP
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -48,3 +48,22 @@ jobs:
         run: make functional-tests
       - name: Run the Acceptance tests
         run: make acceptance-tests
+
+  build_i18n:
+    name: Build the I18N translation files
+    needs: pr_tests
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: eighty20results/Utilities
+
+      - name: WordPress .pot File Generator for 00-e20r-utilities
+        uses: iamdharmesh/action-wordpress-pot-generator@main
+        with:
+          destination_path: './languages'
+          slug: '00-e20r-utilities'
+          text_domain: '00-e20r-utilities'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

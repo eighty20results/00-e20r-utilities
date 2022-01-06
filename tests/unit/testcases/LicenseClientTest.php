@@ -1,6 +1,6 @@
 <?php
-/*
- * Copyright (c) 2016 - 2021 - Eighty / 20 Results by Wicked Strong Chicks.
+/**
+ * Copyright (c) 2016 - 2022 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,9 +15,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @package E20R\Tests\Unit\LicenseClientTest
  */
 
-namespace E20R\Tests\unit;
+namespace E20R\Tests\Unit;
 
 use Codeception\AssertThrows;
 use Codeception\Test\Unit;
@@ -27,6 +29,9 @@ use E20R\Licensing\LicenseClient;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
 
+/**
+ * Tests for the Licensing Client class
+ */
 class LicenseClientTest extends Unit {
 
 	use MockeryPHPUnitIntegration;
@@ -34,7 +39,6 @@ class LicenseClientTest extends Unit {
 
 	/**
 	 * The setup function for this Unit Test suite
-	 *
 	 */
 	protected function setUp(): void {
 		parent::setUp();
@@ -71,14 +75,32 @@ class LicenseClientTest extends Unit {
 		require_once __DIR__ . '/../../../inc/autoload.php';
 	}
 
+	/**
+	 * Tests the check_licenses() method
+	 *
+	 * @return void
+	 * @test
+	 */
 	public function test_check_licenses() {
 
 	}
 
+	/**
+	 * Tests the load_hooks() method
+	 *
+	 * @return void
+	 * @test
+	 */
 	public function test_load_hooks() {
 
 	}
 
+	/**
+	 * Tests the get_instance() method
+	 *
+	 * @return void
+	 * @test
+	 */
 	public function test_get_instance() {
 
 	}

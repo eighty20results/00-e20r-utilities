@@ -12,6 +12,11 @@ if [[ -z "${sed}" ]]; then
     exit 1;
 fi
 
+if [[ -z "${wordpress_version}"  ]]; then
+	echo "Error: Cannot find version number for WordPress. Exiting!"
+	exit 1
+fi
+
 ###########
 #
 # Update plugin and wordpress version info in README.txt
@@ -46,4 +51,3 @@ if ! git commit -m "BUG FIX: Updated README info (v${version} for WP ${wordpress
   echo "No need to commit README.md/README.txt (no changes recorded)"
   exit 0
 fi
-

@@ -583,16 +583,17 @@ build: $(E20R_PLUGIN_BASE_FILE)
 
 deploy:
 	@echo "Deploy ${E20R_PLUGIN_NAME}.zip to ${E20R_DEPLOYMENT_SERVER}"
-	@if [[ -f build/kits/${E20R_PLUGIN_NAME}-*.zip ]]; then \
-  		echo "Preparing to deploy the ${E20R_PLUGIN_NAME}-*.zip plugin archive to the Deployment Server" ; \
-		./bin/deploy.sh "${E20R_PLUGIN_BASE_FILE}" "${E20R_DEPLOYMENT_SERVER}" ; \
-	else \
-	  	echo "Error: ${E20R_PLUGIN_NAME}-*.zip not found!" ; \
-	  	ls -l build/kits; \
+	@if ! compgen -G "build/kits/${E20R_PLUGIN_NAME}-*.zip" > /dev/null; then \
+	  	echo "Error: ${PWD}/build/kits/${E20R_PLUGIN_NAME}*.zip not found!" ; \
+	  	ls -l "${PWD}/build/kits/" ; \
+	  	exit 1; \
 	fi
+	@echo "Preparing to deploy the ${E20R_PLUGIN_NAME}-*.zip plugin archive to the Deployment Server"
+	@./bin/deploy.sh "${E20R_PLUGIN_BASE_FILE}" "${E20R_DEPLOYMENT_SERVER}"
+
 
 #new-release: test composer-prod
-#	@./build_env/get_version.sh && \
+#	@./build_env/get_plugin_version.sh && \
 #		git tag $${VERSION} && \
 #		./build_env/create_release.sh
 
