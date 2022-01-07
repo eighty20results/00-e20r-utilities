@@ -13,7 +13,6 @@ jobs:
         php_version: [ '7.3', '7.4', '8.0' ]
     name: "Plugin tests - PHP"
     runs-on: ubuntu-18.04
-    if: steps.branch-name.outputs.is_tag == true && startsWith(steps.branch-name.outputs.tag, 'release-')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -220,18 +219,16 @@ jobs:
 
       - name: Show me the branch
         shell: bash
-        if: steps.branch-name.outputs.is_tag == true && startsWith(steps.branch-name.outputs.tag, 'release-')
         run: |
           echo "Reference branch is: ${{ steps.branch-name.outputs.ref_branch }}"
           echo "Current branch is: ${{ steps.branch-name.outputs.current_branch }}"
-          echo "PR Source Branch is: ${{ steps.branch-name.outputs.head_ref_branch }}"
-          echo "PR Target Branch is: ${{ steps.branch-name.outputs.base_ref_branch }}"
           echo "Tag is: ${{ steps.branch-name.outputs.tag }}"
           echo "Tag state is: '${{ steps.branch-name.outputs.is_tag }}'"
 
-      # And then deploy the package if it exists _and_ we're on the main branch with a release/version tag
+      # And then deploy the package if it exists _and_ we're on the main branch with a release tag
 
       - name: Deploy plugin when building a release (to WooCommerce Store or Wordpress.org repo)
+        if: steps.branch-name.outputs.is_tag == true && startsWith(steps.branch-name.outputs.tag, 'release-')
         shell: bash
         run: make deploy
         # The deployment target will depend on whether the
