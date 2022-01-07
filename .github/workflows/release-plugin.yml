@@ -13,6 +13,7 @@ jobs:
         php_version: [ '7.3', '7.4', '8.0' ]
     name: "Plugin tests - PHP"
     runs-on: ubuntu-18.04
+    if: steps.branch-name.outputs.is_tag == true && startsWith(steps.branch-name.outputs.tag, 'release-')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -219,7 +220,7 @@ jobs:
 
       - name: Show me the branch
         shell: bash
-        if: startsWith(steps.branch-name.outputs.tag, 'release-') || startsWith(steps.branch-name.outputs.tag, 'v[0-9]')
+        if: steps.branch-name.outputs.is_tag == true && startsWith(steps.branch-name.outputs.tag, 'release-')
         run: |
           echo "Reference branch is: ${{ steps.branch-name.outputs.ref_branch }}"
           echo "Current branch is: ${{ steps.branch-name.outputs.current_branch }}"
@@ -231,16 +232,10 @@ jobs:
       # And then deploy the package if it exists _and_ we're on the main branch with a release/version tag
 
       - name: Deploy plugin when building a release (to WooCommerce Store or Wordpress.org repo)
-        # FIXME: The is_tag test is intentionally going to fail and must be fixed before trying to push a real release
-        if: |
-          steps.branch-name.outputs.is_tag == false &&
-          ( startsWith(steps.branch-name.outputs.tag, 'release-[0-9]+.[0-9]+.[0-9]+') ||
-          startsWith(steps.branch-name.outputs.tag, '[vV][0-9]+.[0-9]+.[0-9]+') )
-
-        # Set the shell type (bash)
-
         shell: bash
         run: make deploy
+        # The deployment target will depend on whether the
+        # E20R_SSH_USER or SVN_USERNAME environment variable is defined
         env:
           BRANCH_NAME: ${{ steps.branch-name.outputs.tag }}
           E20R_PLUGIN_NAME: 00-e20r-utilities
