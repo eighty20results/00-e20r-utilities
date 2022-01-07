@@ -217,7 +217,6 @@ jobs:
 
       - name: Show me the branch info (tag should be blank)
         shell: bash
-        if: steps.branch-name.outputs.is_branch == 'true'
         run: |
           echo "Reference branch is: ${{ steps.branch-name.outputs.ref_branch }}"
           echo "Current branch is: ${{ steps.branch-name.outputs.current_branch }}"
