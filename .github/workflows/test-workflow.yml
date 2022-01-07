@@ -217,7 +217,7 @@ jobs:
 
       - name: Show me the branch
         shell: bash
-        if: steps.branch-name.outputs.is_tag == 'false' && startsWith(steps.branch-name.outputs.current_branch, 'refs/head/test_workflow_[0-9]+')
+        if: steps.branch-name.outputs.is_tag == 'false'
         run: |
           echo "Reference branch is: ${{ steps.branch-name.outputs.ref_branch }}"
           echo "Current branch is: ${{ steps.branch-name.outputs.current_branch }}"
