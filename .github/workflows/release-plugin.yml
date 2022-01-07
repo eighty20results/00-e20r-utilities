@@ -221,7 +221,7 @@ jobs:
 
       - name: Show me the branch
         shell: bash
-        if: steps.branch-name.outputs.is_tag == 'true' && startsWith(steps.branch-name.outputs.tag, 'refs/tags/[Vv][0-9]+.[0-9]+.[0-9]+')
+        if:  startsWith(steps.branch-name.outputs.tag, 'refs/tags/[Vv][0-9]+.[0-9]+.[0-9]+')
         run: |
           echo "Reference branch is: ${{ steps.branch-name.outputs.ref_branch }}"
           echo "Current branch is: ${{ steps.branch-name.outputs.current_branch }}"
@@ -232,7 +232,8 @@ jobs:
       # And then deploy the package if it exists _and_ we're on the main branch
 
       - name: Deploy plugin when building a release (to WooCommerce Store or Wordpress.org repo)
-        if: steps.branch-name.outputs.is_tag == 'true' && startsWith(steps.branch-name.outputs.tag, 'refs/tags/[Vv][0-9]+.[0-9]+.[0-9]+')
+        # FIXME: The is_tag test is intentionally bogus and must be fixed before trying to push a real release
+        if: steps.branch-name.outputs.is_tag = false && startsWith(steps.branch-name.outputs.tag, 'refs/tags/[Vv][0-9]+.[0-9]+.[0-9]+')
         shell: bash
         run: make deploy
         env:
