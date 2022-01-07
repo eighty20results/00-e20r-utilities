@@ -226,7 +226,7 @@ jobs:
       # And then deploy the package if it exists _and_ we're on the main branch
 
       - name: Deploy plugin when building a release (to WooCommerce Store or Wordpress.org repo)
-        if: contains(steps.branch-name.outputs.current_branch, 'test_workflow_') == 'true'
+        if: contains(steps.branch-name.outputs.current_branch, 'test_workflow_')
         shell: bash
         run: make deploy
         env:
