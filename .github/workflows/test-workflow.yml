@@ -221,11 +221,12 @@ jobs:
           echo "Reference branch is: ${{ steps.branch-name.outputs.ref_branch }}"
           echo "Current branch is: ${{ steps.branch-name.outputs.current_branch }}"
           echo "Tag is: ${{ steps.branch-name.outputs.tag }}"
+          echo "Tag status is: ${{ steps.branch-name.outputs.is_tag }}"
 
       # And then deploy the package if it exists _and_ we're on the main branch
 
       - name: Deploy plugin when building a release (to WooCommerce Store or Wordpress.org repo)
-        if: steps.branch-name.outputs.is_tag == 'false' && contains(steps.branch-name.outputs.current_branch, 'test_workflow_') == 'true'
+        if: contains(steps.branch-name.outputs.current_branch, 'test_workflow_') == 'true'
         shell: bash
         run: make deploy
         env:
