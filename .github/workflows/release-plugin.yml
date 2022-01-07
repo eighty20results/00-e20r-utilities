@@ -228,12 +228,13 @@ jobs:
           echo "PR Source Branch is: ${{ steps.branch-name.outputs.head_ref_branch }}"
           echo "PR Target Branch is: ${{ steps.branch-name.outputs.base_ref_branch }}"
           echo "Tag is: ${{ steps.branch-name.outputs.tag }}"
+          echo "Tag state is: '${{ steps.branch-name.outputs.is_tag }}'"
 
       # And then deploy the package if it exists _and_ we're on the main branch
 
       - name: Deploy plugin when building a release (to WooCommerce Store or Wordpress.org repo)
         # FIXME: The is_tag test is intentionally bogus and must be fixed before trying to push a real release
-        if: steps.branch-name.outputs.is_tag = false && startsWith(steps.branch-name.outputs.tag, 'refs/tags/[Vv][0-9]+.[0-9]+.[0-9]+')
+        if: steps.branch-name.outputs.is_tag == false && startsWith(steps.branch-name.outputs.tag, 'refs/tags/release-')
         shell: bash
         run: make deploy
         env:
