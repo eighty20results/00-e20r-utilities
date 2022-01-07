@@ -12,6 +12,7 @@ categories:
       - 'bugfix'
       - 'bug'
       - 'bug fix'
+      - '- bug fix'
   - title: '🧰 Maintenance'
     labels:
      - 'chore'
