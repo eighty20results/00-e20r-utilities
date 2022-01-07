@@ -228,7 +228,7 @@ jobs:
       # And then deploy the package if it exists _and_ we're on the main branch with a release tag
 
       - name: Deploy plugin when building a release (to WooCommerce Store or Wordpress.org repo)
-        if: steps.branch-name.outputs.is_tag == true && startsWith(steps.branch-name.outputs.tag, 'release-')
+        if: steps.branch-name.outputs.is_tag && startsWith(steps.branch-name.outputs.tag, 'release-')
         shell: bash
         run: make deploy
         # The deployment target will depend on whether the
