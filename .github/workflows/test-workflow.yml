@@ -215,20 +215,18 @@ jobs:
         id: branch-name
         uses: tj-actions/branch-names@v5.1
 
-      - name: Show me the branch
+      - name: Show me the branch info (tag should be blank)
         shell: bash
-        if: steps.branch-name.outputs.is_tag == 'false'
+        if: steps.branch-name.outputs.is_branch == 'true'
         run: |
           echo "Reference branch is: ${{ steps.branch-name.outputs.ref_branch }}"
           echo "Current branch is: ${{ steps.branch-name.outputs.current_branch }}"
-          echo "PR Source Branch is: ${{ steps.branch-name.outputs.head_ref_branch }}"
-          echo "PR Target Branch is: ${{ steps.branch-name.outputs.base_ref_branch }}"
           echo "Tag is: ${{ steps.branch-name.outputs.tag }}"
 
       # And then deploy the package if it exists _and_ we're on the main branch
 
       - name: Deploy plugin when building a release (to WooCommerce Store or Wordpress.org repo)
-        if: steps.branch-name.outputs.is_tag == 'false' && startsWith(steps.branch-name.outputs.current_branch, 'refs/head/test_workflow_[0-9]+')
+        if: steps.branch-name.outputs.is_tag == 'false' && contains(steps.branch-name.outputs.current_branch, 'test_workflow_[0-9]+')
         shell: bash
         run: make deploy
         env:
