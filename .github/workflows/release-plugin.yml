@@ -221,7 +221,13 @@ jobs:
 
       - name: Show me the branch
         shell: bash
-        if:  startsWith(steps.branch-name.outputs.tag, 'release-')
+        if:  |
+          steps.branch-name.outputs.is_tag == true &&
+          ( startsWith(steps.branch-name.outputs.tag, 'release-[0-9]+.[0-9]+.[0-9]+') ||
+          startsWith(steps.branch-name.outputs.tag, '[vV][0-9]+.[0-9]+.[0-9]+') )
+
+        # Only running this step if we find the tag we expect
+
         run: |
           echo "Reference branch is: ${{ steps.branch-name.outputs.ref_branch }}"
           echo "Current branch is: ${{ steps.branch-name.outputs.current_branch }}"
