@@ -3,8 +3,9 @@
 # Send plugin kit to the specified E20R WooCommerce server (assumes appropriate secrets for GitHub Action)
 # OR (TODO: to the WordPress.org plugin repository (SVN based))
 #
-# Copyright 2021 Eighty/20 Results by Wicked Strong Chicks, LLC
+# Copyright 2021 - 2022(c) Eighty/20 Results by Wicked Strong Chicks, LLC
 #
+
 function to_woocommerce_store() {
 	declare metadata
 	declare remote_path
@@ -17,8 +18,6 @@ function to_woocommerce_store() {
 	declare ssh_port
 	declare ssh_user
 	declare ssh_host
-
-	source build_config/helper_config "${@}"
 
 	# Should only be used when running as a GitHub action for a non-main branch
 	if ! grep -q -E '/^(release-[vV]\d+\.\d+(\.\d+)?|[vV]\d+\.\d+(\.\d+)?|main)$/' <<< "${BRANCH_NAME}" -- ; then
@@ -274,6 +273,8 @@ function to_wordpress_org() {
 		echo "✓ Not in main branch. Nothing to do"
 	fi
 }
+
+source build_config/helper_config "${@}"
 
 if [ -z "${SVN_USERNAME}"  ] && [ -n "${E20R_SSH_USER}" ]; then
 	echo "ℹ︎ Will attempt to deploy ${E20R_PLUGIN_NAME} to the WooCommerce Store"
