@@ -20,7 +20,7 @@ function main() {
 	source build_config/helper_config "${@}"
 
 	# Should only be used when running as a GitHub action for a non-main branch
-	if [[ -n "${BRANCH_NAME}" && "${BRANCH_NAME}" != "main" ]]; then
+	if ! grep -q -E '/^(release-[vV]\d+\.\d+(\.\d+)?|[vV]\d+\.\d+(\.\d+)?|main)$/' <<< "${BRANCH_NAME}" -- ; then
 		echo "Creating mocked ssh and scp command so we won't actually deploy anything"
 
 		function ssh() {
