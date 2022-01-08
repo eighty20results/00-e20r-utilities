@@ -20,7 +20,7 @@ function to_woocommerce_store() {
 	declare ssh_host
 
 	# Should only be used when running as a GitHub action for a non-main branch
-	if ! grep -q -E '/^(release-[vV]\d+\.\d+(\.\d+)?|[vV]\d+\.\d+(\.\d+)?|main)$/' <<< "${BRANCH_NAME}" -- ; then
+	if [[ ! "${BRANCH_NAME}" =~ (release-([vV])?[0-9]+\.[0-9]+(\.[0-9]+)?|([vV])?[0-9]+\.[0-9]+(\.[0-9]+)?) ]]; then
 		echo "Creating mocked ssh and scp command, then we won't actually deploy anything from ${BRANCH_NAME}"
 
 		function ssh() {
