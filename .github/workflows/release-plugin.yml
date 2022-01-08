@@ -3,8 +3,8 @@ name: Release (and deploy) plugin package
 # Deploy when a new release is created in the Main branch
 on:
   release:
-    # Only deploy when the admin creates/publishes/edits/pre-releases from GitHub
-    types: [edited, published]
+    # Only deploy when the admin publishes/pre-releases from GitHub
+    types: [published]
 
 jobs:
   plugin_tests:
