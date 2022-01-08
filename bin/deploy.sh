@@ -21,7 +21,7 @@ function to_woocommerce_store() {
 
 	# Should only be used when running as a GitHub action for a non-main branch
 	if ! grep -q -E '/^(release-[vV]\d+\.\d+(\.\d+)?|[vV]\d+\.\d+(\.\d+)?|main)$/' <<< "${BRANCH_NAME}" -- ; then
-		echo "Creating mocked ssh and scp command so we won't actually deploy anything"
+		echo "Creating mocked ssh and scp command, then we won't actually deploy anything from ${BRANCH_NAME}"
 
 		function ssh() {
 			echo ssh "$@"
@@ -282,5 +282,6 @@ if [ -z "${SVN_USERNAME}"  ] && [ -n "${E20R_SSH_USER}" ]; then
 fi
 
 if [ -z "${E20R_SSH_USER}" ] && [ -n "${SVN_USERNAME}" ]; then
+	echo "ℹ︎ Will attempt to deploy ${E20R_PLUGIN_NAME} to the Wordpress.org Repository"
 	to_wordpress_org "$@"
 fi
