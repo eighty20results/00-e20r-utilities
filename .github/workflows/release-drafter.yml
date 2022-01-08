@@ -1,4 +1,4 @@
-name: Creates Draft Release
+name: Creates Draft Release when merging the Pull Request
 
 on:
   push:
