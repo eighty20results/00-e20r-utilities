@@ -69,6 +69,8 @@ jobs:
           CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
 
   build_i18n:
+    # Only run when the pull request is created
+    if: github.event.pull_request.opened == true
     name: Build the I18N translation files
     needs: [pr_tests]
     runs-on: ubuntu-18.04
