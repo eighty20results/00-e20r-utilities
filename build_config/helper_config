@@ -37,7 +37,8 @@ declare -x -a include=( \
 	"docs" \
 	"inc/composer" \
 	"inc/yahnis-elsts" \
-	"inc/10quality"
+	"inc/10quality" \
+	"inc/mixpanel" \
 	"inc/autoload.php" \
 	"src" \
 	"class-loader.php" \

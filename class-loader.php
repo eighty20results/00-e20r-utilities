@@ -2,8 +2,8 @@
 /**
 Plugin Name: E20R Utilities Module
 Plugin URI: https://eighty20results.com/
-Description: Provides functionality required by some of the Eighty/20 Results developed plugins
-Version: 2.1.0
+Description: Provides functionality required by the Eighty/20 Results developed plugins
+Version: 2.2.0
 Requires PHP: 7.3
 Author: Thomas Sjolshagen <thomas@eighty20results.com>
 Author URI: https://eighty20results.com/thomas-sjolshagen/
@@ -32,7 +32,7 @@ Domain Path: languages/
 
 namespace E20R\Utilities;
 
-use E20R\Licensing\Exceptions\BadOperation;
+use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Metrics\MixpanelConnector;
 use function \add_action;
 use function \add_filter;
@@ -225,7 +225,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 
 			try {
 				$this->metrics->get()->registerAllOnce( $mp_events );
-			} catch ( BadOperation $exception ) {
+			} catch ( InvalidSettingsKey $exception ) {
 				$this->utils->log( $exception->getMessage() );
 			}
 
