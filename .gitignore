@@ -60,3 +60,6 @@ fabric.properties
 
 /docker.hub.key
 /tests/docker/docker.hub.key
+build/
+!build/kits/.gitignore
+!build/kits/.gitkeep
