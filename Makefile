@@ -153,8 +153,8 @@ clean: prerequisite
 clean-inc: prerequisite
 	@if [[ -d $(COMPOSER_DIR) ]]; then \
   	  echo "Removing existing composer packages from $(COMPOSER_DIR)" ; \
-  	  find $(COMPOSER_DIR)/ -type d -maxdepth 0 -exec rm -rf {} \; ; \
-  	  [[ -f $(COMPOSER_DIR)/*.php ]] && rm $(COMPOSER_DIR)/*.php ; \
+  	  find $(COMPOSER_DIR)/ -type d ! -name '$(COMPOSER_DIR)/.gitignore' -maxdepth 0 -exec rm -rf {} \; ; \
+  	  [[ -f $(COMPOSER_DIR)/autoload.php ]] && rm $(COMPOSER_DIR)/*.php ; \
   	else \
   	  echo "No existing composer packages to remove from $(COMPOSER_DIR)" ; \
   	  mkdir -p $(COMPOSER_DIR) ; \
