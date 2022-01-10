@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BUG FIX: Update version number for plugin and fix exception handling (Thomas Sjolshagen)
 - BUG FIX: Make sure mixpanel component is included (Thomas Sjolshagen)
 - BUG FIX: Clean-up and prerequisite targets were faulty (Thomas Sjolshagen)
+- BUG FIX: Couldn't always clean inc/ (Thomas Sjolshagen)
+- BUG FIX: Updated CHANGELOG (v2.2.0 for WP 5.8.3) (Thomas Sjolshagen)
+- BUG FIX: Updated README info (v2.2.0 for WP 5.8.3) (Thomas Sjolshagen)
+- BUG FIX: Updated metadata.json for v2.2.0 and WP 5.8.3 (Thomas Sjolshagen)
+- BUG FIX: Needed the E20R_PLUGIN_NAME environment variable set (Thomas Sjolshagen)
+- BUG FIX: Update version number for plugin and fix exception handling (Thomas Sjolshagen)
+- BUG FIX: Make sure mixpanel component is included (Thomas Sjolshagen)
+- BUG FIX: Clean-up and prerequisite targets were faulty (Thomas Sjolshagen)
+
 ## v2.1.0 - 2022-01-06
 - 🔄 Generated POT File (WordPress .pot File Generator)
 - BUG FIX: Didn't exclude execution when running against main branch
