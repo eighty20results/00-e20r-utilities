@@ -43,21 +43,29 @@ jobs:
           key: ${{ runner.os }}-composer-cache-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-cache
           path: inc/**
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
 
       - name: Install all needed dependencies for Composer
         shell: bash
         if: steps.restore-cache.outputs.cache-hit != 'true'
         run: make composer-dev
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
 
       - name: Install all needed WordPress plugin dependencies
         shell: bash
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: make wp-deps
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
 
       - name: Install all needed dependencies for Docker
         shell: bash
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: make docker-deps
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
 
       - name: Run all Standard Tests
         shell: bash

@@ -51,16 +51,22 @@ jobs:
         shell: bash
         if: steps.restore-cache.outputs.cache-hit != 'true'
         run: make composer-dev
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
 
       - name: Install all needed WordPress plugin dependencies
         shell: bash
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: make wp-deps
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
 
       - name: Install all needed dependencies for Docker
         shell: bash
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: make docker-deps
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
 
       - name: Run all Standard Tests
         shell: bash
@@ -118,16 +124,22 @@ jobs:
         shell: bash
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: make composer-dev
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
 
       - name: Install all needed WordPress plugin dependencies
         shell: bash
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: make wp-deps
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
 
       - name: Install all needed dependencies for Docker
         shell: bash
         if: steps.composer-cache.outputs.cache-hit != 'true'
         run: make docker-deps
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
 
       - name: Cache the built plugin package
         uses: actions/cache@v2
@@ -193,11 +205,15 @@ jobs:
         if: steps.composer-cache-prod.outputs.cache-hit != 'true'
         shell: bash
         run: make composer-dev
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
 
       - name: Install all needed WordPress plugin dependencies
         if: steps.composer-cache-prod.outputs.cache-hit != 'true'
         shell: bash
         run: make wp-deps
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
 
       - name: Install all needed dependencies for Docker
         if: steps.composer-cache-prod.outputs.cache-hit != 'true'
