@@ -37,11 +37,11 @@ declare -x -a include=( \
 	"docs" \
 	"inc" \
 	"src" \
-	"class-loader.php" \
 	"composer.json" \
 	"composer.phar" \
 	"README.txt" \
 	"CHANGELOG.md"
+	"class-loader.php" \
 	)
 declare -x -a exclude=( \
 	".git" \
