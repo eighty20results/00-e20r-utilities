@@ -21,9 +21,9 @@
 
 namespace E20R\Metrics;
 
+use E20R\Licensing\Exceptions\HostNotDefined;
 use E20R\Licensing\Exceptions\InvalidMixpanelKey;
 use E20R\Licensing\Exceptions\InvalidSettingsKey;
-use E20R\Licensing\Exceptions\UserNotDefined;
 use Mixpanel;
 use function esc_attr__;
 
@@ -63,7 +63,7 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 		 * @param string[]      $host        Mixpanel host.
 		 * @param null|Mixpanel $mp_instance Mixpanel class instance (for testing purposes).
 		 *
-		 * @throws UserNotDefined - No user logged in when instantiating the class.
+		 * @throws HostNotDefined - No user logged in when instantiating the class.
 		 * @throws InvalidMixpanelKey - The Mixpanel key supplied is invalid.
 		 */
 		public function __construct( $token = null, $host = array( 'host' => 'api-eu.mixpanel.com' ), $mp_instance = null ) {
@@ -76,7 +76,7 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 				);
 			}
 
-			$this->user_id = get_option( 'e20r_mp_userid', uniqid( 'e20rutil', true ) );
+			$this->user_id = $this->get_user_id();
 
 			if ( empty( $host ) ) {
 				$host = array( 'host' => 'api-eu.mixpanel.com' );
@@ -88,19 +88,19 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 				$this->instance = $mp_instance;
 			}
 
-			$user_info = wp_get_current_user();
+			$this->hostid = gethostname();
 
-			if ( empty( $user_info ) ) {
-				throw new UserNotDefined(
-					esc_attr__( 'Current user not yet identified', '00-e20r-utilities' )
+			if ( empty( $this->hostid ) ) {
+				throw new HostNotDefined(
+					esc_attr__( 'Unable to locate host ID!', '00-e20r-utilities' )
 				);
 			}
 
-			$this->hostid = sprintf( '%1$s -> %2$s', gethostname(), $this->user_id );
+			$this->hostid = sprintf( '%1$s -> %2$s', $this->hostid, $this->user_id );
 			$this->instance->people->set(
-				$this->user_id,
+				$this->get_user_id(),
 				array(
-					'host_id' => $this->hostid,
+					'host_name' => $this->hostid,
 				),
 				null,
 				true
@@ -113,12 +113,10 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 		 * @return int|string
 		 */
 		private function get_user_id() {
-			$user_id   = 'unknown_user';
-			$user_info = function_exists( 'wp_get_current_user' ) ? wp_get_current_user() : $user_id;
-			if ( 'unknown_user' !== $user_info ) {
-				$user_id = $user_info->ID;
+			if ( empty( $this->user_id ) ) {
+				$this->user_id = get_option( 'e20r_mp_userid', uniqid( 'e20rutil', true ) );
 			}
-			return $user_id;
+			return $this->user_id;
 		}
 
 		/**
