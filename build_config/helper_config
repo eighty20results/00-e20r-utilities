@@ -35,11 +35,7 @@ github_url="https://github.com/eighty20results/${short_name}/"
 # Plugin specific files to include/exclude and move if necessary during build
 declare -x -a include=( \
 	"docs" \
-	"inc/composer" \
-	"inc/yahnis-elsts" \
-	"inc/10quality" \
-	"inc/mixpanel" \
-	"inc/autoload.php" \
+	"inc" \
 	"src" \
 	"class-loader.php" \
 	"composer.json" \
@@ -75,7 +71,7 @@ declare -x -a excluded_for_svn=(
 		"trunk/bin" \
 		"trunk/build_env" \
 		"trunk/docker" \
-		"trunk/inc" \
+		"trunk/inc/yahnis-elsts" \
 		"trunk/src/utilities/.git" \
 		"trunk/src/utilities/bin" \
 		"trunk/src/utilities/.gitignore" \
