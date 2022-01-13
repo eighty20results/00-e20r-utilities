@@ -38,8 +38,8 @@ use function \add_action;
 use function \add_filter;
 
 // Deny direct access to the file
-if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( 'Cannot access file directly' );
+if ( ! defined( 'ABSPATH' ) ) {
+	die( 'Cannot access file directly' );
 }
 
 if ( ! defined( 'E20R_UTILITIES_BASE_FILE' ) ) {
@@ -47,7 +47,17 @@ if ( ! defined( 'E20R_UTILITIES_BASE_FILE' ) ) {
 }
 
 // Load the PSR-4 Autoloader
-require_once __DIR__ . '/inc/autoload.php';
+if ( file_exists( __DIR__ . '/inc/autoload.php' ) ) {
+	require_once __DIR__ . '/inc/autoload.php';
+} else {
+	error_log(
+		esc_attr__(
+			'Error: Unable to load required files. Please remove (delete) the E20R Utilities Module plugin and report this error at eighty20results.com',
+			'00-e20r-utilities'
+		)
+	);
+	return false;
+}
 
 if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 
