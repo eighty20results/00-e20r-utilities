@@ -45,6 +45,13 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 		private $instance = null;
 
 		/**
+		 * An instance of the Utilities class
+		 *
+		 * @var Utilities|null $utils
+		 */
+		private $utils = null;
+
+		/**
 		 * Identifying string for host
 		 *
 		 * @var string|null
@@ -62,14 +69,15 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 		/**
 		 * Instantiate our own edition of the Mixpanel Connector
 		 *
-		 * @param null|string   $token       Mixpanel token.
-		 * @param string[]      $host        Mixpanel host.
-		 * @param null|Mixpanel $mp_instance Mixpanel class instance (for testing purposes).
+		 * @param null|string    $token       Mixpanel token.
+		 * @param string[]       $host        Mixpanel host.
+		 * @param null|Mixpanel  $mp_instance Mixpanel class instance (for testing purposes).
+		 * @param null|Utilities $utils       E20R Utilities Module class instance (for testing purposes)
 		 *
 		 * @throws HostNotDefined - No user logged in when instantiating the class.
 		 * @throws InvalidMixpanelKey - The Mixpanel key supplied is invalid.
 		 */
-		public function __construct( $token = null, $host = array( 'host' => 'api-eu.mixpanel.com' ), $mp_instance = null ) {
+		public function __construct( $token = null, $host = array( 'host' => 'api-eu.mixpanel.com' ), $mp_instance = null, $utils = null ) {
 			if ( is_null( $token ) ) {
 				throw new InvalidMixpanelKey(
 					esc_attr__(
@@ -79,6 +87,12 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 				);
 			}
 
+			if ( empty( $this->utils ) && empty( $utils ) ) {
+				$message = new Message();
+				$utils   = new Utilities( $message );
+			}
+
+			$this->utils   = $utils;
 			$this->user_id = $this->get_user_id();
 
 			if ( empty( $host ) ) {
@@ -124,11 +138,13 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 
 		/**
 		 * Installed and activated plugin
+		 *
+		 * @throws MissingDependencies Thrown when the Mixpanel Composer module is missing
 		 */
 		public function increment_activations() {
 			if ( ! class_exists( Mixpanel::class ) ) {
-				$msg = esc_attr__(
-					"Error: E20R Utilities Module is missing a required composer module (). Please report this error at https://github.com/eighty20results/Utilities/issues",
+				$msg     = esc_attr__(
+					'Error: E20R Utilities Module is missing a required composer module (). Please report this error at https://github.com/eighty20results/Utilities/issues',
 					'00-e20r-utilities'
 				);
 				$message = new Message();
@@ -137,18 +153,19 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 
 				throw new MissingDependencies( $msg );
 			}
+			$this->utils->log( 'Updating - incrementing - the activation metric in Mixpanel' );
 			$this->instance->people->increment( $this->get_user_id(), 'utilities_activated', 1 );
 		}
 
 		/**
 		 * Deactivated plugin
 		 *
-		 * @throws MissingDependencies Thrown if the Mixpanel Composer package is not present!
+		 * @throws MissingDependencies Thrown when the Mixpanel Composer module is missing
 		 */
 		public function decrement_activations() {
 			if ( ! class_exists( Mixpanel::class ) ) {
-				$msg = esc_attr__(
-					"Error: E20R Utilities Module is missing a required composer module (). Please report this error at https://github.com/eighty20results/Utilities/issues",
+				$msg     = esc_attr__(
+					'Error: E20R Utilities Module is missing a required composer module (). Please report this error at https://github.com/eighty20results/Utilities/issues',
 					'00-e20r-utilities'
 				);
 				$message = new Message();
