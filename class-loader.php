@@ -32,10 +32,10 @@ Domain Path: languages/
 
 namespace E20R\Utilities;
 
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Metrics\MixpanelConnector;
-use function \add_action;
-use function \add_filter;
+use E20R\Exceptions\InvalidSettingsKey;
+use function add_action;
+use function add_filter;
 
 // Deny direct access to the file
 if ( ! defined( 'ABSPATH' ) ) {

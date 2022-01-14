@@ -21,7 +21,7 @@
 
 namespace E20R\Licensing\Settings;
 
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidSettingsKey;
 use ReflectionClass;
 use ReflectionProperty;
 

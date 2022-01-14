@@ -22,16 +22,16 @@
 
 namespace E20R\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use Codeception\AssertThrows;
 use Codeception\Test\Unit;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Licensing\Settings\BaseSettings;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Settings\NewSettings;
-use Brain\Monkey;
-use Brain\Monkey\Functions;
 use E20R\Licensing\Settings\OldSettings;
+use E20R\Exceptions\InvalidSettingsKey;
 use Exception;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;

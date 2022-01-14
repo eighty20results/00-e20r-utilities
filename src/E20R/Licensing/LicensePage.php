@@ -24,12 +24,12 @@
 namespace E20R\Licensing;
 
 use E20R\Licensing\Exceptions\ConfigDataNotFound;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Settings\LicenseSettings;
-use E20R\Utilities\Utilities;
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Utilities\Message;
+use E20R\Utilities\Utilities;
 use Exception;
 
 // Deny direct access to the file
@@ -549,7 +549,7 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 			foreach ( $settings as $product_sku => $license ) {
 				try {
 					$licensing = new License( $product_sku );
-				} catch ( Exceptions\InvalidSettingsKey | Exceptions\MissingServerURL $e ) {
+				} catch ( \E20R\Utilities\Exceptions\InvalidSettingsKey | Exceptions\MissingServerURL $e ) {
 					$this->utils->add_message( 'Error: ' . $e->getMessage(), 'error', 'backend' );
 				}
 

@@ -24,8 +24,8 @@ namespace E20R\Utilities;
 // Disallow direct access to the class definition
 
 use E20R\Licensing\Exceptions\BadOperation;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Settings\Defaults;
+use E20R\Exceptions\InvalidSettingsKey;
 use Exception;
 use Puc_v4_Factory;
 use stdClass;

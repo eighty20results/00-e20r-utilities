@@ -21,14 +21,14 @@
 
 namespace E20R\Tests\Unit;
 
-use Codeception\Test\Unit;
-use E20R\Licensing\Exceptions\InvalidMixpanelKey;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
-use E20R\Licensing\Exceptions\UserNotDefined;
-use E20R\Metrics\MixpanelConnector;
-use E20R\Utilities\Utilities;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use Codeception\Test\Unit;
+use E20R\Licensing\Exceptions\UserNotDefined;
+use E20R\Metrics\Exceptions\InvalidMixpanelKey;
+use E20R\Metrics\MixpanelConnector;
+use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Utilities\Utilities;
 use Exception;
 use Mixpanel;
 use Mockery;

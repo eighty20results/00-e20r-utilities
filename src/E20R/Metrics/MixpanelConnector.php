@@ -21,9 +21,12 @@
 
 namespace E20R\Metrics;
 
-use E20R\Licensing\Exceptions\HostNotDefined;
-use E20R\Licensing\Exceptions\InvalidMixpanelKey;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Metrics\Exceptions\HostNotDefined;
+use E20R\Metrics\Exceptions\InvalidMixpanelKey;
+use E20R\Metrics\Exceptions\MissingDependencies;
+use E20R\Utilities\Message;
+use E20R\Utilities\Utilities;
 use Mixpanel;
 use function esc_attr__;
 
@@ -123,13 +126,37 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 		 * Installed and activated plugin
 		 */
 		public function increment_activations() {
+			if ( ! class_exists( Mixpanel::class ) ) {
+				$msg = esc_attr__(
+					"Error: E20R Utilities Module is missing a required composer module (). Please report this error at https://github.com/eighty20results/Utilities/issues",
+					'00-e20r-utilities'
+				);
+				$message = new Message();
+				$utils   = new Utilities( $message );
+				$utils->add_message( $msg, 'error', 'backend' );
+
+				throw new MissingDependencies( $msg );
+			}
 			$this->instance->people->increment( $this->get_user_id(), 'utilities_activated', 1 );
 		}
 
 		/**
 		 * Deactivated plugin
+		 *
+		 * @throws MissingDependencies Thrown if the Mixpanel Composer package is not present!
 		 */
 		public function decrement_activations() {
+			if ( ! class_exists( Mixpanel::class ) ) {
+				$msg = esc_attr__(
+					"Error: E20R Utilities Module is missing a required composer module (). Please report this error at https://github.com/eighty20results/Utilities/issues",
+					'00-e20r-utilities'
+				);
+				$message = new Message();
+				$utils   = new Utilities( $message );
+				$utils->add_message( $msg, 'error', 'backend' );
+
+				throw new MissingDependencies( $msg );
+			}
 			$this->instance->people->increment( $this->get_user_id(), 'utilities_deactivated', 1 );
 		}
 

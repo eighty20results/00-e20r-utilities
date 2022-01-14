@@ -23,17 +23,17 @@
 
 namespace E20R\Licensing\Settings;
 
+use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Exceptions\ConfigDataNotFound;
 use E20R\Licensing\Exceptions\DefinedByConstant;
 use E20R\Licensing\Exceptions\ErrorSavingSettings;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Exceptions\NoLicenseKeyFound;
 use E20R\Licensing\Exceptions\ServerConnectionError;
-use E20R\Licensing\Exceptions\BadOperation;
-use E20R\Licensing\LicenseServer;
 use E20R\Licensing\License;
+use E20R\Licensing\LicenseServer;
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 use ReflectionException;

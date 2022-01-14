@@ -16,10 +16,10 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Licensing\Exceptions\InvalidSettingsKey
+ * @package E20R\Exceptions\InvalidSettingsKey
  */
 
-namespace E20R\Licensing\Exceptions;
+namespace E20R\Exceptions;
 
 use Exception;
 use Throwable;
