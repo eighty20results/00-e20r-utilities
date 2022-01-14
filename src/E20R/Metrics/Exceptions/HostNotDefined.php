@@ -16,10 +16,10 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Licensing\Exceptions\UserNotDefined
+ * @package E20R\Metrics\Exceptions\HostNotDefined
  */
 
-namespace E20R\Licensing\Exceptions;
+namespace E20R\Metrics\Exceptions;
 
 use Exception;
 use Throwable;
