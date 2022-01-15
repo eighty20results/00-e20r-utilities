@@ -5,6 +5,8 @@ Requires at least: 5.0
 Tested up to: 5.8.3
 Stable tag: 2.2.0
 
+![Release to wordpress.org](https://github.com/eighty20results/Utilities/workflows/Release%20to%20wordpress.org/badge.svg?branch=main)
+
 Adds various utility functions and license capabilities needed by some Eighty/20 Results developed plugins
 
 == Description ==
@@ -19,10 +21,10 @@ The plugin consolidates required functionality for a number of Eighty / 20 Resul
 Please report all issues/problems on the [plugin's GitHub 'Issues' page](https://github.com/eighty20results/Utilities/issues)
 
 = Supported Filters =
-See [FILTERS.md](./docs/FILTERS.md)
+See [FILTERS.md](docs/FILTERS.md)
 
 = Supported Actions =
-See [ACTIONS.md](./docs/ACTIONS.md)
+See [ACTIONS.md](docs/ACTIONS.md)
 
 = Changelog =
 See the official [CHANGELOG.md](CHANGELOG.md) file
