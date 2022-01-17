@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
 	wp_die( 'Cannot access file directly' );
 }
 
-if ( ! class_exists( '\E20R\Utilities\Cache' ) ) {
+if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 
 	/**
 	 * Cache handler
@@ -51,7 +51,7 @@ if ( ! class_exists( '\E20R\Utilities\Cache' ) ) {
 		public static function get( $key, $group = self::CACHE_GROUP ) {
 			$value = get_transient( "{$group}_{$key}" );
 
-			if ( false === $value || false === ( $value instanceof Cache_Object ) ) {
+			if ( false === $value || ! is_a( $value, '\\E20R\\Utilities\\Cache_Object' ) ) {
 				$value = null;
 			} else {
 				$value = $value->get( 'value' );
