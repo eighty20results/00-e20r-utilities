@@ -26,6 +26,7 @@ use E20R\Utilities\Cache_Object;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 
+
 /**
  * Integration (WPUnit) test of the Cache_Object class
  */
@@ -40,37 +41,6 @@ class Cache_Object_IntegrationTest extends WPTestCase {
 		$this->utils = new Utilities( $message );
 	}
 
-
-	/**
-	 * Test whether setting the cache object property is happening
-	 *
-	 * @param string $key_name The name of the object property to set
-	 * @param mixed  $to_value The target value for the property
-	 * @param string $expected_key The resulting key stored in the property
-	 * @param mixed  $expected_value The resulting value of the property
-	 *
-	 * @dataProvider fixture_cache_object_set
-	 *
-	 * @return void
-	 * @test
-	 */
-	public function it_should_get_set( $key_name, $to_value, $expected_key, $expected_value ) {
-
-		$cache_object = new Cache_Object( 'test_key', 'default' );
-
-		self::assertTrue( property_exists( $cache_object, 'key' ) );
-		self::assertTrue( property_exists( $cache_object, 'value' ) );
-
-		$cache_object->set( 'key', $key_name );
-		$cache_object->set( 'value', $to_value );
-
-		$key_result   = $cache_object->get( 'key' );
-		$value_result = $cache_object->get( 'value' );
-
-		self::assertSame( $expected_key, $key_result );
-		self::assertSame( $expected_value, $value_result );
-	}
-
 	/**
 	 * Fixture for the it_should_get_set() test
 	 *
@@ -83,6 +53,102 @@ class Cache_Object_IntegrationTest extends WPTestCase {
 			array( 'an_integer', 10, 'an_integer', 10 ),
 			array( 'a_float', 10.1, 'a_float', 10.1 ),
 			array( 'weird key', 'yes', 'weird key', 'yes' ),
+			array( 1, 10, 1, 10 ),
+			array( 10, null, 10, null ),
+			array( md5( 'something' ), 'any_value', md5( 'something' ), 'any_value' ),
+			array( md5( 'something', true ), 'any_other_value', md5( 'something', true ), 'any_other_value' ),
 		);
 	}
+
+	/**
+	 * Test whether setting the cache object property is happening properly when the class is instantiated
+	 *
+	 * @param string $key_name The name of the object property to set
+	 * @param mixed  $to_value The target value for the property
+	 * @param string $expected_key The resulting key stored in the property
+	 * @param mixed  $expected_value The resulting value of the property
+	 *
+	 * @dataProvider fixture_cache_object_set
+	 *
+	 * @return void
+	 * @test
+	 */
+	public function it_should_set_key_value_on_instantiation( $key_name, $to_value, $expected_key, $expected_value ) {
+
+		$cache_object = new Cache_Object( $key_name, $to_value );
+
+		self::assertTrue( property_exists( $cache_object, 'key' ) );
+		self::assertTrue( property_exists( $cache_object, 'value' ) );
+
+		$key_result   = $cache_object->get( 'key' );
+		$value_result = $cache_object->get( 'value' );
+
+		self::assertSame( $expected_key, $key_result );
+		self::assertSame( $expected_value, $value_result );
+	}
+
+	/**
+	 * Test that the cache object value property is updated when the set() method is called for the value
+	 *
+	 * @param string $key_name The object property key value to use
+	 * @param mixed  $to_value The target value for the 'value' property
+	 * @param string $expected_key The resulting key stored in the property
+	 * @param mixed  $expected_value The resulting value of the property
+	 *
+	 * @dataProvider fixture_cache_object_set
+	 *
+	 * @return void
+	 * @test
+	 */
+	public function it_should_update_value( $key_name, $to_value, $expected_key, $expected_value ) {
+
+		$cache_object = new Cache_Object( $key_name, null );
+
+		self::assertTrue( property_exists( $cache_object, 'key' ) );
+		self::assertTrue( property_exists( $cache_object, 'value' ) );
+
+		self::assertSame( $expected_key, $cache_object->get( 'key' ) );
+		self::assertSame( null, $cache_object->get( 'value' ) );
+
+		$cache_object->set( 'value', $to_value );
+
+		$key_result   = $cache_object->get( 'key' );
+		$value_result = $cache_object->get( 'value' );
+
+		self::assertSame( $expected_key, $key_result );
+		self::assertSame( $expected_value, $value_result );
+	}
+
+	/**
+	 * Test that the cache object key property is updated when the set() method is called for the key
+	 *
+	 * @param string $key_name The name of the object property to set
+	 * @param mixed  $to_value The target value for the property
+	 * @param string $expected_key The resulting key stored in the property
+	 * @param mixed  $expected_value The resulting value of the property
+	 *
+	 * @dataProvider fixture_cache_object_set
+	 *
+	 * @return void
+	 * @test
+	 */
+	public function it_should_update_key( $key_name, $to_value, $expected_key, $expected_value ) {
+
+		$cache_object = new Cache_Object( 'dummy_key', $to_value );
+
+		self::assertTrue( property_exists( $cache_object, 'key' ) );
+		self::assertTrue( property_exists( $cache_object, 'value' ) );
+
+		self::assertSame( 'dummy_key', $cache_object->get( 'key' ) );
+		self::assertSame( $to_value, $cache_object->get( 'value' ) );
+
+		$cache_object->set( 'key', $key_name );
+
+		$key_result   = $cache_object->get( 'key' );
+		$value_result = $cache_object->get( 'value' );
+
+		self::assertSame( $expected_key, $key_result );
+		self::assertSame( $expected_value, $value_result );
+	}
+
 }
