@@ -39,8 +39,8 @@ use E20R\Utilities\Utilities;
 use ReflectionException;
 
 // Deny direct access to the file
-if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( 'Cannot access file directly' );
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
 }
 
 if ( ! defined( 'E20R_MISSING_SETTING' ) ) {

@@ -34,7 +34,11 @@ use E20R\Utilities\Utilities;
 use Exception;
 use ReflectionException;
 
-if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
+if ( ! class_exists( '\\E20R\\Licensing\\Licensing' ) ) {
 	/**
 	 * Compatibility class for old license management approach
 	 */

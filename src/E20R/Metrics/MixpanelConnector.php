@@ -30,6 +30,10 @@ use E20R\Utilities\Utilities;
 use Mixpanel;
 use function esc_attr__;
 
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
 if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 
 	/**

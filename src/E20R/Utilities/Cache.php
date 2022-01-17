@@ -22,8 +22,8 @@
 namespace E20R\Utilities;
 
 // Deny direct access to the file
-if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( 'Cannot access file directly' );
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access file directly' );
 }
 
 if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {

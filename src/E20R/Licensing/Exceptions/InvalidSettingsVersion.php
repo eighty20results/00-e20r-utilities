@@ -24,6 +24,10 @@ namespace E20R\Licensing\Exceptions;
 use Exception;
 use Throwable;
 
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
 /**
  * Custom exception raised when we're using the wrong settings class for the Licensing server version
  */

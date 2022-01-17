@@ -21,8 +21,6 @@
 
 namespace E20R\Utilities;
 
-// Disallow direct access to the class definition
-
 use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Exceptions\InvalidSettingsKey;
@@ -32,8 +30,9 @@ use stdClass;
 use function apply_filters;
 use function plugin_dir_path;
 
-if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( 'Cannot access file directly' );
+// Disallow direct access to the class definition
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
 }
 
 if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {

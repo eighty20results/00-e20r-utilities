@@ -31,6 +31,10 @@ use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Utilities\Utilities;
 use Exception;
 
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
 if ( ! class_exists( 'E20R\\Licensing\\AjaxHandler' ) ) {
 
 	/**

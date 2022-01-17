@@ -24,11 +24,11 @@ namespace E20R\Licensing;
 use E20R\Utilities\Utilities;
 
 // Deny direct access to the file
-if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( 'Cannot access file directly' );
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
 }
 
-if ( ! class_exists( '\E20R\Licensing\LicenseClient' ) ) {
+if ( ! class_exists( '\\E20R\\Licensing\\LicenseClient' ) ) {
 
 	/**
 	 * Class LicenseClient

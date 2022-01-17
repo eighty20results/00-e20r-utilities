@@ -24,6 +24,10 @@ namespace E20R\Exceptions;
 use Exception;
 use Throwable;
 
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
 /**
  * Custom exception raised when the specified class parameter (key) is not present in the settings class that was instatiated
  */

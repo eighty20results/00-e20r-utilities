@@ -23,6 +23,10 @@ namespace E20R\Utilities;
 
 use stdClass;
 
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
 /**
  * WP Background Process
  *
@@ -38,7 +42,7 @@ use stdClass;
  *          * @credit Thanks to @A5hleyRich at https://github.com/A5hleyRich/wp-background-processing
  */
 
-if ( ! class_exists( '\E20R\Utilities\E20R_Background_Process' ) ) {
+if ( ! class_exists( '\\E20R\\Utilities\\E20R_Background_Process' ) ) {
 
 	/**
 	 * Abstract E20R_Background_Process class.

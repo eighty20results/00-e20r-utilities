@@ -21,7 +21,11 @@
 
 namespace E20R\Utilities;
 
-if ( ! class_exists( '\E20R\Utilities\Message' ) ) {
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
+if ( ! class_exists( '\\E20R\\Utilities\\Message' ) ) {
 
 	/**
 	 * Stores message(s) for use by the WP Backend alert notices

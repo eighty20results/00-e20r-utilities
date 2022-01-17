@@ -30,7 +30,11 @@ use E20R\Utilities\Utilities;
 use Exception;
 use ReflectionClass;
 
-if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
+if ( ! class_exists( '\\E20R\\Licensing\\Settings\\Defaults' ) ) {
 	/**
 	 * Class Defaults
 	 *

@@ -38,11 +38,11 @@ use Exception;
 use ReflectionException;
 
 // Deny direct access to the file
-if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( 'Cannot access file directly' );
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
 }
 
-if ( ! class_exists( '\E20R\Licensing\License' ) ) {
+if ( ! class_exists( '\\E20R\\Licensing\\License' ) ) {
 
 	/**
 	 * Class used to handle operations from the licensing client

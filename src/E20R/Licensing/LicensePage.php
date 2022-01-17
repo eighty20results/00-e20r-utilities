@@ -35,11 +35,11 @@ use E20R\Utilities\Utilities;
 use Exception;
 
 // Deny direct access to the file
-if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( 'Cannot access file directly' );
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
 }
 
-if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
+if ( ! class_exists( '\\E20R\\Licensing\\LicensePage' ) ) {
 	/**
 	 * Class defining/displaying wp-admin/ settings page for the Licensing code
 	 */

@@ -25,6 +25,10 @@ use E20R\Exceptions\InvalidSettingsKey;
 use ReflectionClass;
 use ReflectionProperty;
 
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
 /**
  * Class NewSettings
  *

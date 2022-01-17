@@ -21,6 +21,10 @@
 
 namespace E20R\Utilities;
 
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
 /**
  * WP Async Request
  *
@@ -30,7 +34,7 @@ namespace E20R\Utilities;
  * @since   1.9.6 - ENHANCEMENT: Added fixes and updates from EWWW Image Optimizer code
  */
 
-if ( ! class_exists( '\E20R\Utilities\E20R_Async_Request' ) ) {
+if ( ! class_exists( '\\E20R\\Utilities\\E20R_Async_Request' ) ) {
 	/**
 	 * Abstract E20R_Async_Request class.
 	 *

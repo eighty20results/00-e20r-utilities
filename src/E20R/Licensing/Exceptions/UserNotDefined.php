@@ -24,6 +24,10 @@ namespace E20R\Licensing\Exceptions;
 use Exception;
 use Throwable;
 
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
 /**
  * Exception thrown when a user hasn't been defined yet
  */

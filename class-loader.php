@@ -38,8 +38,8 @@ use function add_action;
 use function add_filter;
 
 // Deny direct access to the file
-if ( ! defined( 'ABSPATH' ) ) {
-	die( 'Cannot access file directly' );
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( "Cannot access file directly\n" );
 }
 
 if ( ! defined( 'E20R_UTILITIES_BASE_FILE' ) ) {
@@ -50,6 +50,7 @@ if ( ! defined( 'E20R_UTILITIES_BASE_FILE' ) ) {
 if ( file_exists( __DIR__ . '/inc/autoload.php' ) ) {
 	require_once __DIR__ . '/inc/autoload.php';
 } else {
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 	error_log(
 		esc_attr__(
 			'Error: Unable to load required files. Please remove (delete) the E20R Utilities Module plugin and report this error at eighty20results.com',

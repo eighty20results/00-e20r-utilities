@@ -23,6 +23,10 @@ namespace E20R\Licensing\Exceptions;
 
 use Exception;
 
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
 /**
  * Custom exception raised when unable to locate a license key
  */
