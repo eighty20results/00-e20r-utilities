@@ -76,15 +76,47 @@ if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 		}
 
 		/**
-		 * Delete a cache entry
+		 * Delete a cache entry or a group of cache entries by key or group
 		 *
-		 * @param string $key The cache key to delete
-		 * @param string $group The group to delete cached values from (based on key)
+		 * @param string|null $key The cache key to delete (null will use a wildcard for the key)
+		 * @param string      $group The group to delete cached values from (null will use a wildcard for the group)
 		 *
 		 * @return bool - True if successful, false otherwise
 		 */
 		public static function delete( $key, $group = self::CACHE_GROUP ) {
-			return delete_transient( "{$group}_{$key}" );
+
+			// If both are set, just use delete_transient
+			if ( ! empty( $key ) && ! empty( $group ) ) {
+				return delete_transient( "{$group}_{$key}" );
+			}
+
+			global $wpdb;
+			$wildcard  = '%';
+			$to_delete = null;
+
+			// The key was intentionally set to null so performing a wildcard search
+			if ( null === $key ) {
+				$to_delete = $wpdb->esc_like( "_transient_{$group}_" ) . $wildcard;
+			}
+
+			// The group was intentionally set to null so performing a wildcard search
+			if ( null === $group && null !== $key ) {
+				$to_delete = '_transient_%_' . $wpdb->esc_like( $key ) . $wildcard;
+			}
+
+			// Onl prepare and execute if we configured a wildcard search
+			if ( ! empty( $to_delete ) ) {
+				$_sql = $wpdb->prepare(
+					'DELETE FROM %s WHERE option_name LIKE %s',
+					$wpdb->options,
+					$to_delete
+				);
+
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+				return ! ( null === $wpdb->get_var( $_sql ) );
+			}
+
+			return false;
 		}
 	}
 }
