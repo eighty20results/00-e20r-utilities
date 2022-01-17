@@ -488,14 +488,13 @@ coverage: wp-deps
 # Using codeception to execute the WP Unit Tests (aka WP integration tests) for this plugin
 #
 integration-tests: docker-deps start-stack db-import
-	if [[ -n "$(FOUND_INTEGRATION_TESTS)" ]]; then \
+	@if [[ -n "$(FOUND_INTEGRATION_TESTS)" ]]; then \
   		echo "Running all integration tests for $(PROJECT)"; \
 		APACHE_RUN_USER=$(APACHE_RUN_USER) APACHE_RUN_GROUP=$(APACHE_RUN_GROUP) COMPOSE_INTERACTIVE_NO_CLI=1 \
   		DB_IMAGE=$(DB_IMAGE) DB_VERSION=$(DB_VERSION) WP_VERSION=$(WP_VERSION) VOLUME_CONTAINER=$(VOLUME_CONTAINER) \
   		docker compose --project-name $(PROJECT) --env-file $(DC_ENV_FILE) --file $(DC_CONFIG_FILE) \
   			exec -T -w /var/www/html/wp-content/plugins/$(PROJECT)/ wordpress \
-  			$(COMPOSER_DIR)/bin/codecept \
-  			run integration --coverage-html ./coverage/integration --verbose --debug --steps $(INTEGRATION_TEST_CASE_PATH); \
+  			$(COMPOSER_DIR)/bin/codecept run integration --coverage-html ./coverage/integration --verbose --debug $(INTEGRATION_TEST_CASE_PATH); \
 	fi
 
 # TODO: Add coverage support to the integration-test target
