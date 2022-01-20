@@ -64,6 +64,20 @@ if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 		private $data = null;
 
 		/**
+		 * The cache key to use
+		 *
+		 * @var null|string $key
+		 */
+		private $key = null;
+
+		/**
+		 * The cache group to link keys to
+		 *
+		 * @var null|string $group
+		 */
+		private $group = null;
+
+		/**
 		 * Constructor for the Cache() class
 		 *
 		 * @param string            $key The key to use for the cached object(s)
@@ -75,8 +89,24 @@ if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 			if ( null === $data ) {
 				$data = new Cache_Object( $key, $group );
 			}
-			$this->data      = $data;
-			$this->key_group = "{$group}_{$key}";
+			$this->data = $data;
+			$this->set_group_key( $key, $group );
+		}
+
+		/**
+		 * Returns the value of the specified class property
+		 *
+		 * @param string $property The name of the class property to attempt to retrieve the value of
+		 *
+		 * @return mixed
+		 * @throws BadOperation Thrown if attempting to access a non-existent property
+		 */
+		public function property_get( $property ) {
+			if ( ! property_exists( self::class, $property ) ) {
+				throw new BadOperation( "Error: {$property} is not a valid class property" );
+			}
+
+			return $this->{$property};
 		}
 
 		/**
@@ -93,6 +123,24 @@ if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 				self::$instance = new self( $key, $group );
 			}
 			return self::$instance->get_data( $key, $group );
+		}
+
+		/**
+		 * Set the key and group variables for the cached item
+		 *
+		 * @param null|string $key The cache key
+		 * @param null|string $group The cache group (more than one key per group is supported)
+		 *
+		 * @return void
+		 */
+		private function set_group_key( $key, $group ) {
+			if ( ! empty( $key ) ) {
+				$this->key = $key;
+			}
+			if ( ! empty( $group ) ) {
+				$this->group = $group;
+			}
+			$this->key_group = "{$this->group}_{$this->key}";
 		}
 
 		/**
@@ -113,8 +161,8 @@ if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 				throw new BadOperation( esc_attr__( 'Missing cache group name!', 'e20r-utilities' ) );
 			}
 
-			$this->key_group = "{$group}_{$key}";
-			$this->data      = get_transient( $this->key_group );
+			$this->set_group_key( $key, $group );
+			$this->data = get_transient( $this->key_group );
 
 			if ( false === $this->data || ! is_a( $this->data, '\\E20R\\Utilities\\Cache_Object' ) ) {
 				$value = null;
@@ -166,6 +214,7 @@ if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 			if ( empty( $this->data ) ) {
 				$this->data = new Cache_Object( $key, $value );
 			}
+			$this->set_group_key( $key, $group );
 			return set_transient( $this->key_group, $this->data, $expires );
 		}
 
@@ -181,6 +230,7 @@ if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 			// If both are set, just use delete_transient
 			if ( ! empty( $key ) && ! empty( $group ) ) {
 				$this->data = null;
+				$this->set_group_key( $key, $group );
 				return delete_transient( $this->key_group );
 			}
 
