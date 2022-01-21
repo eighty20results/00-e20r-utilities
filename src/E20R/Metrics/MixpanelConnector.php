@@ -25,16 +25,18 @@ use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Metrics\Exceptions\HostNotDefined;
 use E20R\Metrics\Exceptions\InvalidMixpanelKey;
 use E20R\Metrics\Exceptions\MissingDependencies;
+use E20R\Metrics\Exceptions\UniqueIDException;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 use Mixpanel;
+use Exception;
 use function esc_attr__;
 
 if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
 	die( 'Cannot access source file directly!' );
 }
 
-if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
+if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 
 	/**
 	 * Custom Mixpanel connector
@@ -98,6 +100,7 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 
 			$this->utils   = $utils;
 			$this->user_id = $this->get_user_id();
+			$this->utils->log( "Loading MixpanelConnector class for user ID {$this->user_id}" );
 
 			if ( empty( $host ) ) {
 				$host = array( 'host' => 'api-eu.mixpanel.com' );
@@ -105,6 +108,7 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 
 			if ( empty( $mp_instance ) ) {
 				$this->instance = Mixpanel::getInstance( $token, $host );
+				$this->utils->log( 'Added the Mixpanel() class instance!' );
 			} else {
 				$this->instance = $mp_instance;
 			}
@@ -118,6 +122,7 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 			}
 
 			$this->hostid = sprintf( '%1$s -> %2$s', $this->hostid, $this->user_id );
+			$this->utils->log( "Host ID for Mixpanel will be: {$this->hostid}" );
 			$this->instance->people->set(
 				$this->get_user_id(),
 				array(
@@ -131,11 +136,19 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 		/**
 		 * Return a User ID (numeric or the '' string) to use for Mixpanel data
 		 *
-		 * @return int|string
+		 * @return int|string|null
 		 */
 		private function get_user_id() {
 			if ( empty( $this->user_id ) ) {
-				$this->user_id = get_option( 'e20r_mp_userid', uniqid( 'e20rutil', true ) );
+				try {
+					$this->user_id = get_option( 'e20r_mp_userid', $this->uniq_real_id( 'e20rutl' ) );
+				} catch ( UniqueIDException $e ) {
+					// translators: %1$s the error message from the UniqueIDException()
+					$message = sprintf( esc_attr__( 'Error: %1$s', '00-e20r-utilities' ), $e->getMessage() );
+					$this->utils->log( $message );
+					$this->utils->add_message( $message, 'error', 'backend' );
+					return null;
+				}
 			}
 			return $this->user_id;
 		}
@@ -147,18 +160,80 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 		 */
 		public function increment_activations() {
 			if ( ! class_exists( Mixpanel::class ) ) {
-				$msg     = esc_attr__(
-					'Error: E20R Utilities Module is missing a required composer module (). Please report this error at https://github.com/eighty20results/Utilities/issues',
-					'00-e20r-utilities'
+				$msg = sprintf(
+					// translators: %1$s - Class in the composer module we're raising the dependency exception for
+					esc_attr__(
+						'Error: E20R Utilities Module is missing a required composer module (%1$s). Please report this error at https://github.com/eighty20results/Utilities/issues',
+						'00-e20r-utilities'
+					),
+					Mixpanel::class
 				);
-				$message = new Message();
-				$utils   = new Utilities( $message );
-				$utils->add_message( $msg, 'error', 'backend' );
+
+				$this->utils->add_message( $msg, 'error', 'backend' );
 
 				throw new MissingDependencies( $msg );
 			}
 			$this->utils->log( 'Updating - incrementing - the activation metric in Mixpanel' );
 			$this->instance->people->increment( $this->get_user_id(), 'utilities_activated', 1 );
+		}
+
+		/**
+		 * Generates a random unique ID (default 13 characters long, but can be adjusted)
+		 *
+		 * @param null|string $prefix Optionally use a prefix which can't be bigger than 50% of the length of the ID
+		 * @param int         $length Length of the randomized Unique ID to generate (default is 13 characters)
+		 *
+		 * @return false|string
+		 *
+		 * @throws UniqueIDException Thrown if there's a problem with generating a securely unique ID
+		 * @access private
+		 * @credit https://www.php.net/manual/en/function.uniqid.php#120123
+		 */
+		private function uniq_real_id( $prefix = null, $length = 13 ) {
+
+			if ( ! empty( $prefix ) ) {
+				$str_length = strlen( $prefix );
+				$new_length = $length - $str_length;
+
+				if ( $new_length <= 0 || ( $str_length > ( $length - 2 ) ) ) {
+					throw new UniqueIDException(
+						esc_attr__(
+							'Specified prefix is longer than the allowed half length of the ID',
+							'00-e20r-utilities'
+						)
+					);
+				}
+
+				$length = $new_length;
+			}
+
+			if ( function_exists( 'random_bytes' ) ) {
+				try {
+					$bytes = random_bytes( ceil( $length / 2 ) );
+				} catch ( Exception $e ) {
+					throw new UniqueIDException(
+						sprintf(
+							// translators: %1$s the message from the random_bytes() exception thrown
+							esc_attr__(
+								'Error: %1$s',
+								'00-e20r-utilities'
+							),
+							$e->getMessage()
+						)
+					);
+				}
+			} elseif ( function_exists( 'openssl_random_pseudo_bytes' ) ) {
+				$bytes = openssl_random_pseudo_bytes( ceil( $length / 2 ) );
+			} else {
+				throw new UniqueIDException(
+					esc_attr__(
+						'Error: No cryptographically secure random function available',
+						'00-e20r-utilities'
+					)
+				);
+			}
+
+			return substr( bin2hex( $bytes ), 0, $length );
 		}
 
 		/**
