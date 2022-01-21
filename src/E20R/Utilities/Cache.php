@@ -208,12 +208,11 @@ if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 				throw new BadOperation( esc_attr__( 'Missing cache key name!', 'e20r-utilities' ) );
 			}
 			if ( empty( $group ) ) {
-				throw new BadOperation( esc_attr__( 'Missing cache group name!', 'e20r-utilities' ) );
+				$this->group = self::CACHE_GROUP;
 			}
 
-			if ( empty( $this->data ) ) {
-				$this->data = new Cache_Object( $key, $value );
-			}
+			$this->data = new Cache_Object( $key, $value );
+
 			$this->set_group_key( $key, $group );
 			return set_transient( $this->key_group, $this->data, $expires );
 		}
@@ -245,7 +244,7 @@ if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 
 			// The group was intentionally set to null so performing a wildcard search
 			if ( null === $group && null !== $key ) {
-				$to_delete = '_transient_%_' . $wpdb->esc_like( $key ) . $wildcard;
+				$to_delete = '_transient__' . $wpdb->esc_like( $key ) . $wildcard;
 			}
 
 			// Onl prepare and execute if we configured a wildcard search
