@@ -182,7 +182,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 
 				throw new MissingDependencies( $msg );
 			}
-			$this->utils->log( 'Updating - incrementing - the E20R Utilities Module activation metric in Mixpanel' );
+			$this->utils->log( "Incrementing the {$plugin_slug} activation metric" );
 			$this->instance->people->increment( $this->get_user_id(), "{$plugin_slug}_activated", 1 );
 		}
 
@@ -260,15 +260,20 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 			}
 
 			if ( ! class_exists( Mixpanel::class ) ) {
-				$msg = esc_attr__(
-					'Error: E20R Utilities Module is missing a required composer module (). Please report this error at https://github.com/eighty20results/Utilities/issues',
-					'00-e20r-utilities'
+				$msg = sprintf(
+				// translators: %1$s - Class in the composer module we're raising the dependency exception for
+					esc_attr__(
+						'Error: E20R Utilities Module is missing a required composer module (%1$s). Please report this error at https://github.com/eighty20results/Utilities/issues',
+						'00-e20r-utilities'
+					),
+					Mixpanel::class
 				);
+
 				$this->utils->add_message( $msg, 'error', 'backend' );
 
 				throw new MissingDependencies( $msg );
 			}
-			$this->utils->log( 'Decrementing the activated plugins metric' );
+			$this->utils->log( "Decrementing the {$plugin_slug} activation metric" );
 			$this->instance->people->increment( $this->get_user_id(), "{$plugin_slug}_deactivated", 1 );
 		}
 
