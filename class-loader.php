@@ -32,6 +32,7 @@ Domain Path: languages/
 
 namespace E20R\Utilities;
 
+use E20R\Metrics\Exceptions\InvalidPluginInfo;
 use E20R\Metrics\Exceptions\MissingDependencies;
 use E20R\Metrics\MixpanelConnector;
 use E20R\Exceptions\InvalidSettingsKey;
@@ -237,8 +238,8 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 */
 		public function installed() {
 			$mp_events = array(
-				'installed' => true,
-				'activated' => true,
+				'00-e20r-utilities_activated'   => true,
+				'00-e20r-utilities_deactivated' => true,
 			);
 
 			try {
@@ -248,8 +249,8 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 			}
 
 			try {
-				$this->metrics->increment_activations();
-			} catch ( MissingDependencies $e ) {
+				$this->metrics->increment_activations( '00-e20r-utilities' );
+			} catch ( MissingDependencies | InvalidPluginInfo $e ) {
 				$this->utils->log( $e->getMessage() );
 				$this->utils->add_message( $e->getMessage(), 'error', 'backend' );
 			}
@@ -260,8 +261,8 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 */
 		public function uninstalled() {
 			try {
-				$this->metrics->decrement_activations();
-			} catch ( MissingDependencies $e ) {
+				$this->metrics->decrement_activations( '00-e20r-utilities' );
+			} catch ( MissingDependencies | InvalidPluginInfo $e ) {
 				$this->utils->log( $e->getMessage() );
 				$this->utils->add_message( $e->getMessage(), 'error', 'backend' );
 			}
