@@ -114,20 +114,21 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 				$this->instance = $mp_instance;
 			}
 
-			$this->hostid = gethostname();
+			$hostid = gethostname();
 
-			if ( empty( $this->hostid ) ) {
+			if ( empty( $hostid ) ) {
 				throw new HostNotDefined(
 					esc_attr__( 'Unable to locate host ID!', '00-e20r-utilities' )
 				);
 			}
 
-			$this->hostid = sprintf( '%1$s -> %2$s', $this->hostid, $this->user_id );
+			$this->hostid = sprintf( '%1$s -> %2$s', $hostid, $this->user_id );
 			$this->utils->log( "Host ID for Mixpanel will be: {$this->hostid}" );
 			$this->instance->people->set(
-				$this->get_user_id(),
+				$this->hostid,
 				array(
-					'host_name' => $this->hostid,
+					'user_id' => $this->user_id,
+					'host_id' => $this->hostid,
 				),
 				null,
 				true
@@ -135,14 +136,19 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 		}
 
 		/**
-		 * Return a User ID (numeric or the '' string) to use for Mixpanel data
+		 * Return a User ID (string) to use for Mixpanel data
 		 *
-		 * @return int|string|null
+		 * @return string|null
 		 */
 		private function get_user_id() {
+
 			if ( empty( $this->user_id ) ) {
+				$this->user_id = get_option( 'e20r_mp_userid', null );
+			}
+
+			if ( null === $this->user_id ) {
 				try {
-					$this->user_id = get_option( 'e20r_mp_userid', $this->uniq_real_id( 'e20rutl' ) );
+					$this->user_id = $this->uniq_real_id( 'e20rutl' );
 				} catch ( UniqueIDException $e ) {
 					// translators: %1$s the error message from the UniqueIDException()
 					$message = sprintf( esc_attr__( 'Error: %1$s', '00-e20r-utilities' ), $e->getMessage() );
@@ -150,7 +156,9 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 					$this->utils->add_message( $message, 'error', 'backend' );
 					return null;
 				}
+				update_option( 'e20r_mp_userid', $this->user_id );
 			}
+
 			return $this->user_id;
 		}
 
@@ -183,7 +191,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 				throw new MissingDependencies( $msg );
 			}
 			$this->utils->log( "Incrementing the {$plugin_slug} activation metric" );
-			$this->instance->people->increment( $this->get_user_id(), "{$plugin_slug}_activated", 1 );
+			$this->instance->people->increment( $this->hostid, "{$plugin_slug}_activated", 1 );
 		}
 
 		/**
@@ -273,8 +281,8 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 
 				throw new MissingDependencies( $msg );
 			}
-			$this->utils->log( "Decrementing the {$plugin_slug} activation metric" );
-			$this->instance->people->increment( $this->get_user_id(), "{$plugin_slug}_deactivated", 1 );
+			$this->utils->log( "Decrementing the {$plugin_slug} activation metric for {$this->hostid}" );
+			$this->instance->people->increment( $this->hostid, "{$plugin_slug}_deactivated", 1 );
 		}
 
 		/**
