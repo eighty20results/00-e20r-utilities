@@ -22,6 +22,7 @@
 namespace E20R\Tests\Integration;
 
 use Codeception\TestCase\WPTestCase;
+use E20R\Metrics\MixpanelConnector;
 use E20R\Utilities\Loader;
 use E20R\Utilities\Utilities;
 use Exception;
@@ -56,6 +57,12 @@ class Loader_IntegrationTest extends WPTestCase {
 	private $loader = null;
 
 	/**
+	 * Mocked MixpanelConnector class
+	 *
+	 * @var null|MixpanelConnector $m_mixpanel
+	 */
+	private $m_mixpanel = null;
+	/**
 	 * Test setup
 	 */
 	protected function setUp(): void {
@@ -82,6 +89,28 @@ class Loader_IntegrationTest extends WPTestCase {
 					'load_text_domain' => null,
 					'configure_update' => null,
 					'dummy_function'   => null,
+				)
+			);
+		} catch ( Exception $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( $e->getMessage() );
+		}
+
+		try {
+			$this->m_mixpanel = $this->makeEmpty(
+				MixpanelConnector::class,
+				array(
+					'get_user_id'           => '',
+					'increment_activations' => null,
+					'uniq_real_id'          => '',
+					'decrement_activations' => null,
+					'get'                   => function( $param_name = 0 ) {
+						$values = array(
+							0 => null,
+						);
+
+						return $values[ $param_name ];
+					},
 				)
 			);
 		} catch ( Exception $e ) {
