@@ -233,7 +233,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 				);
 			}
 
-			return substr( bin2hex( $bytes ), 0, $length );
+			return substr( $prefix . bin2hex( $bytes ), 0, $length );
 		}
 
 		/**
