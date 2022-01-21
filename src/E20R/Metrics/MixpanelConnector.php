@@ -24,6 +24,7 @@ namespace E20R\Metrics;
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Metrics\Exceptions\HostNotDefined;
 use E20R\Metrics\Exceptions\InvalidMixpanelKey;
+use E20R\Metrics\Exceptions\InvalidPluginInfo;
 use E20R\Metrics\Exceptions\MissingDependencies;
 use E20R\Metrics\Exceptions\UniqueIDException;
 use E20R\Utilities\Message;
@@ -156,9 +157,17 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 		/**
 		 * Installed and activated plugin
 		 *
+		 * @param string|null $plugin_slug The slug of the plugin
+		 *
 		 * @throws MissingDependencies Thrown when the Mixpanel Composer module is missing
+		 * @throws InvalidPluginInfo Thrown if the user didn't supply a plugin slug to register
 		 */
-		public function increment_activations() {
+		public function increment_activations( $plugin_slug = null ) {
+
+			if ( empty( $plugin_slug ) ) {
+				throw new InvalidPluginInfo( 'Error: No plugin slug supplied!' );
+			}
+
 			if ( ! class_exists( Mixpanel::class ) ) {
 				$msg = sprintf(
 					// translators: %1$s - Class in the composer module we're raising the dependency exception for
@@ -173,8 +182,8 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 
 				throw new MissingDependencies( $msg );
 			}
-			$this->utils->log( 'Updating - incrementing - the activation metric in Mixpanel' );
-			$this->instance->people->increment( $this->get_user_id(), 'utilities_activated', 1 );
+			$this->utils->log( 'Updating - incrementing - the E20R Utilities Module activation metric in Mixpanel' );
+			$this->instance->people->increment( $this->get_user_id(), "{$plugin_slug}_activated", 1 );
 		}
 
 		/**
@@ -239,21 +248,28 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 		/**
 		 * Deactivated plugin
 		 *
+		 * @param string|null $plugin_slug The name of the plugin we're deactivating in Mixpanel
+		 *
 		 * @throws MissingDependencies Thrown when the Mixpanel Composer module is missing
+		 * @throws InvalidPluginInfo Thrown if the user didn't supply a plugin slug to register
 		 */
-		public function decrement_activations() {
+		public function decrement_activations( $plugin_slug = null ) {
+
+			if ( empty( $plugin_slug ) ) {
+				throw new InvalidPluginInfo( 'Error: No plugin slug supplied!' );
+			}
+
 			if ( ! class_exists( Mixpanel::class ) ) {
-				$msg     = esc_attr__(
+				$msg = esc_attr__(
 					'Error: E20R Utilities Module is missing a required composer module (). Please report this error at https://github.com/eighty20results/Utilities/issues',
 					'00-e20r-utilities'
 				);
-				$message = new Message();
-				$utils   = new Utilities( $message );
-				$utils->add_message( $msg, 'error', 'backend' );
+				$this->utils->add_message( $msg, 'error', 'backend' );
 
 				throw new MissingDependencies( $msg );
 			}
-			$this->instance->people->increment( $this->get_user_id(), 'utilities_deactivated', 1 );
+			$this->utils->log( 'Decrementing the activated plugins metric' );
+			$this->instance->people->increment( $this->get_user_id(), "{$plugin_slug}_deactivated", 1 );
 		}
 
 		/**
