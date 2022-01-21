@@ -32,6 +32,7 @@ Domain Path: languages/
 
 namespace E20R\Utilities;
 
+use E20R\Metrics\Exceptions\MissingDependencies;
 use E20R\Metrics\MixpanelConnector;
 use E20R\Exceptions\InvalidSettingsKey;
 use function add_action;
@@ -94,9 +95,10 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 * Loader constructor.
 		 * Loads the default PSR-4 Autoloader and configures a couple of required action handlers
 		 *
-		 * @param Utilities $utils - An instance of the Utilities class.
+		 * @param Utilities         $utils - An instance of the Utilities class.
+		 * @param MixpanelConnector $mixpanel The MixpanelConnector class for this plugin
 		 */
-		public function __construct( $utils = null ) {
+		public function __construct( $utils = null, $mixpanel = null ) {
 			if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				wp_die(
 					esc_attr__(
@@ -113,6 +115,13 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 				$utils   = new Utilities( $message );
 			}
 			$this->utils = $utils;
+
+			// Let the loader add the usage metrics (Mixpanel) class unless it's supplied
+			if ( empty( $mixpanel ) ) {
+				$mixpanel = new MixpanelConnector( 'a14f11781866c2117ab6487792e4ebfd' );
+			}
+
+			$this->metrics = $mixpanel;
 
 			// Add required action for language modules (I18N).
 			add_action( 'plugins_loaded', array( $this->utils, 'load_text_domain' ), 11 );
@@ -226,9 +235,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		/**
 		 * Instantiate and register with MixPanel when activating the plugin
 		 */
-		public function utilities_installed() {
-			$this->metrics = new MixpanelConnector( 'a14f11781866c2117ab6487792e4ebfd' );
-
+		public function installed() {
 			$mp_events = array(
 				'installed' => true,
 				'activated' => true,
@@ -240,22 +247,32 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 				$this->utils->log( $exception->getMessage() );
 			}
 
-			$this->metrics->increment_activations();
+			try {
+				$this->metrics->increment_activations();
+			} catch ( MissingDependencies $e ) {
+				$this->utils->log( $e->getMessage() );
+				$this->utils->add_message( $e->getMessage(), 'error', 'backend' );
+			}
 		}
 
 		/**
 		 * Various actions when deactivating the plugin
 		 */
-		public function utilities_uninstalled() {
-			$this->metrics->decrement_activations();
+		public function uninstalled() {
+			try {
+				$this->metrics->decrement_activations();
+			} catch ( MissingDependencies $e ) {
+				$this->utils->log( $e->getMessage() );
+				$this->utils->add_message( $e->getMessage(), 'error', 'backend' );
+			}
 		}
 	}
 }
 
 if ( defined( 'ABSPATH' ) ) {
 	$loader = new Loader();
-	register_activation_hook( __FILE__, array( $loader, 'utilities_installed' ) );
-	register_deactivation_hook( __FILE__, array( $loader, 'utilities_uninstalled' ) );
+	register_activation_hook( __FILE__, array( $loader, 'installed' ) );
+	register_deactivation_hook( __FILE__, array( $loader, 'uninstalled' ) );
 	add_action( 'plugins_loaded', array( $loader, 'utilities_loaded' ), 10 );
 }
 
