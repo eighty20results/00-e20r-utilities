@@ -240,7 +240,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 					);
 				}
 			} elseif ( function_exists( 'openssl_random_pseudo_bytes' ) ) {
-				$bytes = openssl_random_pseudo_bytes( ceil( $length / 2 ) );
+				$bytes = openssl_random_pseudo_bytes( (int) ceil( $length / 2 ) );
 			} else {
 				throw new UniqueIDException(
 					esc_attr__(
