@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## v2.3.0 - 2022-01-23
-- BUG FIX: Always returned an unique user ID for MixpanelConnector (Thomas Sjolshagen)
+- BUG FIX: Always returned a unique user ID for MixpanelConnector (Thomas Sjolshagen)
 - BUG FIX: Not a generic activation/deactivating log message (Thomas Sjolshagen)
 - BUG FIX: Configure Mixpanel events and catch exceptions (Thomas Sjolshagen)
 - BUG FIX: Didn't let user configure plugin to track in MixpanelConnector() class (Thomas Sjolshagen)
