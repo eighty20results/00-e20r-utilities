@@ -200,7 +200,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 		 * @param null|string $prefix Optionally use a prefix which can't be bigger than 50% of the length of the ID
 		 * @param int         $length Length of the randomized Unique ID to generate (default is 13 characters)
 		 *
-		 * @return false|string
+		 * @return string
 		 *
 		 * @throws UniqueIDException Thrown if there's a problem with generating a securely unique ID
 		 * @access private
@@ -226,7 +226,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 
 			if ( function_exists( 'random_bytes' ) ) {
 				try {
-					$bytes = random_bytes( ceil( $length / 2 ) );
+					$bytes = random_bytes( (int) ceil( $length / 2 ) );
 				} catch ( Exception $e ) {
 					throw new UniqueIDException(
 						sprintf(
