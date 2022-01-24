@@ -2,9 +2,9 @@ name: Run Unit Tests and create translations when creating a PR
 
 # Run Unit Test and POT files when new PR is created
 on:
-  push:
-    branches:
-      - main
+#   push:
+#     branches:
+#       - main
   pull_request:
     branches:
       - main
@@ -77,8 +77,6 @@ jobs:
           CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
 
   build_i18n:
-    # Only run when the pull request is created
-    if: github.event.pull_request.opened == true
     name: Build the I18N translation files
     needs: [pr_tests]
     runs-on: ubuntu-18.04
