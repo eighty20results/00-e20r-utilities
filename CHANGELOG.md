@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## v2.3.0 - 2022-01-24
+- BUG FIX: Need the preferred API host for mixpanel configured. (Thomas Sjolshagen)
+- BUG FIX: Updated metadata.json for v2.3.0 and WP 5.8.3 (Thomas Sjolshagen)
+- BUG FIX: Updated README info (v2.3.0 for WP 5.8.3) (Thomas Sjolshagen)
+- BUG FIX: Updated CHANGELOG (v2.3.0 for WP 5.8.3) (Thomas Sjolshagen)
 - BUG FIX: Updates to make sure unit tests pass (and unpassable tests are skipped for now) (Thomas Sjolshagen)
 - BUG FIX: Didn't allow execution of a single test class or test method (Thomas Sjolshagen)
 - BUG FIX: Handle new mixpanel support in unit tests (Thomas Sjolshagen)
@@ -52,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BUG FIX: Reordering things in the include list (Thomas Sjolshagen)
 - BUG FIX: Better error handling when composer autoloader is missing. (Thomas Sjolshagen)
 - BUG FIX: autoload.php file in the wrong location to load successfully (Thomas Sjolshagen)
+
 ## v2.2.0 - 2022-01-10
 - BUG FIX: Needed the E20R_PLUGIN_NAME environment variable set (Thomas Sjolshagen)
 - BUG FIX: Update version number for plugin and fix exception handling (Thomas Sjolshagen)
