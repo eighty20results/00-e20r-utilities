@@ -16,22 +16,19 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Licensing\Exceptions\ErrorSavingSettings
+ * @package E20R\Metrics\Exceptions\InvalidMixpanelKey
  */
 
-namespace E20R\Licensing\Exceptions;
+namespace E20R\Metrics\Exceptions;
 
 use Exception;
 use Throwable;
 
-if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
-	die( 'Cannot access source file directly!' );
-}
-
 /**
- * Raised when there's an error attempting to save the Licensing settings
+ * Raised when an invalid/unrecognized MixPanel key was specified
  */
-class ErrorSavingSettings extends Exception {
+class InvalidMixpanelKey extends Exception {
+
 	/**
 	 * Custom exception constructor
 	 *

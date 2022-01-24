@@ -22,15 +22,19 @@
 namespace E20R\Licensing\Settings;
 
 use E20R\Licensing\Exceptions\BadOperation;
-use E20R\Licensing\Exceptions\DefinedByConstant;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\ConfigDataNotFound;
+use E20R\Licensing\Exceptions\DefinedByConstant;
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 use Exception;
 use ReflectionClass;
 
-if ( ! class_exists( '\E20R\Licensing\Settings\Defaults' ) ) {
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
+if ( ! class_exists( '\\E20R\\Licensing\\Settings\\Defaults' ) ) {
 	/**
 	 * Class Defaults
 	 *

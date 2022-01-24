@@ -21,14 +21,15 @@
 
 namespace E20R\Tests\Unit;
 
-use Codeception\Test\Unit;
-use E20R\Licensing\Exceptions\InvalidMixpanelKey;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
-use E20R\Licensing\Exceptions\UserNotDefined;
-use E20R\Metrics\MixpanelConnector;
-use E20R\Utilities\Utilities;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use Codeception\Test\Unit;
+use E20R\Metrics\Exceptions\HostNotDefined;
+use E20R\Metrics\Exceptions\InvalidMixpanelKey;
+use E20R\Metrics\Exceptions\UniqueIDException;
+use E20R\Metrics\MixpanelConnector;
+use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Utilities\Utilities;
 use Exception;
 use Mixpanel;
 use Mockery;
@@ -150,14 +151,23 @@ class MixpanelConnectorTest extends Unit {
 			->zeroOrMoreTimes()
 			->andReturn( 10024 );
 
+		try {
+			$this->mock_mp = $this->makeEmpty(
+				Mixpanel::class
+			);
+		} catch ( Exception $e ) {
+			self::assertFalse( true, 'Error mocking Mixpanel() class: ' . $e->getMessage() );
+		}
+
 		$this->mock_utils = $this->makeEmpty(
 			Utilities::class,
 			array(
-				'log' => function( $text ) {
+				'log'         => function( $text ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( "Mocked log: {$text}" );
 					return null;
 				},
+				'add_message' => null,
 			)
 		);
 
@@ -172,8 +182,6 @@ class MixpanelConnectorTest extends Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../../../inc/autoload.php';
-		require_once __DIR__ . '/../inc/class-wp-filesystem-base.php';
-		require_once __DIR__ . '/../inc/class-wp-filesystem-direct.php';
 	}
 
 	/**
@@ -187,31 +195,18 @@ class MixpanelConnectorTest extends Unit {
 	 *
 	 * @test
 	 * @dataProvider fixture_instantiated
+	 *
+	 * @throws HostNotDefined Thrown if the Mixpanel API host configuration is not defined
+	 * @throws InvalidMixpanelKey Thrown if the mixpanel key is missing/not defined
 	 */
-	public function test_instantiate_class( $token, $server, $class_name ) {
-		try {
-			$this->mock_mp = $this->construct(
-				Mixpanel::class,
-				array( $token, $server )
-			);
-		} catch ( Exception $e ) {
-			self::assertFalse( true, 'Error mocking Mixpanel() class: ' . $e->getMessage() );
-		}
+	public function it_instantiated_the_mixpanel_connector( $token, $server, $class_name ) {
+		Functions\expect( 'update_option' )
+			->zeroOrMoreTimes()
+			->with( 'e20r_mp_userid', null )
+			->andReturn( true );
 
-		try {
-			$mp_class = new MixpanelConnector( $token, $server, $this->mock_mp );
-			self::assertInstanceOf(
-				$class_name,
-				$mp_class,
-				sprintf(
-					'%1$s is not an instance of %2$s',
-					get_class( $mp_class ),
-					$class_name
-				)
-			);
-		} catch ( InvalidMixpanelKey | UserNotDefined $e ) {
-			self::assertFalse( true, 'Error instantiating MixpanelConnector() class: ' . $e->getMessage() );
-		}
+		$mp_class = new MixpanelConnector( $token, $server, $this->mock_mp, $this->mock_utils );
+		self::assertSame( $class_name, get_class( $mp_class ), sprintf( '%1$s is not an instance of %2$s', get_class( $mp_class ), $class_name ) );
 	}
 
 	/**
@@ -221,7 +216,90 @@ class MixpanelConnectorTest extends Unit {
 	 */
 	public function fixture_instantiated() {
 		return array(
-			array( 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ), 'E20R\Metrics\MixpanelConnector' ),
+			array( 'a14f11781866c21172e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ), MixpanelConnector::class ),
+			array( 'anything', array( 'host' => 'api-eu.mixpanel.com' ), MixpanelConnector::class ),
+			array( '10', array( 'host' => 'whocares' ), MixpanelConnector::class ),
+		);
+	}
+
+
+	/**
+	 * Test: The token is empty and we expect an exception to be raised
+	 *
+	 * @param null|string|int $bad_token The token value we expect will trigger the exception
+	 *
+	 * @return void
+	 *
+	 * @test
+	 * @dataProvider fixture_bad_config
+	 *
+	 * @throws HostNotDefined Thrown if the Mixpanel API host configuration is not defined
+	 * @throws InvalidMixpanelKey Thrown if the mixpanel key is missing/not defined
+	 */
+	public function it_raises_key_exception( $bad_token ) {
+
+		Functions\expect( 'update_option' )
+			->zeroOrMoreTimes()
+			->with( 'e20r_mp_userid' )
+			->andReturn( true );
+
+		$this->expectException( InvalidMixpanelKey::class );
+		new MixpanelConnector( $bad_token, null, $this->mock_mp, $this->mock_utils );
+	}
+
+	/**
+	 * Fixture: Test bad token/API key value(s) for MixpanelConnector
+	 *
+	 * @return array
+	 */
+	public function fixture_bad_config() {
+		return array(
+			array( null, null ),
+			array( '', null ),
+			array( 0, array() ),
+			array( 10, array() ),
+			array( (int) '10', array() ),
+			array( [], [] ), // phpcs:ignore Generic.Arrays.DisallowShortArraySyntax.Found
+		);
+	}
+
+	/**
+	 * Test: The bad host configuration and we expect a HostNotDefined exception to be raised
+	 *
+	 * @param string          $token The token value to use (skipping the InvalidMixpanelKey exception)
+	 * @param null|string|int $bad_host_config The host config to trigger the HostNotDefined exception
+	 *
+	 * @return void
+	 *
+	 * @test
+	 * @dataProvider fixture_bad_host_config
+	 *
+	 * @throws HostNotDefined Thrown if the Mixpanel API host configuration is not defined
+	 */
+	public function it_raises_host_exception( $token, $bad_host_config ) {
+
+		Functions\expect( 'update_option' )
+			->zeroOrMoreTimes()
+			->with( 'e20r_mp_userid' )
+			->andReturn( true );
+
+		$this->expectException( HostNotDefined::class );
+		new MixpanelConnector( $token, $bad_host_config, $this->mock_mp, $this->mock_utils );
+	}
+
+	/**
+	 * Fixture: Test bad token/API key value(s) for MixpanelConnector
+	 *
+	 * @return array
+	 */
+	public function fixture_bad_host_config() {
+		return array(
+			array( 'invalid_valid_key', null ),
+			array( 'invalid_valid_key', '' ),
+			array( 'invalid_valid_key', 'anyhost.example.com' ),
+			array( 'invalid_valid_key', '' ),
+			array( 'invalid_valid_key', array() ),
+			array( 'invalid_valid_key', [] ), // phpcs:ignore Generic.Arrays.DisallowShortArraySyntax.Found
 		);
 	}
 
@@ -229,36 +307,55 @@ class MixpanelConnectorTest extends Unit {
 	 * Test the get() method
 	 *
 	 * @param string $parameter The parameter name to attempt fetching data for
-	 * @param mixed  $expected The expected return value
-	 * @param string $token The MixPanel API server token
-	 * @param array  $config Host configuration for API server
+	 * @param mixed  $expected  The expected return value
+	 * @param string $token     The MixPanel API server token
+	 * @param array  $config    Host configuration for API server
 	 *
 	 * @return void
 	 * @dataProvider fixture_successful_get
 	 *
 	 * @test
 	 */
-	public function test_successful_get_operations(
+	public function it_successfully_gets_class_parameter_values(
 		$parameter,
 		$expected,
 		$token = null,
 		$config = array( 'host' => 'api-eu.mixpanel.com' )
 	) {
 		$result = null;
+		Functions\expect( 'update_option' )
+			->zeroOrMoreTimes()
+			->with( 'e20r_mp_userid' )
+			->andReturn( true );
 
-		try {
-			$this->mock_mp = $this->construct(
-				Mixpanel::class,
-				array( $token, $config )
-			);
-		} catch ( Exception $e ) {
-			self::assertFalse( true, 'Error mocking Mixpanel() class: ' . $e->getMessage() );
+		Functions\expect( 'gethostname' )
+			->atLeast()
+			->once()
+			->andReturn( '7e131628a169' );
+
+		Functions\expect( 'bin2hex' )
+			->atLeast()
+			->once()
+			->andReturn( '69f3f1' );
+
+		if ( function_exists( 'random_bytes' ) ) {
+			Functions\expect( 'random_bytes' )
+				->atLeast()
+				->once()
+				->andReturn( '69f3f1' );
+		}
+
+		if ( ! function_exists( 'random_bytes' ) && function_exists( 'openssl_random_pseudo_bytes' ) ) {
+			Functions\expect( 'openssl_random_pseudo_bytes' )
+				->atLeast()
+				->once()
+				->andReturn( '69f3f1' );
 		}
 
 		try {
-			$mp     = new MixpanelConnector( $token, $config, $this->mock_mp );
+			$mp     = new MixpanelConnector( $token, $config, $this->mock_mp, $this->mock_utils );
 			$result = $mp->get( $parameter );
-		} catch ( InvalidMixpanelKey | UserNotDefined $e ) {
+		} catch ( InvalidMixpanelKey $e ) {
 			self::assertFalse(
 				true,
 				'Error instantiating MixpanelConnector() class: ' . $e->getMessage()
@@ -272,9 +369,17 @@ class MixpanelConnectorTest extends Unit {
 					$e->getMessage()
 				)
 			);
+		} catch ( HostNotDefined $e ) {
+			self::assertFalse(
+				true,
+				sprintf(
+					'Error instantiating MixpanelConnector() class: %1$s',
+					$e->getMessage()
+				)
+			);
 		}
-
-		self::assertSame( $expected, $result, "Error: {$expected} is not {$result}" );
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+		self::assertSame( $expected, $result, "Error: {$expected} is not " . print_r( $result, true ) );
 	}
 
 	/**
@@ -284,9 +389,11 @@ class MixpanelConnectorTest extends Unit {
 	 */
 	public function fixture_successful_get() {
 		return array(
-			array( 'user_id', $this->user_id, 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ) ),
+			array( 'user_id', 'e20rutl69f3f1', 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ) ),
+			array( 'hostid', '7e131628a169 -> e20rutl69f3f1', 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ) ),
 		);
 	}
+
 	/**
 	 * Test the get() method (errors)
 	 *
@@ -302,7 +409,7 @@ class MixpanelConnectorTest extends Unit {
 	 * @dataProvider fixture_unsuccessful_get
 	 * @test
 	 */
-	public function test_unsuccessful_get_operations(
+	public function it_requests_non_existing_parameters_and_raises_exception(
 		$parameter,
 		$expected,
 		$expected_exception,
@@ -311,11 +418,16 @@ class MixpanelConnectorTest extends Unit {
 		$config = array( 'host' => 'api-eu.mixpanel.com' )
 	) {
 		if ( null !== $expected_exception ) {
-			$this->expectExceptionMessageRegExp( "/No API key found for the Mixpanel connector|Invalid parameter \({$parameter}\) for the MixpanelConnector\(\) class/" );
+			$this->expectException( $expected_exception );
 		}
 
+		Functions\expect( 'update_option' )
+			->zeroOrMoreTimes()
+			->with( 'e20r_mp_userid' )
+			->andReturn( true );
+
 		try {
-			$this->mock_mp = $this->construct(
+			$this->mock_mp = $this->constructEmpty(
 				Mixpanel::class,
 				array( $token, $config ),
 				array(
@@ -326,9 +438,9 @@ class MixpanelConnectorTest extends Unit {
 			self::assertFalse( true, 'Error mocking Mixpanel() class: ' . $e->getMessage() );
 		}
 
-		$mp_class = new MixpanelConnector( $token, $config, $this->mock_mp );
+		$mp_class = new MixpanelConnector( $token, $config, $this->mock_mp, $this->mock_utils );
 		$returned = $mp_class->get( $parameter );
-		self::assertSame( $expected, $returned );
+		self::assertSame( $expected, $returned, "Error: The returned value is expected to be '{$expected}' but is {$returned}" );
 	}
 
 	/**
@@ -338,8 +450,135 @@ class MixpanelConnectorTest extends Unit {
 	 */
 	public function fixture_unsuccessful_get() {
 		return array(
-			array( 'not_a_valid_class_property', null, InvalidSettingsKey::class, null, 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ) ),
-			array( 'not_a_valid_class_property', null, InvalidMixpanelKey::class, $this->user_id, null, array( 'host' => 'api-eu.mixpanel.com' ) ),
+			// parameter, expected, expected_exception, user_id, token, config_array
+			array( 'not_a_valid_class_property', null, InvalidSettingsKey::class, null, 'a14f11781866c2117792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ) ),
+			array( 'not_a_valid_class_property', null, InvalidMixpanelKey::class, 'e20rutl69f3f1', null, array( 'host' => 'api-eu.mixpanel.com' ) ),
+		);
+	}
+
+	/**
+	 * Test the uniq_real_id() method
+	 *
+	 * @param string      $prefix string prefix to use for
+	 * @param int         $length The total length of the ID we're allowed to generate
+	 * @param mixed       $bytes "Random" bytes returned by random_bytes() or openssl_random_pseudo_bytes()
+	 * @param string      $expected The resulting string
+	 * @param string|null $exception If applicable, the exception we expect the method to throw
+	 *
+	 * @return void
+	 *
+	 * @dataProvider fixture_generate_random_bytes
+	 *
+	 * @test
+	 */
+	public function it_returns_unique_ids( $prefix, $length, $bytes, $expected, $exception ) {
+		$this->markTestSkipped( 'Problem with generating standard/random-ish IDs' );
+
+		Functions\when( 'random_bytes' )
+			->justReturn( $bytes );
+		Functions\when( 'openssl_random_pseudo_bytes' )
+			->justReturn( $bytes );
+		Functions\expect( 'update_option' )
+			->zeroOrMoreTimes()
+			->with( 'e20r_mp_userid' )
+			->andReturn( true );
+
+		if ( null !== $exception ) {
+			$this->mock_utils->log( "We're expecting an exception!" );
+			$this->expectException( $exception );
+		}
+		$mp_class = new MixpanelConnector( 'dummytoken', array( 'host' => 'localhost.example.com' ), $this->mock_mp, $this->mock_utils );
+		$result   = $mp_class->uniq_real_id( $prefix, $length );
+
+		self::assertSame( $expected, $result );
+	}
+
+	/**
+	 * Fixture: Generate the bytes/expected result for the 2 random function in uniq_real_id() method
+	 *
+	 * @return array Array of fixtures to use in test
+	 * @throws Exception Raised if something goes wrong with random_bytes()
+	 */
+	public function fixture_generate_random_bytes() {
+		$retval = array();
+		foreach ( range( 0, 10 ) as $index ) {
+			$prefix     = "e{$index}rml";
+			$str_length = strlen( $prefix );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.rand_mt_rand
+			$length = (int) mt_rand( 10, 15 );
+			$bytes  = random_bytes( (int) ceil( $length / 2 ) );
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( "Selected length: {$length}" );
+			$length = $length - $str_length;
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( "Length after prefix '{$prefix}' ({$str_length}) has been deducted: {$length}" );
+			$exception = null;
+			if ( $length <= 0 || ( $str_length > ( $length - 2 ) ) ) {
+				$exception = UniqueIDException::class;
+			}
+			$expected = $prefix . substr( bin2hex( $bytes ), 0, $length );
+			$retval[] = array( $prefix, $length, $bytes, $expected, $exception );
+		}
+		return $retval;
+	}
+	/**
+	 * Tests the get_user_id() method
+	 *
+	 * @param string|null $get_option_value The user_id string we're pretending to have saved in the WP Options table
+	 * @param string      $uniq_real_id The unique ID generated
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidSettingsKey Raised if the supplied 'get()' method parameter is missing in the MixpanelConnector() class
+	 *
+	 * @dataProvider fixture_user_ids
+	 * @test
+	 */
+	public function it_configured_a_user_id( $get_option_value, $uniq_real_id ) {
+		$this->markTestSkipped( 'Problem with generating user IDs' );
+
+		Functions\expect( 'get_option' )
+			->zeroOrMoreTimes()
+			->with( 'e20r_mp_userid' )
+			->andReturn( $get_option_value );
+
+		Functions\expect( 'update_option' )
+			->zeroOrMoreTimes()
+			->with( 'e20r_mp_userid' )
+			->andReturn( true );
+
+		$mp_class = $this->construct(
+			MixpanelConnector::class,
+			array( 'dummytoken', array( 'host' => 'localhost.example.com' ), $this->mock_mp, $this->mock_utils ),
+			array(
+				'uniq_real_id' => function ( $prefix, $len ) use ( $uniq_real_id, $get_option_value ) {
+					$value = $get_option_value;
+					if ( empty( $get_option_value ) ) {
+						$value = $uniq_real_id;
+					}
+
+					return $value;
+				},
+			)
+		);
+
+		$mp_class->get_user_id();
+		$result = $mp_class->get( 'user_id' );
+		if ( null === $get_option_value ) {
+			self::assertSame( $uniq_real_id, $result, "Error: Unique ID value ({$uniq_real_id}) is not equal to the class member parameter setting '{$result}'" );
+		} else {
+			self::assertSame( $get_option_value, $result, "Error: Specified option value ({$get_option_value}) is not equal to the class member parameter setting {$result}" );
+		}
+	}
+	/**
+	 * Fixture for the get_user_id() method test(s)
+	 *
+	 * @return array[]
+	 */
+	public function fixture_user_ids() {
+		return array(
+			// get_option_value, uniq_id, expected exception
+			array( null, 'e20rutl69f3f1' ),
 		);
 	}
 }

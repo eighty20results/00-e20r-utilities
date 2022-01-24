@@ -22,19 +22,19 @@
 
 namespace E20R\Tests\Unit;
 
-use Codeception\AssertThrows;
-use Codeception\Test\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use E20R\Utilities\Utilities;
-use E20R\Licensing\Settings\Defaults;
+use Codeception\AssertThrows;
+use Codeception\Test\Unit;
 use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Exceptions\ConfigDataNotFound;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Licensing\Settings\Defaults;
+use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Utilities\Utilities;
 use Exception;
-use Throwable;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use Throwable;
 
 /**
  * Unit tests for the Defaults class

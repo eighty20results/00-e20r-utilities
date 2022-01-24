@@ -23,21 +23,23 @@
 
 namespace E20R\Licensing;
 
+use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Exceptions\ConfigDataNotFound;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Settings\LicenseSettings;
-use E20R\Utilities\Utilities;
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Utilities\Message;
+use E20R\Utilities\Utilities;
 use Exception;
 
 // Deny direct access to the file
-if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( 'Cannot access file directly' );
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
 }
 
-if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
+if ( ! class_exists( '\\E20R\\Licensing\\LicensePage' ) ) {
 	/**
 	 * Class defining/displaying wp-admin/ settings page for the Licensing code
 	 */
@@ -432,7 +434,7 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 								// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
 								sprintf(
 									'on or before: %1$s',
-									wp_date(
+									date_i18n(
 										get_option( 'date_format' ),
 										$args['expiration_ts']
 									)
@@ -549,7 +551,7 @@ if ( ! class_exists( '\E20R\Licensing\LicensePage' ) ) {
 			foreach ( $settings as $product_sku => $license ) {
 				try {
 					$licensing = new License( $product_sku );
-				} catch ( Exceptions\InvalidSettingsKey | Exceptions\MissingServerURL $e ) {
+				} catch ( BadOperation | ConfigDataNotFound | InvalidSettingsVersion | MissingServerURL | Exception $e ) {
 					$this->utils->add_message( 'Error: ' . $e->getMessage(), 'error', 'backend' );
 				}
 

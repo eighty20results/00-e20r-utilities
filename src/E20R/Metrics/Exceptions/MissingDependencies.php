@@ -16,28 +16,25 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Licensing\Exceptions\ErrorSavingSettings
+ * @package E20R\Metrics\Exceptions\MissingDependencies
  */
 
-namespace E20R\Licensing\Exceptions;
+namespace E20R\Metrics\Exceptions;
 
 use Exception;
 use Throwable;
 
-if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
-	die( 'Cannot access source file directly!' );
-}
-
 /**
- * Raised when there's an error attempting to save the Licensing settings
+ * Custom exception when unable to connect to the Mixpanel API server(s)
  */
-class ErrorSavingSettings extends Exception {
+class MissingDependencies extends Exception {
+
 	/**
-	 * Custom exception constructor
+	 * The default constructor for Exceptions
 	 *
-	 * @param string         $message The exception error message to use
-	 * @param int            $code The Exception error code (int) to use
-	 * @param Throwable|null $previous Previous exception that called this one
+	 * @param string         $message String message to use when raising exception
+	 * @param int            $code Error code (int) to use when raising exception
+	 * @param Throwable|null $previous Previous exception type that led to raising ServerConnectionError
 	 */
 	public function __construct( string $message = '', int $code = 0, ?Throwable $previous = null ) { // phpcs:ignore Generic.CodeAnalysis.UselessOverridingMethod.Found
 		parent::__construct( $message, $code, $previous );

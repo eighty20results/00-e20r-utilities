@@ -3,7 +3,7 @@
 Plugin Name: E20R Utilities Module
 Plugin URI: https://eighty20results.com/
 Description: Provides functionality required by the Eighty/20 Results developed plugins
-Version: 2.2.0
+Version: 2.3.0
 Requires PHP: 7.3
 Author: Thomas Sjolshagen <thomas@eighty20results.com>
 Author URI: https://eighty20results.com/thomas-sjolshagen/
@@ -32,14 +32,16 @@ Domain Path: languages/
 
 namespace E20R\Utilities;
 
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
+use E20R\Metrics\Exceptions\InvalidPluginInfo;
+use E20R\Metrics\Exceptions\MissingDependencies;
 use E20R\Metrics\MixpanelConnector;
-use function \add_action;
-use function \add_filter;
+use E20R\Exceptions\InvalidSettingsKey;
+use function add_action;
+use function add_filter;
 
 // Deny direct access to the file
-if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( 'Cannot access file directly' );
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( "Cannot access file directly\n" );
 }
 
 if ( ! defined( 'E20R_UTILITIES_BASE_FILE' ) ) {
@@ -47,7 +49,18 @@ if ( ! defined( 'E20R_UTILITIES_BASE_FILE' ) ) {
 }
 
 // Load the PSR-4 Autoloader
-require_once __DIR__ . '/inc/autoload.php';
+if ( file_exists( __DIR__ . '/inc/autoload.php' ) ) {
+	require_once __DIR__ . '/inc/autoload.php';
+} else {
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log(
+		esc_attr__(
+			'Error: Unable to load required files. Please remove (delete) the E20R Utilities Module plugin and report this error at eighty20results.com',
+			'00-e20r-utilities'
+		)
+	);
+	return false;
+}
 
 if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 
@@ -83,10 +96,11 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 * Loader constructor.
 		 * Loads the default PSR-4 Autoloader and configures a couple of required action handlers
 		 *
-		 * @param Utilities $utils - An instance of the Utilities class.
+		 * @param Utilities|null         $utils - An instance of the Utilities class.
+		 * @param MixpanelConnector|null $mp_connector The MixpanelConnector class for this plugin
 		 */
-		public function __construct( $utils = null ) {
-			if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
+		public function __construct( $utils = null, $mp_connector = null ) {
+			if ( ! class_exists( '\\E20R\\Utilities\\Utilities' ) ) {
 				wp_die(
 					esc_attr__(
 						"Error: Couldn't load the Utilities class included in this module. Please deactivate the E20R Utilities Module plugin!",
@@ -102,6 +116,13 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 				$utils   = new Utilities( $message );
 			}
 			$this->utils = $utils;
+
+			// Let the loader add the usage metrics (Mixpanel) class unless it's supplied
+			if ( empty( $mp_connector ) ) {
+				$mp_connector = new MixpanelConnector( 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ), null, $this->utils );
+			}
+
+			$this->metrics = $mp_connector;
 
 			// Add required action for language modules (I18N).
 			add_action( 'plugins_loaded', array( $this->utils, 'load_text_domain' ), 11 );
@@ -215,12 +236,10 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		/**
 		 * Instantiate and register with MixPanel when activating the plugin
 		 */
-		public function utilities_installed() {
-			$this->metrics = new MixpanelConnector( 'a14f11781866c2117ab6487792e4ebfd' );
-
+		public function installed() {
 			$mp_events = array(
-				'installed' => true,
-				'activated' => true,
+				'00-e20r-utilities_activated'   => true,
+				'00-e20r-utilities_deactivated' => true,
 			);
 
 			try {
@@ -229,22 +248,32 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 				$this->utils->log( $exception->getMessage() );
 			}
 
-			$this->metrics->increment_activations();
+			try {
+				$this->metrics->increment_activations( '00-e20r-utilities' );
+			} catch ( MissingDependencies | InvalidPluginInfo $e ) {
+				$this->utils->log( $e->getMessage() );
+				$this->utils->add_message( $e->getMessage(), 'error', 'backend' );
+			}
 		}
 
 		/**
 		 * Various actions when deactivating the plugin
 		 */
-		public function utilities_uninstalled() {
-			$this->metrics->decrement_activations();
+		public function uninstalled() {
+			try {
+				$this->metrics->decrement_activations( '00-e20r-utilities' );
+			} catch ( MissingDependencies | InvalidPluginInfo $e ) {
+				$this->utils->log( $e->getMessage() );
+				$this->utils->add_message( $e->getMessage(), 'error', 'backend' );
+			}
 		}
 	}
 }
 
 if ( defined( 'ABSPATH' ) ) {
 	$loader = new Loader();
-	register_activation_hook( __FILE__, array( $loader, 'utilities_installed' ) );
-	register_deactivation_hook( __FILE__, array( $loader, 'utilities_uninstalled' ) );
+	register_activation_hook( __FILE__, array( $loader, 'installed' ) );
+	register_deactivation_hook( __FILE__, array( $loader, 'uninstalled' ) );
 	add_action( 'plugins_loaded', array( $loader, 'utilities_loaded' ), 10 );
 }
 

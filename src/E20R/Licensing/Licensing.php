@@ -24,17 +24,21 @@ namespace E20R\Licensing;
 use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Exceptions\ConfigDataNotFound;
 use E20R\Licensing\Exceptions\ErrorSavingSettings;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Exceptions\NoLicenseKeyFound;
 use E20R\Licensing\Exceptions\ServerConnectionError;
 use E20R\Licensing\Settings\LicenseSettings;
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Utilities\Utilities;
 use Exception;
 use ReflectionException;
 
-if ( ! class_exists( '\E20R\Licensing\Licensing' ) ) {
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
+if ( ! class_exists( '\\E20R\\Licensing\\Licensing' ) ) {
 	/**
 	 * Compatibility class for old license management approach
 	 */

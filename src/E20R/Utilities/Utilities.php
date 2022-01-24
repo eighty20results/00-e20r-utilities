@@ -21,19 +21,18 @@
 
 namespace E20R\Utilities;
 
-// Disallow direct access to the class definition
-
 use E20R\Licensing\Exceptions\BadOperation;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Settings\Defaults;
+use E20R\Exceptions\InvalidSettingsKey;
 use Exception;
 use Puc_v4_Factory;
 use stdClass;
 use function apply_filters;
 use function plugin_dir_path;
 
-if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( 'Cannot access file directly' );
+// Disallow direct access to the class definition
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
 }
 
 if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
@@ -615,7 +614,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				if ( ! empty( $user_level->cycle_number ) && ! empty( $user_level->trial_limit ) ) {
 
 					$trial_duration = $user_level->cycle_number * $user_level->trial_limit;
-					$start_date     = wp_date( 'Y-m-d H:i:s', $start_ts );
+					$start_date     = date_i18n( 'Y-m-d H:i:s', $start_ts );
 					$trial_ends_ts  = strtotime(
 						sprintf( '%1$s +%2$s %3$s', $start_date, $trial_duration, $user_level->cycle_period ) // @phpstan-ignore-line
 					);
@@ -684,7 +683,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			$log_file = sprintf(
 				'debug_%1$s.log',
-				wp_date( 'Y_M_D', time() )
+				date_i18n( 'Y_M_D', time() )
 			);
 
 			$upload_dir_info = wp_upload_dir();
@@ -735,7 +734,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$req_time         = isset( $_SERVER['REQUEST_TIME'] ) ? $_SERVER['REQUEST_TIME'] : time();
 			$thread_id        = sprintf( '%08x', abs( crc32( $remote_addr . $req_time ) ) );
 			$tz_string        = get_option( 'timezone_string' );
-			$timestamp        = wp_date( 'H:m:s', strtotime( $tz_string ) );
+			$timestamp        = date_i18n( 'H:m:s', strtotime( $tz_string ) );
 			$calling_function = $this->who_called_me();
 
 			// Log the message to the custom E20R debug log

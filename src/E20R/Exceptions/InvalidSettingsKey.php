@@ -16,18 +16,22 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Licensing\Exceptions\InvalidMixpanelKey
+ * @package E20R\Exceptions\InvalidSettingsKey
  */
 
-namespace E20R\Licensing\Exceptions;
+namespace E20R\Exceptions;
 
 use Exception;
 use Throwable;
 
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
 /**
- * Raised when an invalid/unrecognized MixPanel key was specified
+ * Custom exception raised when the specified class parameter (key) is not present in the settings class that was instatiated
  */
-class InvalidMixpanelKey extends Exception {
+class InvalidSettingsKey extends Exception {
 
 	/**
 	 * Custom exception constructor

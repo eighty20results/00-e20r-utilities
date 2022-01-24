@@ -23,11 +23,11 @@
 
 namespace E20R\Licensing;
 
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\NoLicenseKeyFound;
-use E20R\Utilities\Utilities;
-use E20R\Utilities\Cache;
 use E20R\Licensing\Settings\LicenseSettings;
-// For the 10quality license client handling
+use E20R\Utilities\Cache;
+use E20R\Utilities\Utilities;
 use Exception;
 use LicenseKeys\Utility\Api;
 use LicenseKeys\Utility\Client;
@@ -35,11 +35,11 @@ use LicenseKeys\Utility\LicenseRequest;
 use stdClass;
 
 // Deny direct access to the file
-if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( 'Cannot access file directly' );
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
 }
 
-if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
+if ( ! class_exists( '\\E20R\\Licensing\\LicenseServer' ) ) {
 	/**
 	 * Class LicenseServer
 	 */
@@ -93,7 +93,7 @@ if ( ! class_exists( '\E20R\Licensing\LicenseServer' ) ) {
 		 * @param LicenseSettings $license_settings The settings for the license we're connecting to verify/add/update
 		 * @param Utilities|null  $utils            The Utilities class (or a mock thereof). Used during testing
 		 *
-		 * @throws Exceptions\InvalidSettingsKey Raised if the setting specified does not exist for the version of the Licensing code being used
+		 * @throws InvalidSettingsKey Raised if the setting specified does not exist for the version of the Licensing code being used
 		 */
 		public function __construct( LicenseSettings $license_settings, ?Utilities $utils = null ) {
 			if ( empty( $utils ) ) {

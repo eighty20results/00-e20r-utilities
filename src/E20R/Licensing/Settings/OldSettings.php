@@ -24,6 +24,10 @@ namespace E20R\Licensing\Settings;
 use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use function wp_unslash;
 
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
 /**
  * Class OldSettings
  *

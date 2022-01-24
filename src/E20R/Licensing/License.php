@@ -25,24 +25,24 @@ namespace E20R\Licensing;
 use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Exceptions\ConfigDataNotFound;
 use E20R\Licensing\Exceptions\ErrorSavingSettings;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Exceptions\NoLicenseKeyFound;
 use E20R\Licensing\Exceptions\ServerConnectionError;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Licensing\Settings\LicenseSettings;
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
 use Exception;
 use ReflectionException;
 
 // Deny direct access to the file
-if ( ! defined( 'ABSPATH' ) && function_exists( 'wp_die' ) ) {
-	wp_die( 'Cannot access file directly' );
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
 }
 
-if ( ! class_exists( '\E20R\Licensing\License' ) ) {
+if ( ! class_exists( '\\E20R\\Licensing\\License' ) ) {
 
 	/**
 	 * Class used to handle operations from the licensing client
@@ -120,7 +120,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 * @param Utilities|null       $utils - The Utilities class
 		 * @param AjaxHandler|null     $ajax_handler - The AJAX handler class
 		 *
-		 * @throws Exceptions\InvalidSettingsKey - When a LicenseSetting doesn't exist
+		 * @throws InvalidSettingsKey - When a LicenseSetting doesn't exist
 		 * @throws MissingServerURL - Raised when the URL to the license server isn't defined
 		 * @throws ConfigDataNotFound - Raised if the configuration JSON blob is missing
 		 * @throws BadOperation - Raised if somebody tries an invalid operation against a constant or settings class parameter
@@ -150,7 +150,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 				try {
 					$defaults = new Defaults();
 					$settings = new LicenseSettings( $this->product_sku, $defaults, $this->utils );
-				} catch ( Exceptions\InvalidSettingsKey | MissingServerURL | BadOperation | ConfigDataNotFound | InvalidSettingsVersion $e ) {
+				} catch ( InvalidSettingsKey | MissingServerURL | BadOperation | ConfigDataNotFound | InvalidSettingsVersion $e ) {
 					$this->utils->log( 'Error: Invalid setting key used when instantiating the LicenseSettings() class: ' . esc_attr( $e->getMessage() ) );
 					throw $e;
 				}
@@ -236,7 +236,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 *
 		 * @param string $sku - The product SKU for the licensed bit of code/product
 		 *
-		 * @throws Exceptions\InvalidSettingsKey - Raised if the key specified doesn't exist for the settings class
+		 * @throws InvalidSettingsKey - Raised if the key specified doesn't exist for the settings class
 		 * @throws MissingServerURL - Raised if the URL to the License server is missing/wrong
 		 * @throws BadOperation - Raised if a constant operation isn't defined
 		 * @throws ConfigDataNotFound - Raised if the cofiguration data JSON is missing
@@ -250,7 +250,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			$defaults       = new Defaults();
 			try {
 				$this->settings = new LicenseSettings( $this->product_sku, $defaults, $this->utils );
-			} catch ( Exceptions\InvalidSettingsKey | MissingServerURL | BadOperation | ConfigDataNotFound | InvalidSettingsVersion $e ) {
+			} catch ( InvalidSettingsKey | MissingServerURL | BadOperation | ConfigDataNotFound | InvalidSettingsVersion $e ) {
 				$this->utils->log( $e->getMessage() );
 				throw $e;
 			}
@@ -448,7 +448,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			if ( $this->log_debug ) {
 				$this->utils->log(
 					"Expiration date for {$product_sku}: " .
-					wp_date( 'Y-m-d H:i:s', $expires )
+					date_i18n( 'Y-m-d H:i:s', $expires )
 				);
 			}
 
@@ -478,7 +478,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 		 * @return array|bool
 		 *
 		 * @throws ServerConnectionError - Raised when the license Server isn't available
-		 * @throws Exceptions\InvalidSettingsKey - Raised if the specified setting doesn't exist in the settings class
+		 * @throws InvalidSettingsKey - Raised if the specified setting doesn't exist in the settings class
 		 * @throws Exceptions\BadOperation - Raised when attempting an unsupported action against a constant
 		 * @throws Exceptions\InvalidSettingsVersion - Raised when an unsupported version of the settings class is used
 		 * @throws MissingServerURL - Raised if the License server URL is missing
@@ -507,13 +507,7 @@ if ( ! class_exists( '\E20R\Licensing\License' ) ) {
 			if ( empty( $this->settings ) ) {
 				try {
 					$this->settings = new LicenseSettings( $product_sku, $plugin_defaults, $this->utils );
-				} catch (
-					Exceptions\InvalidSettingsKey |
-				MissingServerURL |
-				BadOperation |
-				ConfigDataNotFound |
-				InvalidSettingsVersion $e
-				) {
+				} catch ( InvalidSettingsKey | MissingServerURL | BadOperation | ConfigDataNotFound | InvalidSettingsVersion $e ) {
 					$this->utils->add_message( $e->getMessage(), 'error', 'backend' );
 					throw $e;
 				}

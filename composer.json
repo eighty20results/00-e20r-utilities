@@ -62,6 +62,7 @@
             "NamespaceInSourceDir\\": "",
             "E20R\\": "src/E20R/",
             "E20R\\Utilities\\": "src/E20R/Utilities/",
+            "E20R\\Exceptions\\": "src/E20R/Exceptions",
             "E20R\\Licensing\\": "src/E20R/Licensing/",
             "E20R\\Metrics\\": "src/E20R/Metrics/",
             "E20R\\Licensing\\Exceptions\\": "src/E20R/Licensing/Exceptions/",

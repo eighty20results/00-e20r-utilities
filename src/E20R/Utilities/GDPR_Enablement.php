@@ -21,7 +21,11 @@
 
 namespace E20R\Utilities;
 
-if ( ! class_exists( '\E20R\Utilities\GDPR_Enablement' ) ) {
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
+if ( ! class_exists( '\\E20R\\Utilities\\GDPR_Enablement' ) ) {
 
 	/**
 	 * Class GDPR_Enablement

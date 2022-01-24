@@ -22,24 +22,24 @@
 
 namespace E20R\Tests\Unit;
 
+use Brain\Monkey\Actions;
+use Brain\Monkey\Filters;
+use Brain\Monkey\Functions;
 use Codeception\AssertThrows;
+use Codeception\Test\Unit;
 use E20R\Licensing\AjaxHandler;
 use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Exceptions\ConfigDataNotFound;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
 use E20R\Licensing\Exceptions\InvalidSettingsVersion;
 use E20R\Licensing\Exceptions\MissingServerURL;
 use E20R\Licensing\Exceptions\ServerConnectionError;
+use E20R\Licensing\License;
 use E20R\Licensing\LicensePage;
 use E20R\Licensing\LicenseServer;
-use E20R\Licensing\Settings\LicenseSettings;
-use E20R\Licensing\License;
 use E20R\Licensing\Settings\Defaults;
+use E20R\Licensing\Settings\LicenseSettings;
+use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Utilities\Utilities;
-use Codeception\Test\Unit;
-use Brain\Monkey\Functions;
-use Brain\Monkey\Actions;
-use Brain\Monkey\Filters;
 use Exception;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;

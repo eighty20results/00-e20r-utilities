@@ -21,13 +21,23 @@
 
 namespace E20R\Metrics;
 
-use E20R\Licensing\Exceptions\InvalidMixpanelKey;
-use E20R\Licensing\Exceptions\InvalidSettingsKey;
-use E20R\Licensing\Exceptions\UserNotDefined;
+use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Metrics\Exceptions\HostNotDefined;
+use E20R\Metrics\Exceptions\InvalidMixpanelKey;
+use E20R\Metrics\Exceptions\InvalidPluginInfo;
+use E20R\Metrics\Exceptions\MissingDependencies;
+use E20R\Metrics\Exceptions\UniqueIDException;
+use E20R\Utilities\Message;
+use E20R\Utilities\Utilities;
 use Mixpanel;
+use Exception;
 use function esc_attr__;
 
-if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
+if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
+	die( 'Cannot access source file directly!' );
+}
+
+if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 
 	/**
 	 * Custom Mixpanel connector
@@ -37,9 +47,16 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 		/**
 		 * Instance of the Mixpanel class
 		 *
-		 * @var Mixpanel|null $instance
+		 * @var Mixpanel|null $mixpanel
 		 */
-		private $instance = null;
+		private $mixpanel = null;
+
+		/**
+		 * An instance of the Utilities class
+		 *
+		 * @var Utilities|null $utils
+		 */
+		private $utils = null;
 
 		/**
 		 * Identifying string for host
@@ -59,80 +76,230 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 		/**
 		 * Instantiate our own edition of the Mixpanel Connector
 		 *
-		 * @param null|string   $token       Mixpanel token.
-		 * @param string[]      $host        Mixpanel host.
-		 * @param null|Mixpanel $mp_instance Mixpanel class instance (for testing purposes).
+		 * @param null|string    $token       Mixpanel token.
+		 * @param null|string[]  $host        Mixpanel host.
+		 * @param null|Mixpanel  $mixpanel    Mixpanel class instance (for testing purposes).
+		 * @param null|Utilities $utils       E20R Utilities Module class instance (for testing purposes)
 		 *
-		 * @throws UserNotDefined - No user logged in when instantiating the class.
+		 * @throws HostNotDefined - No user logged in when instantiating the class.
 		 * @throws InvalidMixpanelKey - The Mixpanel key supplied is invalid.
 		 */
-		public function __construct( $token = null, $host = array( 'host' => 'api-eu.mixpanel.com' ), $mp_instance = null ) {
-			if ( is_null( $token ) ) {
+		public function __construct( $token = null, $host = null, $mixpanel = null, $utils = null ) {
+			if ( empty( $this->utils ) && empty( $utils ) ) {
+				$message = new Message();
+				$utils   = new Utilities( $message );
+			}
+
+			$this->utils = $utils;
+			if ( empty( $token ) || ! is_string( $token ) ) {
 				throw new InvalidMixpanelKey(
 					esc_attr__(
-						'No API key found for the Mixpanel connector',
+						'No key provided for the Mixpanel API',
 						'00-e20r-utilities'
 					)
 				);
 			}
 
-			$this->user_id = get_option( 'e20r_mp_userid', uniqid( 'e20rutil', true ) );
+			$this->get_user_id();
+
+			if ( ! is_array( $host ) ) {
+				throw new HostNotDefined(
+					esc_attr__(
+						'The Mixpanel API server configuration is incorrect',
+						'00-e20r-utilities'
+					)
+				);
+			}
+
+			if ( ! in_array( 'host', array_keys( $host ), true ) ) {
+				throw new HostNotDefined(
+					esc_attr__(
+						'The Mixpanel API server configuration is lacking host definition',
+						'00-e20r-utilities'
+					)
+				);
+			}
 
 			if ( empty( $host ) ) {
 				$host = array( 'host' => 'api-eu.mixpanel.com' );
 			}
 
-			if ( empty( $mp_instance ) ) {
-				$this->instance = Mixpanel::getInstance( $token, $host );
-			} else {
-				$this->instance = $mp_instance;
+			if ( empty( $mixpanel ) ) {
+				$mixpanel = Mixpanel::getInstance( $token, $host );
+				$this->utils->log( 'Created a new Mixpanel() class instance!' );
 			}
 
-			$user_info = wp_get_current_user();
+			$this->mixpanel = $mixpanel;
 
-			if ( empty( $user_info ) ) {
-				throw new UserNotDefined(
-					esc_attr__( 'Current user not yet identified', '00-e20r-utilities' )
+			$hostid = gethostname();
+			if ( empty( $hostid ) ) {
+				throw new HostNotDefined(
+					esc_attr__( 'Unable to locate host ID!', '00-e20r-utilities' )
 				);
 			}
 
-			$this->hostid = sprintf( '%1$s -> %2$s', gethostname(), $this->user_id );
-			$this->instance->people->set(
-				$this->user_id,
-				array(
-					'host_id' => $this->hostid,
-				),
-				null,
-				true
-			);
+			$this->hostid = sprintf( '%1$s -> %2$s', $hostid, $this->user_id );
+
+			if ( isset( $this->mixpanel->people ) && ! empty( $this->mixpanel->people ) ) {
+				$this->mixpanel->people->set(
+					$this->hostid,
+					array(
+						'user_id' => $this->user_id,
+						'host_id' => $this->hostid,
+					),
+					null,
+					true
+				);
+			} else {
+				$this->utils->log( 'The Mixpanel environment has not been instantiated. Are we unit testing??' );
+			}
 		}
 
 		/**
-		 * Return a User ID (numeric or the '' string) to use for Mixpanel data
+		 * Return a User ID (string) to use for Mixpanel data
 		 *
-		 * @return int|string
+		 * @return void
 		 */
-		private function get_user_id() {
-			$user_id   = 'unknown_user';
-			$user_info = function_exists( 'wp_get_current_user' ) ? wp_get_current_user() : $user_id;
-			if ( 'unknown_user' !== $user_info ) {
-				$user_id = $user_info->ID;
+		public function get_user_id() {
+
+			if ( empty( $this->user_id ) ) {
+				$this->user_id = get_option( 'e20r_mp_userid', null );
 			}
-			return $user_id;
+
+			if ( null === $this->user_id ) {
+				try {
+					$this->user_id = $this->uniq_real_id( 'e20rutl' );
+				} catch ( UniqueIDException $e ) {
+					// translators: %1$s the error message from the UniqueIDException()
+					$message = sprintf( esc_attr__( 'Error: %1$s', '00-e20r-utilities' ), $e->getMessage() );
+					$this->utils->log( $message );
+					$this->utils->add_message( $message, 'error', 'backend' );
+					return;
+				}
+				update_option( 'e20r_mp_userid', $this->user_id );
+			}
 		}
 
 		/**
 		 * Installed and activated plugin
+		 *
+		 * @param string|null $plugin_slug The slug of the plugin
+		 *
+		 * @throws MissingDependencies Thrown when the Mixpanel Composer module is missing
+		 * @throws InvalidPluginInfo Thrown if the user didn't supply a plugin slug to register
 		 */
-		public function increment_activations() {
-			$this->instance->people->increment( $this->get_user_id(), 'utilities_activated', 1 );
+		public function increment_activations( $plugin_slug = null ) {
+
+			if ( empty( $plugin_slug ) ) {
+				throw new InvalidPluginInfo( 'Error: No plugin slug supplied!' );
+			}
+
+			if ( ! class_exists( Mixpanel::class ) ) {
+				$msg = sprintf(
+					// translators: %1$s - Class in the composer module we're raising the dependency exception for
+					esc_attr__(
+						'Error: E20R Utilities Module is missing a required composer module (%1$s). Please report this error at https://github.com/eighty20results/Utilities/issues',
+						'00-e20r-utilities'
+					),
+					Mixpanel::class
+				);
+
+				$this->utils->add_message( $msg, 'error', 'backend' );
+				throw new MissingDependencies( $msg );
+			}
+			$this->utils->log( "Incrementing the {$plugin_slug} activation metric" );
+			$this->mixpanel->people->increment( $this->hostid, "{$plugin_slug}_activated", 1 );
+		}
+
+		/**
+		 * Generates a random unique ID (default 13 characters long, but can be adjusted)
+		 *
+		 * @param null|string $prefix Optionally use a prefix which can't be bigger than 50% of the length of the ID
+		 * @param int         $length Length of the randomized Unique ID to generate (default is 13 characters)
+		 *
+		 * @return string
+		 *
+		 * @throws UniqueIDException Thrown if there's a problem with generating a securely unique ID
+		 * @access private
+		 * @credit https://www.php.net/manual/en/function.uniqid.php#120123
+		 */
+		public function uniq_real_id( $prefix = null, $length = 13 ) {
+
+			if ( ! empty( $prefix ) ) {
+				$str_length = strlen( $prefix );
+				$new_length = $length - $str_length;
+
+				if ( $new_length <= 0 || ( $str_length > ( $length - 2 ) ) ) {
+					throw new UniqueIDException(
+						esc_attr__(
+							'Specified prefix is longer than the allowed half length of the ID',
+							'00-e20r-utilities'
+						)
+					);
+				}
+
+				$length = $new_length;
+			}
+
+			if ( function_exists( 'random_bytes' ) ) {
+				try {
+					$bytes = random_bytes( (int) ceil( $length / 2 ) );
+				} catch ( Exception $e ) {
+					throw new UniqueIDException(
+						sprintf(
+							// translators: %1$s the message from the random_bytes() exception thrown
+							esc_attr__(
+								'Error: %1$s',
+								'00-e20r-utilities'
+							),
+							$e->getMessage()
+						)
+					);
+				}
+			} elseif ( function_exists( 'openssl_random_pseudo_bytes' ) ) {
+				$bytes = openssl_random_pseudo_bytes( (int) ceil( $length / 2 ) );
+			} else {
+				throw new UniqueIDException(
+					esc_attr__(
+						'Error: No cryptographically secure random function available',
+						'00-e20r-utilities'
+					)
+				);
+			}
+
+			return $prefix . substr( bin2hex( $bytes ), 0, $length );
 		}
 
 		/**
 		 * Deactivated plugin
+		 *
+		 * @param string|null $plugin_slug The name of the plugin we're deactivating in Mixpanel
+		 *
+		 * @throws MissingDependencies Thrown when the Mixpanel Composer module is missing
+		 * @throws InvalidPluginInfo Thrown if the user didn't supply a plugin slug to register
 		 */
-		public function decrement_activations() {
-			$this->instance->people->increment( $this->get_user_id(), 'utilities_deactivated', 1 );
+		public function decrement_activations( $plugin_slug = null ) {
+
+			if ( empty( $plugin_slug ) ) {
+				throw new InvalidPluginInfo( 'Error: No plugin slug supplied!' );
+			}
+
+			if ( ! class_exists( Mixpanel::class ) ) {
+				$msg = sprintf(
+				// translators: %1$s - Class in the composer module we're raising the dependency exception for
+					esc_attr__(
+						'Error: E20R Utilities Module is missing a required composer module (%1$s). Please report this error at https://github.com/eighty20results/Utilities/issues',
+						'00-e20r-utilities'
+					),
+					Mixpanel::class
+				);
+
+				$this->utils->add_message( $msg, 'error', 'backend' );
+
+				throw new MissingDependencies( $msg );
+			}
+			$this->utils->log( "Decrementing the {$plugin_slug} activation metric for {$this->hostid}" );
+			$this->mixpanel->people->increment( $this->hostid, "{$plugin_slug}_deactivated", 1 );
 		}
 
 		/**
@@ -140,10 +307,10 @@ if ( ! class_exists( 'E20R\Metrics\MixpanelConnector' ) ) {
 		 *
 		 * @param string $parameter - the class parameter to return the value of.
 		 *
-		 * @return Mixpanel|null
+		 * @return mixed|null
 		 * @throws InvalidSettingsKey - Incorrect/unexpected variable to get for this class.
 		 */
-		public function get( $parameter = 'instance' ) {
+		public function get( $parameter = 'mixpanel' ) {
 			if ( ! property_exists( $this, $parameter ) ) {
 				throw new InvalidSettingsKey(
 					sprintf(

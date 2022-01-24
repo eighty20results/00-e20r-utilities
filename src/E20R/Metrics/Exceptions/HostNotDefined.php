@@ -16,24 +16,20 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package E20R\Licensing\Exceptions\ErrorSavingSettings
+ * @package E20R\Metrics\Exceptions\HostNotDefined
  */
 
-namespace E20R\Licensing\Exceptions;
+namespace E20R\Metrics\Exceptions;
 
 use Exception;
 use Throwable;
 
-if ( ! defined( 'ABSPATH' ) && ( ! defined( 'PLUGIN_PATH' ) ) ) {
-	die( 'Cannot access source file directly!' );
-}
-
 /**
- * Raised when there's an error attempting to save the Licensing settings
+ * Exception thrown when a user hasn't been defined yet
  */
-class ErrorSavingSettings extends Exception {
+class HostNotDefined extends Exception {
 	/**
-	 * Custom exception constructor
+	 * Custom exception to denote an undefined/uninstantiated user
 	 *
 	 * @param string         $message The exception error message to use
 	 * @param int            $code The Exception error code (int) to use

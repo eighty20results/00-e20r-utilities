@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2.
 msgid ""
 msgstr ""
-"Project-Id-Version: E20R Utilities Module 2.1.0\n"
+"Project-Id-Version: E20R Utilities Module 2.3.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/00-e20r-utilities\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2022-01-07T18:02:23+00:00\n"
+"POT-Creation-Date: 2022-01-24T20:51:12+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.5.0\n"
 "X-Domain: 00-e20r-utilities\n"
@@ -23,7 +23,7 @@ msgid "https://eighty20results.com/"
 msgstr ""
 
 #. Description of the plugin
-msgid "Provides functionality required by some of the Eighty/20 Results developed plugins"
+msgid "Provides functionality required by the Eighty/20 Results developed plugins"
 msgstr ""
 
 #. Author of the plugin
@@ -34,31 +34,35 @@ msgstr ""
 msgid "https://eighty20results.com/thomas-sjolshagen/"
 msgstr ""
 
-#: class-loader.php:91
+#: class-loader.php:57
+msgid "Error: Unable to load required files. Please remove (delete) the E20R Utilities Module plugin and report this error at eighty20results.com"
+msgstr ""
+
+#: class-loader.php:105
 msgid "Error: Couldn't load the Utilities class included in this module. Please deactivate the E20R Utilities Module plugin!"
 msgstr ""
 
 #. translators: %s - SKU for licensed product
-#: src/E20R/Licensing/AjaxHandler.php:162
+#: src/E20R/Licensing/AjaxHandler.php:166
 msgid "No product name found for the \"%s\" SKU"
 msgstr ""
 
 #. translators: %s - Product name for the license
-#: src/E20R/Licensing/AjaxHandler.php:175
+#: src/E20R/Licensing/AjaxHandler.php:179
 msgid "Error: Invalid/non-existent key specified for the \"%s\" license"
 msgstr ""
 
 #. translators: %s - Product name for the license
-#: src/E20R/Licensing/AjaxHandler.php:188
+#: src/E20R/Licensing/AjaxHandler.php:192
 msgid "Invalid SKU given for the \"%s\" license"
 msgstr ""
 
-#: src/E20R/Licensing/AjaxHandler.php:202
+#: src/E20R/Licensing/AjaxHandler.php:206
 msgid "Error: Unable to configure SKU for license"
 msgstr ""
 
 #. translators: %s - Product name for the license
-#: src/E20R/Licensing/AjaxHandler.php:218
+#: src/E20R/Licensing/AjaxHandler.php:222
 msgid "Error: Invalid license key for \"%s\". It is not an active/available license"
 msgstr ""
 
@@ -66,56 +70,56 @@ msgstr ""
 msgid "Error: Unable to connect to license server. Please upgrade the E20R Utilities plugin!"
 msgstr ""
 
-#: src/E20R/Licensing/License.php:539
+#: src/E20R/Licensing/License.php:533
 msgid "Error transmitting to the remote Licensing server"
 msgstr ""
 
 #. translators: The substitution values come from the error object
-#: src/E20R/Licensing/License.php:562
+#: src/E20R/Licensing/License.php:556
 msgid "Activation error: %1$s -> %2$s"
 msgstr ""
 
 #. translators: %1$s - Error message from the LicenseSettings::merge() operation
-#: src/E20R/Licensing/License.php:609
+#: src/E20R/Licensing/License.php:603
 msgid "Error merging settings: %1$s"
 msgstr ""
 
 #. translators: Error message supplied from decoded request object
-#: src/E20R/Licensing/License.php:752
+#: src/E20R/Licensing/License.php:746
 msgid "Deactivation error: %s"
 msgstr ""
 
 #. translators: Error message supplied from decoded request object
-#: src/E20R/Licensing/License.php:758
+#: src/E20R/Licensing/License.php:752
 msgid "%1$s -> %2$s"
 msgstr ""
 
-#: src/E20R/Licensing/License.php:826
+#: src/E20R/Licensing/License.php:820
 msgid "Configure Licenses"
 msgstr ""
 
 #. translators: Name of license is supplied from the plugin being licensed
-#: src/E20R/Licensing/License.php:925
+#: src/E20R/Licensing/License.php:919
 msgid "Error: No expiration info found for %s. Using default value (expired)"
 msgstr ""
 
 #. translators: Name of license is translated in the calling plugin
-#: src/E20R/Licensing/License.php:945
+#: src/E20R/Licensing/License.php:939
 msgid "Warning: No expiration info found for %s. Using default value (expired)"
 msgstr ""
 
-#: src/E20R/Licensing/License.php:968
-#: src/E20R/Licensing/License.php:973
-#: src/E20R/Licensing/LicensePage.php:293
+#: src/E20R/Licensing/License.php:962
+#: src/E20R/Licensing/License.php:967
+#: src/E20R/Licensing/LicensePage.php:295
 msgid "Unknown"
 msgstr ""
 
-#: src/E20R/Licensing/License.php:985
+#: src/E20R/Licensing/License.php:979
 msgid "Paste the purchased key here"
 msgstr ""
 
 #. translators: The settings from the plugin being licensed will contain its name
-#: src/E20R/Licensing/License.php:1026
+#: src/E20R/Licensing/License.php:1020
 msgid "Add %s license"
 msgstr ""
 
@@ -124,74 +128,74 @@ msgstr ""
 msgid "Paste the received '%1$s' key here"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:196
-#: src/E20R/Licensing/LicensePage.php:197
+#: src/E20R/Licensing/LicensePage.php:198
+#: src/E20R/Licensing/LicensePage.php:199
 msgid "E20R Licenses"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:216
-#: src/E20R/Licensing/LicensePage.php:499
+#: src/E20R/Licensing/LicensePage.php:218
+#: src/E20R/Licensing/LicensePage.php:501
 msgid "Activate/Deactivate & Save license(s)"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:220
+#: src/E20R/Licensing/LicensePage.php:222
 msgid "This add-on is distributed under version 2 of the GNU Public License (GPLv2). One of the things the GPLv2 license grants is the right to use this software on your site, free of charge."
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:251
+#: src/E20R/Licensing/LicensePage.php:253
 msgid "Purchase Licenses/Add-ons &raquo;"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:257
+#: src/E20R/Licensing/LicensePage.php:259
 msgid "Name"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:260
+#: src/E20R/Licensing/LicensePage.php:262
 msgid "Key"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:263
+#: src/E20R/Licensing/LicensePage.php:265
 msgid "Email"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:267
+#: src/E20R/Licensing/LicensePage.php:269
 msgid "Deactivate"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:410
+#: src/E20R/Licensing/LicensePage.php:412
 msgid "Verify license"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:424
+#: src/E20R/Licensing/LicensePage.php:426
 msgid "This license does not expire"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:426
+#: src/E20R/Licensing/LicensePage.php:428
 msgid "This license is not activated"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:445
+#: src/E20R/Licensing/LicensePage.php:447
 msgid "will renew automatically (unless cancelled)"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:446
+#: src/E20R/Licensing/LicensePage.php:448
 msgid "needs to be renewed manually"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:449
+#: src/E20R/Licensing/LicensePage.php:451
 msgid "does not need to be renewed"
 msgstr ""
 
 #. translators: Message to show when the license is expiring
-#: src/E20R/Licensing/LicensePage.php:455
+#: src/E20R/Licensing/LicensePage.php:457
 msgid "This license %1$s %2$s"
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:489
+#: src/E20R/Licensing/LicensePage.php:491
 msgid "You are not permitted to perform this action."
 msgstr ""
 
-#: src/E20R/Licensing/LicensePage.php:630
+#: src/E20R/Licensing/LicensePage.php:632
 msgid "Thank you!"
 msgstr ""
 
@@ -251,60 +255,60 @@ msgid "Error validating the %1$s license: %2$s -> %3$s"
 msgstr ""
 
 #. translators: %1$s - The setting/key name
-#: src/E20R/Licensing/Settings/BaseSettings.php:91
+#: src/E20R/Licensing/Settings/BaseSettings.php:95
 msgid "%1$s is not a valid setting for this version of the licensing solution"
 msgstr ""
 
 #. translators: %1$s - Class property
-#: src/E20R/Licensing/Settings/BaseSettings.php:115
+#: src/E20R/Licensing/Settings/BaseSettings.php:119
 msgid "\"%1$s\" is not a valid setting for this version of the licensing solution"
 msgstr ""
 
-#: src/E20R/Licensing/Settings/Defaults.php:302
+#: src/E20R/Licensing/Settings/Defaults.php:306
 msgid "No configuration data found"
 msgstr ""
 
-#: src/E20R/Licensing/Settings/Defaults.php:310
+#: src/E20R/Licensing/Settings/Defaults.php:314
 msgid "Unable to decode the configuration data"
 msgstr ""
 
 #. translators: %1$s - the parameter name provided by the caller
-#: src/E20R/Licensing/Settings/Defaults.php:351
+#: src/E20R/Licensing/Settings/Defaults.php:355
 msgid "Error: Cannot lock \"%1$s\". Invalid parameter name"
 msgstr ""
 
 #. translators: %1$s - the parameter name provided by the caller
-#: src/E20R/Licensing/Settings/Defaults.php:376
+#: src/E20R/Licensing/Settings/Defaults.php:380
 msgid "Error: Cannot unlock \"%1$s\". Invalid parameter name"
 msgstr ""
 
 #. translators: %1$s - Name of requested constant
-#: src/E20R/Licensing/Settings/Defaults.php:405
+#: src/E20R/Licensing/Settings/Defaults.php:409
 msgid "\"%1$s\" is not a valid Defaults() constant!"
 msgstr ""
 
 #. translators: %d - the operation constant to perform
-#: src/E20R/Licensing/Settings/Defaults.php:415
+#: src/E20R/Licensing/Settings/Defaults.php:419
 msgid "%d is an invalid operation"
 msgstr ""
 
 #. translators: %1$s - the supplied setting name, %2$s - constant name
-#: src/E20R/Licensing/Settings/Defaults.php:475
+#: src/E20R/Licensing/Settings/Defaults.php:479
 msgid "%1$s is already defined by the \"%2$s\" constant"
 msgstr ""
 
 #. translators: %1$s - the supplied setting name
-#: src/E20R/Licensing/Settings/Defaults.php:504
+#: src/E20R/Licensing/Settings/Defaults.php:508
 msgid "\"%1$s\" is a default setting and cannot be updated"
 msgstr ""
 
 #. translators: %1$s - Supplied parameter name
-#: src/E20R/Licensing/Settings/Defaults.php:546
+#: src/E20R/Licensing/Settings/Defaults.php:550
 msgid "\"%1$s\" is not a valid default setting"
 msgstr ""
 
 #. translators: %s - The parameter given by the calling function
-#: src/E20R/Licensing/Settings/Defaults.php:583
+#: src/E20R/Licensing/Settings/Defaults.php:587
 msgid "Error: \"%1$s\" is not a valid parameter"
 msgstr ""
 
@@ -331,41 +335,70 @@ msgstr ""
 msgid "Error saving license settings: %1$s"
 msgstr ""
 
-#: src/E20R/Licensing/Settings/NewSettings.php:138
-#: src/E20R/Licensing/Settings/OldSettings.php:131
+#: src/E20R/Licensing/Settings/NewSettings.php:142
+#: src/E20R/Licensing/Settings/OldSettings.php:135
 msgid "The supplied settings are not the correct settings for the current license management version"
 msgstr ""
 
-#: src/E20R/Metrics/MixpanelConnector.php:72
-msgid "No API key found for the Mixpanel connector"
+#: src/E20R/Metrics/MixpanelConnector.php:96
+msgid "No key provided for the Mixpanel API"
 msgstr ""
 
-#: src/E20R/Metrics/MixpanelConnector.php:95
-msgid "Current user not yet identified"
+#: src/E20R/Metrics/MixpanelConnector.php:107
+msgid "The Mixpanel API server configuration is incorrect"
+msgstr ""
+
+#: src/E20R/Metrics/MixpanelConnector.php:116
+msgid "The Mixpanel API server configuration is lacking host definition"
+msgstr ""
+
+#: src/E20R/Metrics/MixpanelConnector.php:137
+msgid "Unable to locate host ID!"
+msgstr ""
+
+#. translators: %1$s the error message from the UniqueIDException()
+#. translators: %1$s the message from the random_bytes() exception thrown
+#: src/E20R/Metrics/MixpanelConnector.php:174
+#: src/E20R/Metrics/MixpanelConnector.php:251
+msgid "Error: %1$s"
+msgstr ""
+
+#. translators: %1$s - Class in the composer module we're raising the dependency exception for
+#: src/E20R/Metrics/MixpanelConnector.php:200
+#: src/E20R/Metrics/MixpanelConnector.php:290
+msgid "Error: E20R Utilities Module is missing a required composer module (%1$s). Please report this error at https://github.com/eighty20results/Utilities/issues"
+msgstr ""
+
+#: src/E20R/Metrics/MixpanelConnector.php:234
+msgid "Specified prefix is longer than the allowed half length of the ID"
+msgstr ""
+
+#: src/E20R/Metrics/MixpanelConnector.php:263
+msgid "Error: No cryptographically secure random function available"
 msgstr ""
 
 #. translators: %1$s The parameter name
-#: src/E20R/Metrics/MixpanelConnector.php:151
+#: src/E20R/Metrics/MixpanelConnector.php:318
 msgid "Invalid parameter (%1$s) for the MixpanelConnector() class"
 msgstr ""
 
-#: src/E20R/Utilities/GDPR_Enablement.php:113
+#: src/E20R/Utilities/GDPR_Enablement.php:117
 msgid "No extra data collected"
 msgstr ""
 
-#: src/E20R/Utilities/GDPR_Enablement.php:130
+#: src/E20R/Utilities/GDPR_Enablement.php:134
 msgid "No plugin developed by Eighty/20 Results by Wicked Strong Chicks was found"
 msgstr ""
 
-#: src/E20R/Utilities/GDPR_Enablement.php:152
+#: src/E20R/Utilities/GDPR_Enablement.php:156
 msgid "3rd party services"
 msgstr ""
 
-#: src/E20R/Utilities/GDPR_Enablement.php:186
+#: src/E20R/Utilities/GDPR_Enablement.php:190
 msgid "Eighty / 20 Results by Wicked Strong Chicks, LLC"
 msgstr ""
 
-#: src/E20R/Utilities/GDPR_Enablement.php:241
-#: src/E20R/Utilities/GDPR_Enablement.php:262
+#: src/E20R/Utilities/GDPR_Enablement.php:245
+#: src/E20R/Utilities/GDPR_Enablement.php:266
 msgid "E20R Plugin Data"
 msgstr ""
