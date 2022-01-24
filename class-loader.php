@@ -96,11 +96,11 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 * Loader constructor.
 		 * Loads the default PSR-4 Autoloader and configures a couple of required action handlers
 		 *
-		 * @param Utilities         $utils - An instance of the Utilities class.
-		 * @param MixpanelConnector $mixpanel The MixpanelConnector class for this plugin
+		 * @param Utilities|null         $utils - An instance of the Utilities class.
+		 * @param MixpanelConnector|null $mp_connector The MixpanelConnector class for this plugin
 		 */
-		public function __construct( $utils = null, $mixpanel = null ) {
-			if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
+		public function __construct( $utils = null, $mp_connector = null ) {
+			if ( ! class_exists( '\\E20R\\Utilities\\Utilities' ) ) {
 				wp_die(
 					esc_attr__(
 						"Error: Couldn't load the Utilities class included in this module. Please deactivate the E20R Utilities Module plugin!",
@@ -118,11 +118,11 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 			$this->utils = $utils;
 
 			// Let the loader add the usage metrics (Mixpanel) class unless it's supplied
-			if ( empty( $mixpanel ) ) {
-				$mixpanel = new MixpanelConnector( 'a14f11781866c2117ab6487792e4ebfd' );
+			if ( empty( $mp_connector ) ) {
+				$mp_connector = new MixpanelConnector( 'a14f11781866c2117ab6487792e4ebfd', null, null, $this->utils );
 			}
 
-			$this->metrics = $mixpanel;
+			$this->metrics = $mp_connector;
 
 			// Add required action for language modules (I18N).
 			add_action( 'plugins_loaded', array( $this->utils, 'load_text_domain' ), 11 );

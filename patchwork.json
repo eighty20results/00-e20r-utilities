@@ -4,6 +4,10 @@
 	"file_exists",
 	"mkdir",
 	"dirname",
-	"json_decode"
+	"json_decode",
+	"gethostname",
+	"random_bytes",
+	"openssl_random_pseudo_bytes",
+	"bin2hex"
   ]
 }

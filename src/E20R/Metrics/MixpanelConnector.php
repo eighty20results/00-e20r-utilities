@@ -77,14 +77,14 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 		 * Instantiate our own edition of the Mixpanel Connector
 		 *
 		 * @param null|string    $token       Mixpanel token.
-		 * @param string[]       $host        Mixpanel host.
+		 * @param null|string[]  $host        Mixpanel host.
 		 * @param null|Mixpanel  $mp_instance Mixpanel class instance (for testing purposes).
 		 * @param null|Utilities $utils       E20R Utilities Module class instance (for testing purposes)
 		 *
 		 * @throws HostNotDefined - No user logged in when instantiating the class.
 		 * @throws InvalidMixpanelKey - The Mixpanel key supplied is invalid.
 		 */
-		public function __construct( $token = null, $host = array( 'host' => 'api-eu.mixpanel.com' ), $mp_instance = null, $utils = null ) {
+		public function __construct( $token = null, $host = null, $mp_instance = null, $utils = null ) {
 			if ( is_null( $token ) ) {
 				throw new InvalidMixpanelKey(
 					esc_attr__(
@@ -108,13 +108,12 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 			}
 
 			if ( empty( $mp_instance ) ) {
-				$this->instance = Mixpanel::getInstance( $token, $host );
+				$mp_instance = Mixpanel::getInstance( $token, $host );
 				$this->utils->log( 'Added the Mixpanel() class instance!' );
-			} else {
-				$this->instance = $mp_instance;
 			}
 
-			$hostid = gethostname();
+			$this->instance = $mp_instance;
+			$hostid         = gethostname();
 
 			if ( empty( $hostid ) ) {
 				throw new HostNotDefined(
@@ -124,15 +123,19 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 
 			$this->hostid = sprintf( '%1$s -> %2$s', $hostid, $this->user_id );
 			$this->utils->log( "Host ID for Mixpanel will be: {$this->hostid}" );
-			$this->instance->people->set(
-				$this->hostid,
-				array(
-					'user_id' => $this->user_id,
-					'host_id' => $this->hostid,
-				),
-				null,
-				true
-			);
+			if ( null !== $this->instance->people ) {
+				$this->instance->people->set(
+					$this->hostid,
+					array(
+						'user_id' => $this->user_id,
+						'host_id' => $this->hostid,
+					),
+					null,
+					true
+				);
+			} else {
+				$this->utils->log( 'The Mixpanel environment has not been instantiated. Are we unit testing??' );
+			}
 		}
 
 		/**
@@ -140,7 +143,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 		 *
 		 * @return string|null
 		 */
-		private function get_user_id() {
+		public function get_user_id() {
 
 			if ( empty( $this->user_id ) ) {
 				$this->user_id = get_option( 'e20r_mp_userid', null );
@@ -206,7 +209,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 		 * @access private
 		 * @credit https://www.php.net/manual/en/function.uniqid.php#120123
 		 */
-		private function uniq_real_id( $prefix = null, $length = 13 ) {
+		public function uniq_real_id( $prefix = null, $length = 13 ) {
 
 			if ( ! empty( $prefix ) ) {
 				$str_length = strlen( $prefix );

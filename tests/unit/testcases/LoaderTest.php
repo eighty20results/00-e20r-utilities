@@ -22,6 +22,8 @@
 namespace E20R\Tests\Unit;
 
 use Codeception\Test\Unit;
+use E20R\Metrics\MixpanelConnector;
+use Exception;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
 use E20R\Utilities\Loader;
@@ -31,6 +33,7 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Brain\Monkey\Filters;
 use Brain\Monkey\Actions;
+use Mixpanel;
 
 use function E20R\Tests\Unit\Fixtures\e20r_unittest_stubs;
 
@@ -49,6 +52,20 @@ class LoaderTest extends Unit {
 	private $m_utils = null;
 
 	/**
+	 * Mock of the MixpanelConnector() class
+	 *
+	 * @var null|\Mockery
+	 */
+	private $m_mp_connector = null;
+
+	/**
+	 * Mock of the Mixpanel() class
+	 *
+	 * @var null|\Mockery
+	 */
+	private $m_mixpanel = null;
+
+	/**
 	 * Instance of the Loader class
 	 *
 	 * @var null|Loader
@@ -64,9 +81,16 @@ class LoaderTest extends Unit {
 		parent::setUp();
 		Monkey\setUp();
 
+		$this->loadStubbedClasses();
 		$this->loadFiles();
 		e20r_unittest_stubs();
-		$this->loadStubbedClasses();
+		Functions\expect( 'get_option' )
+			->with( 'e20r_mp_userid' )
+			->andReturn(
+				function() {
+					return 'e20rutl69f3f1';
+				}
+			);
 	}
 
 	/**
@@ -83,16 +107,54 @@ class LoaderTest extends Unit {
 	 * Classes that can be mocked for the entire test
 	 */
 	public function loadStubbedClasses() {
-		$this->m_utils = $this->makeEmpty(
-			Utilities::class,
-			array(
-				'log'              => function( $text ) {
-					error_log( "{$text}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				},
-				'load_text_domain' => null,
-				'configure_update' => null,
-			)
-		);
+		Functions\expect( 'get_option' )
+			->zeroOrMoreTimes()
+			->with( 'e20r_mp_userid', null )
+			->andReturn( 'e20rutl69f3f1' );
+
+		try {
+			$this->m_utils = $this->makeEmpty(
+				Utilities::class,
+				array(
+					'log'              => function( $text ) {
+						error_log( "{$text}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					},
+					'load_text_domain' => null,
+					'configure_update' => null,
+				)
+			);
+		} catch ( Exception $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Unable to create mock of ' . Utilities::class . ': ' . $e->getMessage() );
+		}
+
+		try {
+			$this->m_mixpanel = $this->makeEmpty(
+				Mixpanel::class,
+				array(
+					'getInstance' => $this->m_mixpanel,
+				)
+			);
+		} catch ( Exception $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Unable to create mock of ' . Mixpanel::class . ': ' . $e->getMessage() );
+		}
+
+		try {
+			$this->m_mp_connector = $this->construct(
+				MixpanelConnector::class,
+				array( 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ), $this->m_mixpanel, $this->m_utils ),
+				array(
+					'get_user_id'           => '7e131628a169 -> e20rutl69f3f1',
+					'uniq_real_id'          => 'e20rutl69f3f1',
+					'increment_activations' => true,
+					'decrement_activations' => true,
+				)
+			);
+		} catch ( Exception $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Unable to create mock of ' . MixpanelConnector::class . ': ' . $e->getMessage() );
+		}
 	}
 
 	/**
@@ -105,7 +167,6 @@ class LoaderTest extends Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../inc/unittest_stubs.php';
-		require_once __DIR__ . '/../../../class-loader.php';
 	}
 
 	/**
@@ -116,9 +177,10 @@ class LoaderTest extends Unit {
 	 * @param int    $init_priority The priority used when loading the init action
 	 *
 	 * @dataProvider fixture_instantiated
+	 * @test
 	 */
-	public function test__construct( string $class_name, int $priority, int $init_priority ) {
-		$this->loader = new Loader( $this->m_utils );
+	public function it_instantiated_loader_class( string $class_name, int $priority, int $init_priority ) {
+		$this->loader = new Loader( $this->m_utils, $this->m_mp_connector );
 		self::assertInstanceOf( $class_name, $this->loader );
 
 		Actions\has( 'plugins_loaded', array( $this->loader, 'utilities_loaded' ) );
@@ -150,8 +212,8 @@ class LoaderTest extends Unit {
 	 * @covers \E20R\Utilities\Loader::utilities_loaded
 	 * @test
 	 */
-	public function test_utilities_loaded( $test_value, $expected ) {
-		$this->loader = new Loader( $this->m_utils );
+	public function it_loaded_the_utilities_module( $test_value, $expected ) {
+		$this->loader = new Loader( $this->m_utils, $this->m_mp_connector );
 		$this->loader->utilities_loaded();
 		Filters\has( 'e20r_utilities_module_installed', '__return_true' );
 		$result = apply_filters( 'e20r_utilities_module_installed', $test_value );

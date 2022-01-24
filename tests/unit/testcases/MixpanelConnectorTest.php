@@ -24,7 +24,7 @@ namespace E20R\Tests\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Codeception\Test\Unit;
-use E20R\Licensing\Exceptions\UserNotDefined;
+use E20R\Metrics\Exceptions\HostNotDefined;
 use E20R\Metrics\Exceptions\InvalidMixpanelKey;
 use E20R\Metrics\MixpanelConnector;
 use E20R\Exceptions\InvalidSettingsKey;
@@ -172,8 +172,6 @@ class MixpanelConnectorTest extends Unit {
 	 */
 	public function loadFiles() {
 		require_once __DIR__ . '/../../../inc/autoload.php';
-		require_once __DIR__ . '/../inc/class-wp-filesystem-base.php';
-		require_once __DIR__ . '/../inc/class-wp-filesystem-direct.php';
 	}
 
 	/**
@@ -188,7 +186,12 @@ class MixpanelConnectorTest extends Unit {
 	 * @test
 	 * @dataProvider fixture_instantiated
 	 */
-	public function test_instantiate_class( $token, $server, $class_name ) {
+	public function it_instantiated_the_mixpanel_connector( $token, $server, $class_name ) {
+		Functions\expect( 'update_option' )
+			->zeroOrMoreTimes()
+			->with( 'e20r_mp_userid' )
+			->andReturn( true );
+
 		try {
 			$this->mock_mp = $this->construct(
 				Mixpanel::class,
@@ -209,7 +212,7 @@ class MixpanelConnectorTest extends Unit {
 					$class_name
 				)
 			);
-		} catch ( InvalidMixpanelKey | UserNotDefined $e ) {
+		} catch ( InvalidMixpanelKey $e ) {
 			self::assertFalse( true, 'Error instantiating MixpanelConnector() class: ' . $e->getMessage() );
 		}
 	}
@@ -229,22 +232,50 @@ class MixpanelConnectorTest extends Unit {
 	 * Test the get() method
 	 *
 	 * @param string $parameter The parameter name to attempt fetching data for
-	 * @param mixed  $expected The expected return value
-	 * @param string $token The MixPanel API server token
-	 * @param array  $config Host configuration for API server
+	 * @param mixed  $expected  The expected return value
+	 * @param string $token     The MixPanel API server token
+	 * @param array  $config    Host configuration for API server
 	 *
 	 * @return void
 	 * @dataProvider fixture_successful_get
 	 *
 	 * @test
 	 */
-	public function test_successful_get_operations(
+	public function it_successfully_gets_class_parameter_values(
 		$parameter,
 		$expected,
 		$token = null,
 		$config = array( 'host' => 'api-eu.mixpanel.com' )
 	) {
 		$result = null;
+		Functions\expect( 'update_option' )
+			->zeroOrMoreTimes()
+			->with( 'e20r_mp_userid' )
+			->andReturn( true );
+
+		Functions\expect( 'gethostname' )
+			->atLeast()
+			->once()
+			->andReturn( '7e131628a169' );
+
+		Functions\expect( 'bin2hex' )
+			->atLeast()
+			->once()
+			->andReturn( '69f3f1' );
+
+		if ( function_exists( 'random_bytes' ) ) {
+			Functions\expect( 'random_bytes' )
+				->atLeast()
+				->once()
+				->andReturn( '69f3f1' );
+		}
+
+		if ( ! function_exists( 'random_bytes' ) && function_exists( 'openssl_random_pseudo_bytes' ) ) {
+			Functions\expect( 'openssl_random_pseudo_bytes' )
+				->atLeast()
+				->once()
+				->andReturn( '69f3f1' );
+		}
 
 		try {
 			$this->mock_mp = $this->construct(
@@ -256,9 +287,9 @@ class MixpanelConnectorTest extends Unit {
 		}
 
 		try {
-			$mp     = new MixpanelConnector( $token, $config, $this->mock_mp );
+			$mp     = new MixpanelConnector( $token, $config, $this->mock_mp, $this->mock_utils );
 			$result = $mp->get( $parameter );
-		} catch ( InvalidMixpanelKey | UserNotDefined $e ) {
+		} catch ( InvalidMixpanelKey $e ) {
 			self::assertFalse(
 				true,
 				'Error instantiating MixpanelConnector() class: ' . $e->getMessage()
@@ -272,9 +303,17 @@ class MixpanelConnectorTest extends Unit {
 					$e->getMessage()
 				)
 			);
+		} catch ( HostNotDefined $e ) {
+			self::assertFalse(
+				true,
+				sprintf(
+					'Error instantiating MixpanelConnector() class: %1$s',
+					$e->getMessage()
+				)
+			);
 		}
-
-		self::assertSame( $expected, $result, "Error: {$expected} is not {$result}" );
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+		self::assertSame( $expected, $result, "Error: {$expected} is not " . print_r( $result, true ) );
 	}
 
 	/**
@@ -284,7 +323,7 @@ class MixpanelConnectorTest extends Unit {
 	 */
 	public function fixture_successful_get() {
 		return array(
-			array( 'user_id', $this->user_id, 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ) ),
+			array( 'user_id', 'e20rutl69f3f1', 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ) ),
 		);
 	}
 	/**
@@ -302,7 +341,7 @@ class MixpanelConnectorTest extends Unit {
 	 * @dataProvider fixture_unsuccessful_get
 	 * @test
 	 */
-	public function test_unsuccessful_get_operations(
+	public function it_requests_non_existing_parameters_and_raises_exception(
 		$parameter,
 		$expected,
 		$expected_exception,
@@ -313,6 +352,11 @@ class MixpanelConnectorTest extends Unit {
 		if ( null !== $expected_exception ) {
 			$this->expectExceptionMessageRegExp( "/No API key found for the Mixpanel connector|Invalid parameter \({$parameter}\) for the MixpanelConnector\(\) class/" );
 		}
+
+		Functions\expect( 'update_option' )
+			->zeroOrMoreTimes()
+			->with( 'e20r_mp_userid' )
+			->andReturn( true );
 
 		try {
 			$this->mock_mp = $this->construct(
@@ -338,7 +382,7 @@ class MixpanelConnectorTest extends Unit {
 	 */
 	public function fixture_unsuccessful_get() {
 		return array(
-			array( 'not_a_valid_class_property', null, InvalidSettingsKey::class, null, 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ) ),
+			array( 'not_a_valid_class_property', null, InvalidSettingsKey::class, null, 'a14f11781866c2117792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ) ),
 			array( 'not_a_valid_class_property', null, InvalidMixpanelKey::class, $this->user_id, null, array( 'host' => 'api-eu.mixpanel.com' ) ),
 		);
 	}
