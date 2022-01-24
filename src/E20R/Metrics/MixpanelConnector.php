@@ -47,9 +47,9 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 		/**
 		 * Instance of the Mixpanel class
 		 *
-		 * @var Mixpanel|null $instance
+		 * @var Mixpanel|null $mixpanel
 		 */
-		private $instance = null;
+		private $mixpanel = null;
 
 		/**
 		 * An instance of the Utilities class
@@ -78,43 +78,60 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 		 *
 		 * @param null|string    $token       Mixpanel token.
 		 * @param null|string[]  $host        Mixpanel host.
-		 * @param null|Mixpanel  $mp_instance Mixpanel class instance (for testing purposes).
+		 * @param null|Mixpanel  $mixpanel    Mixpanel class instance (for testing purposes).
 		 * @param null|Utilities $utils       E20R Utilities Module class instance (for testing purposes)
 		 *
 		 * @throws HostNotDefined - No user logged in when instantiating the class.
 		 * @throws InvalidMixpanelKey - The Mixpanel key supplied is invalid.
 		 */
-		public function __construct( $token = null, $host = null, $mp_instance = null, $utils = null ) {
-			if ( is_null( $token ) ) {
-				throw new InvalidMixpanelKey(
-					esc_attr__(
-						'No API key found for the Mixpanel connector',
-						'00-e20r-utilities'
-					)
-				);
-			}
-
+		public function __construct( $token = null, $host = null, $mixpanel = null, $utils = null ) {
 			if ( empty( $this->utils ) && empty( $utils ) ) {
 				$message = new Message();
 				$utils   = new Utilities( $message );
 			}
 
-			$this->utils   = $utils;
-			$this->user_id = $this->get_user_id();
-			$this->utils->log( "Loading MixpanelConnector class for user ID {$this->user_id}" );
+			$this->utils = $utils;
+			if ( empty( $token ) || ! is_string( $token ) ) {
+				throw new InvalidMixpanelKey(
+					esc_attr__(
+						'No key provided for the Mixpanel API',
+						'00-e20r-utilities'
+					)
+				);
+			}
+
+			$this->get_user_id();
+
+			if ( ! is_array( $host ) ) {
+				throw new HostNotDefined(
+					esc_attr__(
+						'The Mixpanel API server configuration is incorrect',
+						'00-e20r-utilities'
+					)
+				);
+			}
+
+			if ( ! in_array( 'host', array_keys( $host ), true ) ) {
+				throw new HostNotDefined(
+					esc_attr__(
+						'The Mixpanel API server configuration is lacking host definition',
+						'00-e20r-utilities'
+					)
+				);
+			}
 
 			if ( empty( $host ) ) {
 				$host = array( 'host' => 'api-eu.mixpanel.com' );
 			}
 
-			if ( empty( $mp_instance ) ) {
-				$mp_instance = Mixpanel::getInstance( $token, $host );
-				$this->utils->log( 'Added the Mixpanel() class instance!' );
+			if ( empty( $mixpanel ) ) {
+				$mixpanel = Mixpanel::getInstance( $token, $host );
+				$this->utils->log( 'Created a new Mixpanel() class instance!' );
 			}
 
-			$this->instance = $mp_instance;
-			$hostid         = gethostname();
+			$this->mixpanel = $mixpanel;
 
+			$hostid = gethostname();
 			if ( empty( $hostid ) ) {
 				throw new HostNotDefined(
 					esc_attr__( 'Unable to locate host ID!', '00-e20r-utilities' )
@@ -122,9 +139,9 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 			}
 
 			$this->hostid = sprintf( '%1$s -> %2$s', $hostid, $this->user_id );
-			$this->utils->log( "Host ID for Mixpanel will be: {$this->hostid}" );
-			if ( null !== $this->instance->people ) {
-				$this->instance->people->set(
+
+			if ( isset( $this->mixpanel->people ) && ! empty( $this->mixpanel->people ) ) {
+				$this->mixpanel->people->set(
 					$this->hostid,
 					array(
 						'user_id' => $this->user_id,
@@ -141,7 +158,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 		/**
 		 * Return a User ID (string) to use for Mixpanel data
 		 *
-		 * @return string|null
+		 * @return void
 		 */
 		public function get_user_id() {
 
@@ -157,12 +174,10 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 					$message = sprintf( esc_attr__( 'Error: %1$s', '00-e20r-utilities' ), $e->getMessage() );
 					$this->utils->log( $message );
 					$this->utils->add_message( $message, 'error', 'backend' );
-					return null;
+					return;
 				}
 				update_option( 'e20r_mp_userid', $this->user_id );
 			}
-
-			return $this->user_id;
 		}
 
 		/**
@@ -190,11 +205,10 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 				);
 
 				$this->utils->add_message( $msg, 'error', 'backend' );
-
 				throw new MissingDependencies( $msg );
 			}
 			$this->utils->log( "Incrementing the {$plugin_slug} activation metric" );
-			$this->instance->people->increment( $this->hostid, "{$plugin_slug}_activated", 1 );
+			$this->mixpanel->people->increment( $this->hostid, "{$plugin_slug}_activated", 1 );
 		}
 
 		/**
@@ -285,7 +299,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 				throw new MissingDependencies( $msg );
 			}
 			$this->utils->log( "Decrementing the {$plugin_slug} activation metric for {$this->hostid}" );
-			$this->instance->people->increment( $this->hostid, "{$plugin_slug}_deactivated", 1 );
+			$this->mixpanel->people->increment( $this->hostid, "{$plugin_slug}_deactivated", 1 );
 		}
 
 		/**
@@ -293,10 +307,10 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 		 *
 		 * @param string $parameter - the class parameter to return the value of.
 		 *
-		 * @return Mixpanel|null
+		 * @return mixed|null
 		 * @throws InvalidSettingsKey - Incorrect/unexpected variable to get for this class.
 		 */
-		public function get( $parameter = 'instance' ) {
+		public function get( $parameter = 'mixpanel' ) {
 			if ( ! property_exists( $this, $parameter ) ) {
 				throw new InvalidSettingsKey(
 					sprintf(
