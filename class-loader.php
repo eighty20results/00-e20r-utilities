@@ -119,7 +119,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 
 			// Let the loader add the usage metrics (Mixpanel) class unless it's supplied
 			if ( empty( $mp_connector ) ) {
-				$mp_connector = new MixpanelConnector( 'a14f11781866c2117ab6487792e4ebfd', null, null, $this->utils );
+				$mp_connector = new MixpanelConnector( 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ), null, $this->utils );
 			}
 
 			$this->metrics = $mp_connector;
