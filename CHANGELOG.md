@@ -6,8 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## v2.3.0 - 2022-01-23
-- BUG FIX: Always returned a unique user ID for MixpanelConnector (Thomas Sjolshagen)
+## v2.3.0 - 2022-01-24
+- BUG FIX: Updates to make sure unit tests pass (and unpassable tests are skipped for now) (Thomas Sjolshagen)
+- BUG FIX: Didn't allow execution of a single test class or test method (Thomas Sjolshagen)
+- BUG FIX: Handle new mixpanel support in unit tests (Thomas Sjolshagen)
+- BUG FIX: Attempting to return a float when calculating size to use for openssl_random_pseudo_bytes() (Thomas Sjolshagen)
+- BUG FIX: Attempting to return a float when calculating size to use for random_bytes() (Thomas Sjolshagen)
+- BUG FIX: Make sure we claim support for WP 5.9 (Thomas Sjolshagen)
+- BUG FIX: Updated metadata.json for v2.3.0 and WP 5.8.3 (Thomas Sjolshagen)
+- BUG FIX: Updated README info (v2.3.0 for WP 5.8.3) (Thomas Sjolshagen)
+- BUG FIX: Updated CHANGELOG (v2.3.0 for WP 5.8.3) (Thomas Sjolshagen)
+- BUG FIX: Always returned an unique user ID for MixpanelConnector (Thomas Sjolshagen)
 - BUG FIX: Not a generic activation/deactivating log message (Thomas Sjolshagen)
 - BUG FIX: Configure Mixpanel events and catch exceptions (Thomas Sjolshagen)
 - BUG FIX: Didn't let user configure plugin to track in MixpanelConnector() class (Thomas Sjolshagen)
