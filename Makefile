@@ -477,7 +477,15 @@ unit-tests: wp-deps
 		echo "Running Unit tests for $(PROJECT)"; \
 		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --verbose --debug --coverage-html ./coverage/unit $(UNIT_TEST_CASE_PATH); \
 	fi
-# TODO: Add coverage support to the unit-test target
+
+unit: wp-deps
+	@if [[ -n "$(FOUND_UNIT_TESTS)" && -n "$(TEST_TO_RUN)" ]]; then \
+		echo "Running Unit tests for $(PROJECT)/$(TEST_TO_RUN)"; \
+		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --verbose --debug --coverage-html ./coverage/unit $(UNIT_TEST_CASE_PATH)/$(TEST_TO_RUN); \
+  	else \
+  	  echo "Error: Either FOUND_UNIT_TESTS is empty or TEST_TO_RUN is empty. Exiting!" ; \
+  	  exit 1 ; \
+	fi
 
 coverage: wp-deps
 	@if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
