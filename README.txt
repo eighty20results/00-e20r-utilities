@@ -3,7 +3,7 @@ Contributors: eighty20results
 Tags: e20r-utilities, module, licensing, tools
 Requires at least: 5.0
 Tested up to: 5.8.3
-Stable tag: 2.3.0
+Stable tag: 2.3.1
 
 ![Release to wordpress.org](https://github.com/eighty20results/Utilities/workflows/Release%20to%20wordpress.org/badge.svg?branch=main)
 
