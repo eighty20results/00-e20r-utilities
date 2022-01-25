@@ -1,13 +1,13 @@
 {
   "name": "Eighty/20 Results Utilities Module",
   "slug": "00-e20r-utilities",
-  "download_url": "https://eighty20results.com/protected-content/00-e20r-utilities/00-e20r-utilities-2.3.0.zip",
-  "version": "2.3.0",
+  "download_url": "https://eighty20results.com/protected-content/00-e20r-utilities/00-e20r-utilities-2.3.1.zip",
+  "version": "2.3.1",
   "tested": "5.8.3",
   "requires": "5.0",
   "author": "Thomas Sjolshagen <thomas@eighty20results.com>",
   "author_homepage": "https://eighty20results.com/thomas-sjolshagen",
-  "last_updated": "2022-01-24 21:40:01 CET",
+  "last_updated": "2022-01-25 07:41:45 CET",
   "homepage": "https://eighty20results.com/plugins/00-e20r-utilities/",
   "sections": {
     "description": "Adds various utility functions and license capabilities needed by some Eighty/20 Results developed plugins",

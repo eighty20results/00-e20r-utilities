@@ -25,4 +25,4 @@ N/A
 
 == Changelog ==
 
-See the official [CHANGELOG.md file](CHANGELOG.md).
+See the official [CHANGELOG.md file](https://github.com/eighty20results.com/Utilities/CHANGELOG.md).
