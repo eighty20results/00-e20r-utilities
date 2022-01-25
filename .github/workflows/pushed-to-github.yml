@@ -67,9 +67,27 @@ jobs:
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
 
-      - name: Run Unit Test
+      - name: Run WordPress Code Standard Tests
         shell: bash
-        run: make unit-tests
+        run: make code-standard-tests
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
+          GITHUB_TOKEN: ${{ secrets.GITHUB }}
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
+      - name: Run PHP Static Code Analysis Tests
+        shell: bash
+        run: make phpstan-tests
+        env:
+          E20R_PLUGIN_NAME: 00-e20r-utilities
+          GITHUB_TOKEN: ${{ secrets.GITHUB }}
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+
+      - name: Run Unit Tests with Code Coverage check
+        shell: bash
+        run: make coverage
         env:
           E20R_PLUGIN_NAME: 00-e20r-utilities
           GITHUB_TOKEN: ${{ secrets.GITHUB }}
