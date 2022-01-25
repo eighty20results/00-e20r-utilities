@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v2.3.1 - 2022-01-25
+- BUG FIX: Bad URI for changelog and documentation (Thomas Sjolshagen)
 ## v2.3.0 - 2022-01-24
 - BUG FIX: Need the preferred API host for mixpanel configured. (Thomas Sjolshagen)
 - BUG FIX: Updated metadata.json for v2.3.0 and WP 5.8.3 (Thomas Sjolshagen)
