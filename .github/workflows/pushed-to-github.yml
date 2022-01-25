@@ -3,8 +3,10 @@ name: Run Unit Tests and create translations pushing to github
 # Run Unit Test and POT files when new PR is created
 on:
   push:
-    - *
-    - !main
+    - '*'         # matches every branch that doesn't contain a '/'
+    - '*/*'       # matches every branch containing a single '/'
+    - '**'        # matches every branch
+    - '!main'   # excludes master
 
 jobs:
   pr_tests:
