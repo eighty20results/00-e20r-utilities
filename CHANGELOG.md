@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v2.3.2 - 2022-01-26
+- BUG FIX: Add WP 5.9 as supported (Thomas Sjolshagen)
+- BUG FIX: Forgot to include array as a valid return type (Thomas Sjolshagen)
 ## v2.3.1 - 2022-01-26
 - BUG FIX: Add WP 5.9 as supported (Thomas Sjolshagen)
 - BUG FIX: Forgot to include array as a valid return type (Thomas Sjolshagen)
