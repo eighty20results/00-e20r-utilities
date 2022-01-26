@@ -1,1 +1,2 @@
-BUG FIX: Bad URI for changelog and documentation (Thomas Sjolshagen)
+BUG FIX: Add WP 5.9 as supported (Thomas Sjolshagen)
+BUG FIX: Forgot to include array as a valid return type (Thomas Sjolshagen)
