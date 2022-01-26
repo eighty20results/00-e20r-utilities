@@ -5,7 +5,7 @@
 `Tested up to: 5.9` <br />
 `Stable tag: 2.3.2` <br />
 
-![Release to wordpress.org](https://github.com/eighty20results/Utilities/workflows/Release%20to%20wordpress.org/badge.svg?branch=main)
+[![Release (and deploy) plugin package](https://github.com/eighty20results/Utilities/actions/workflows/release-plugin.yml/badge.svg)](https://github.com/eighty20results/Utilities/actions/workflows/release-plugin.yml)
 
 Adds various utility functions and license capabilities needed by some Eighty/20 Results developed plugins
 
