@@ -788,7 +788,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * @param string     $name    Name of the variable to return
 		 * @param null|mixed $default The default value to return if the REQUEST variable doesn't exist or is empty.
 		 *
-		 * @return bool|float|int|null|string  Sanitized value from the front-end.
+		 * @return bool|float|int|null|string|array  Sanitized value from the front-end.
 		 */
 		public function get_variable( $name, $default = null ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
@@ -800,7 +800,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 *
 		 * @param array|int|null|string|stdClass $field The value to sanitize
 		 *
-		 * @return mixed     Sanitized value
+		 * @return bool|float|int|null|string|array Sanitized value
 		 */
 		public function sanitize( $field ) {
 

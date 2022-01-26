@@ -2,8 +2,8 @@
 `Contributors: eighty20results` <br />
 `Tags: e20r-utilities, module, licensing, tools` <br />
 `Requires at least: 5.0` <br />
-`Tested up to: 5.8.3` <br />
-`Stable tag: 2.3.1` <br />
+`Tested up to: 5.9` <br />
+`Stable tag: 2.3.2` <br />
 
 ![Release to wordpress.org](https://github.com/eighty20results/Utilities/workflows/Release%20to%20wordpress.org/badge.svg?branch=main)
 
