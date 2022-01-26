@@ -5,7 +5,7 @@
 `Tested up to: 5.9` <br />
 `Stable tag: 2.3.2` <br />
 
-[![Release (and deploy) plugin package](https://github.com/eighty20results/Utilities/actions/workflows/release-plugin.yml/badge.svg)](https://github.com/eighty20results/Utilities/actions/workflows/release-plugin.yml)
+[![Unit Tests](https://github.com/eighty20results/Utilities/actions/workflows/pushed-to-github.yml/badge.svg)](https://github.com/eighty20results/Utilities/actions/workflows/pushed-to-github.yml) [![Release plugin package](https://github.com/eighty20results/Utilities/actions/workflows/release-plugin.yml/badge.svg)](https://github.com/eighty20results/Utilities/actions/workflows/release-plugin.yml) 
 
 Adds various utility functions and license capabilities needed by some Eighty/20 Results developed plugins
 
