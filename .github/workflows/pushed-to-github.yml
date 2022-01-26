@@ -1,4 +1,4 @@
-name: Run Unit Tests on Push to repository
+name: Unit Tests
 
 # Run Unit Test and POT files when new PR is created
 on:
