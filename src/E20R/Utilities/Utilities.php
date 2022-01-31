@@ -803,9 +803,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * @return bool|float|int|null|string|array Sanitized value
 		 */
 		public function sanitize( $field ) {
-
 			if ( ! is_numeric( $field ) ) {
-
 				if ( is_array( $field ) ) {
 					foreach ( $field as $key => $val ) {
 						$field[ $key ] = $this->sanitize( $val );
@@ -813,16 +811,17 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				}
 
 				if ( is_object( $field ) ) {
+					self::$instance->log( 'Processing an object' );
 					foreach ( (array) $field as $key => $val ) {
 						$field->{$key} = $this->sanitize( $val );
 					}
 				}
 
-				if ( ! is_email( $field ) && (
-					( ! is_array( $field ) ) && ctype_alpha( $field ) ||
+				if (
+					( ! is_array( $field ) && ! is_email( $field ) ) ||
+					( ! is_array( $field ) && ctype_alpha( $field ) ) ||
 					( ( ! is_array( $field ) ) && strtotime( $field ) ) ||
 					( ( ! is_array( $field ) ) && is_string( $field ) )
-					)
 				) {
 
 					if ( strtolower( $field ) === 'yes' ) {
@@ -836,7 +835,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 					}
 				}
 
-				if ( function_exists( 'is_email' ) && is_email( $field ) ) {
+				if ( ! is_array( $field ) && function_exists( 'is_email' ) && is_email( $field ) ) {
 					$field = sanitize_email( $field );
 				}
 			} else {
@@ -853,7 +852,6 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 					$field = (bool) $field;
 				}
 			}
-
 			return $field;
 		}
 
