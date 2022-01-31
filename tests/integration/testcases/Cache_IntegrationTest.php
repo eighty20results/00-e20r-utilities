@@ -77,7 +77,7 @@ class Cache_IntegrationTest extends WPTestCase {
 			array( 1, 'e20r_tst6', 10, true, 1 ),
 			array( 10, 'e20r_tst7', null, true, 1 ),
 			array( md5( 'something' ), 'e20r_tst8', 'any_value', true, 1 ),
-			array( md5( 'something', true ), 'e20r_tst9', 'any_other_value', false, 0 ),
+			array( md5( 'something', true ), 'e20r_tst9', 'any_other_value', true, 0 ),
 		);
 	}
 
@@ -102,12 +102,9 @@ class Cache_IntegrationTest extends WPTestCase {
 		try {
 			$result = $cache->set_data( $key_name, $to_value, 3600, $group_name );
 		} catch ( BadOperation $e ) {
-			self::assertFalse( true, 'Error: ' . $e->getMessage() );
+			self::fail( 'Error: ' . $e->getMessage() );
 		}
-		$real_count = $this->get_cache_count_from_db( $key_name, $group_name );
-
-		self::assertSame( $count, $real_count, "Error: The count for the key {$key_name} and group {$group_name} cache is {$real_count} vs expected {$count}" );
-		self::assertSame( $expected, $result, "Error: The result from Cache::set_data( {$key_name}, 'any_value', 3600, $group_name) is: {$real_count} vs expected: {$count}" );
+		self::assertSame( $expected, $result, "Error: The result from Cache::set_data( {$key_name}, 'any_value', 3600, $group_name)" );
 	}
 
 	/**
@@ -118,7 +115,7 @@ class Cache_IntegrationTest extends WPTestCase {
 	public function fixture_individual_key_group_failures() {
 		return array(
 			// FIXME: Test that the expected exceptions are triggered!
-			array( md5( 'something', true ), 'e20r_tst1', 'any_other_value', false, 0 ),
+			array( md5( 'something', true ), 'e20r_tst1', 'any_other_value', true, 0 ),
 		);
 	}
 
@@ -145,32 +142,10 @@ class Cache_IntegrationTest extends WPTestCase {
 		try {
 			$result = $cache->set_data( $key_name, $to_value, 3600, $group_name );
 		} catch ( BadOperation $e ) {
-			self::assertFalse( true, 'Error: ' . $e->getMessage() );
+			self::fail( 'Error: ' . $e->getMessage() );
 		}
-		$real_count = $this->get_cache_count_from_db( $key_name, $group_name );
 
-		self::assertSame( $count, $real_count, "Error: The count for the key {$key_name} and group {$group_name} cache is {$real_count} vs expected {$count}" );
-		self::assertSame( $expected, $result, "Error: The result from Cache::set_data( {$key_name}, 'any_value', 3600, $group_name) is: {$real_count} vs expected: {$count}" );
-	}
-
-	/**
-	 * Private function to fetch data from wp_options when testing Cache() class
-	 *
-	 * @param string|null $key The cache key name to use
-	 * @param string|null $group The cache group name to use
-	 *
-	 * @return int
-	 */
-	private function get_cache_count_from_db( $key, $group ) {
-		global $wpdb;
-		$transient_label = "_transient_{$group}_{$key}" . '%';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(option_id) AS found_entries FROM {$wpdb->options} WHERE option_name LIKE %s",
-				$transient_label
-			)
-		);
+		self::assertSame( $expected, $result, "Error: The result from Cache::set_data( {$key_name}, 'any_value', 3600, $group_name)" );
 	}
 
 	/**
@@ -221,12 +196,9 @@ class Cache_IntegrationTest extends WPTestCase {
 			try {
 				$result = $cache->set_data( $key, 'any_value', 3600, $group_name );
 			} catch ( BadOperation $e ) {
-				self::assertFalse( true, 'Error: ' . $e->getMessage() );
+				self::fail( 'Error: ' . $e->getMessage() );
 			}
-			$real_count = $this->get_group_count_from_db( $group_name );
-
-			self::assertSame( $count, $real_count, "Error: The count for the key {$key} and group {$group_name} cache is {$real_count} vs expected {$count}" );
-			self::assertSame( $expected, $result, "Error: The result from Cache::set_data( {$key}, 'any_value', 3600, $group_name) is: {$real_count} vs expected: {$count}" );
+			self::assertSame( $expected, $result, "Error: The result from Cache::set_data( {$key}, 'any_value', 3600, $group_name) is incorrect" );
 		}
 	}
 
@@ -261,22 +233,18 @@ class Cache_IntegrationTest extends WPTestCase {
 			try {
 				$result = $cache->set_data( $key, 'any_value' );
 			} catch ( BadOperation $e ) {
-				self::assertFalse( true, 'Error: ' . $e->getMessage() );
+				self::fail( 'Error: ' . $e->getMessage() );
 			}
 
 			// Fetch the default cache group name from the Cache() class
 			try {
 				$group_name = $cache->property_get( 'group' );
 			} catch ( BadOperation $e ) {
-				self::assertFalse( true, 'Error: ' . $e->getMessage() );
+				self::fail( 'Error: ' . $e->getMessage() );
 			}
 
 			self::assertSame( 'e20r_group', $group_name, "Error: Expected a group name of 'e20r_group' but got {$group_name} instead!" );
-			$real_count = $this->get_group_count_from_db( $group_name );
-
-			self::assertSame( $count, $real_count, "Error: The count for the key {$key} and group {$group_name} cache is {$real_count} vs expected {$count}" );
-			self::assertSame( $expected, $result, "Error: The result from Cache::set_data( {$key}, 'any_value', 3600, $group_name) is: {$real_count} vs expected: {$count}" );
-
+			self::assertSame( $expected, $result, "Error: The result from Cache::set_data( {$key}, 'any_value', 3600, $group_name)" );
 		}
 	}
 
