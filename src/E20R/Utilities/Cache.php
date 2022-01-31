@@ -162,7 +162,7 @@ if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 			}
 
 			$this->set_group_key( $key, $group );
-			$this->data = get_transient( $this->key_group );
+			$this->data = wp_cache_get( $this->key, $this->group, false );
 
 			if ( false === $this->data || ! is_a( $this->data, '\\E20R\\Utilities\\Cache_Object' ) ) {
 				$value = null;
@@ -212,9 +212,8 @@ if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 			}
 
 			$this->data = new Cache_Object( $key, $value );
-
 			$this->set_group_key( $key, $group );
-			return set_transient( $this->key_group, $this->data, $expires );
+			return wp_cache_add( $this->key, $this->data, $this->group, $expires );
 		}
 
 		/**
@@ -230,7 +229,7 @@ if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 			if ( ! empty( $key ) && ! empty( $group ) ) {
 				$this->data = null;
 				$this->set_group_key( $key, $group );
-				return delete_transient( $this->key_group );
+				return wp_cache_delete( $this->key, $this->group );
 			}
 
 			global $wpdb;

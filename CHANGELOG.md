@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v2.3.3 - 2022-01-31
+- BUG FIX: Update version number (Thomas Sjolshagen)
+- BUG FIX: Use the wp_cache_*() functions (Thomas Sjolshagen)
+- BUG FIX: PHP Warning when processing arrays in the sanitize() method (Thomas Sjolshagen)
+- BUG FIX: Don't include our own build file in the container (Thomas Sjolshagen)
+- BUG FIX: Even more concise (Thomas Sjolshagen)
+- BUG FIX: Concise text for Unit Test action (Thomas Sjolshagen)
+- BUG FIX: Build/deploy badge update (Thomas Sjolshagen)
 ## v2.3.2 - 2022-01-26
 - BUG FIX: Updated version number for plugin (Thomas Sjolshagen)
 - BUG FIX: Updated metadata.json for v2.3.1 and WP 5.9 (Thomas Sjolshagen)
