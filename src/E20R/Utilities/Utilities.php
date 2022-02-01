@@ -1204,12 +1204,20 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				require_once sprintf( '%1$s/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php', dirname( E20R_UTILITIES_BASE_FILE ) );
 			}
 
+			if ( ! has_filter( "puc_is_slug_in_use-{$plugin_slug}", '__return_false' ) ) {
+				self::$instance->log( "Adding the 'puc_is_slug_in_use-{$plugin_slug}' filter hook" );
+				add_filter( "puc_is_slug_in_use-{$plugin_slug}", '__return_false', 99999, 1 );
+			}
 			$plugin_updates = Puc_v4_Factory::buildUpdateChecker(
 				sprintf( 'https://eighty20results.com/protected-content/%1$s/metadata.json', $plugin_slug ),
 				$plugin_path,
 				$plugin_slug
 			);
 
+			if ( has_filter( "puc_is_slug_in_use-{$plugin_slug}", '__return_false' ) ) {
+				self::$instance->log( "Removing the 'puc_is_slug_in_use-{$plugin_slug}' filter hook" );
+				remove_filter( "puc_is_slug_in_use-{$plugin_slug}", '__return_false', 99999 );
+			}
 			return $plugin_updates;
 		}
 
