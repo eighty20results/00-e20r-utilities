@@ -1,5 +1,6 @@
 E20R_PLUGIN_NAME ?= default-plugin-name # We need to/should use a shell environment variable to set this value!
 E20R_PLUGIN_BASE_FILE ?= class-loader.php
+E20R_DEPLOYMENT_SERVER ?= eighty20results.com
 LOCAL_NETWORK_IF ?= en0
 
 ifeq ($(E20R_DEPLOYMENT_SERVER), )
@@ -37,3 +38,4 @@ WP_IMAGE_VERSION ?= 1.0
 
 PHP_CODE_PATHS := *.php src/E20R/*/*.php src/E20R/*/*/*.php
 PHP_IGNORE_PATHS := $(COMPOSER_DIR)/*,node_modules/*,src/utilities/*
+E20R_MAIN_BRANCH_NAME := main
