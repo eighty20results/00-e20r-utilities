@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v2.3.4 - 2022-02-06
+- BUG FIX: Automated test config updates (Eighty/20Results Bot on Github)
+- BUG FIX: Latest Makefile and configuration (Eighty/20Results Bot on Github)
+- BUG FIX: Fixes for GitHub action helper scripts (Eighty/20Results Bot on Github)
+- BUG FIX: GitHub action updates (Eighty/20Results Bot on Github)
+- BUG FIX: Update various supporting config for CI/CD pipeline (Eighty/20Results Bot on Github)
+- BUG FIX: Fatal error during testing with E20R Utilities Module active (Thomas Sjolshagen)
+- BUG FIX: Didn't include all the plugin dependencies we want to support (Thomas Sjolshagen)
+- BUG FIX: Don't include our own build file in the container (Thomas Sjolshagen)
+
 ## v2.3.3 - 2022-01-31
 - BUG FIX: Update version number (Thomas Sjolshagen)
 - BUG FIX: Use the wp_cache_*() functions (Thomas Sjolshagen)
