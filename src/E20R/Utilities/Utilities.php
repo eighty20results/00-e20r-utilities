@@ -819,7 +819,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 				if (
 					( ! is_array( $field ) && ! is_email( $field ) ) ||
-					( ! is_array( $field ) && ctype_alpha( $field ) ) ||
+				    ( ! is_array( $field ) && ctype_alpha( $field ) ) ||
 					( ( ! is_array( $field ) ) && strtotime( $field ) ) ||
 					( ( ! is_array( $field ) ) && is_string( $field ) )
 				) {
@@ -1192,7 +1192,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				$plugin_path = sprintf( '%1$s/%2$s/%2$s.php', WP_PLUGIN_DIR, $plugin_slug );
 			}
 
-			if ( ! file_exists( dirname( E20R_UTILITIES_BASE_FILE ) . '/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php' ) ) {
+			if ( ! defined( 'E20R_UTILITIES_BASE_FILE' ) || ! file_exists( dirname( E20R_UTILITIES_BASE_FILE ) . '/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php' ) ) {
 				$plugin->add_message( 'File not found: Unable to load the plugin update checker!', 'warning' );
 				return null;
 			}
