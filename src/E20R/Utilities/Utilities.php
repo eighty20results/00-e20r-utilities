@@ -25,8 +25,8 @@ use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Exceptions\InvalidSettingsKey;
 use Exception;
-use Puc_v4_Factory;
 use stdClass;
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 use function apply_filters;
 use function plugin_dir_path;
 
@@ -1200,7 +1200,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			/**
 			 * One-click update handler & checker
 			 */
-			if ( ! class_exists( '\\Puc_v4_Factory' ) ) {
+			if ( ! class_exists( 'YahnisElsts\\PluginUpdateChecker\\v5\\PucFactory;' ) ) {
 				require_once sprintf( '%1$s/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php', dirname( E20R_UTILITIES_BASE_FILE ) );
 			}
 
@@ -1208,7 +1208,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				self::$instance->log( "Adding the 'puc_is_slug_in_use-{$plugin_slug}' filter hook" );
 				add_filter( "puc_is_slug_in_use-{$plugin_slug}", '__return_false', 99999, 1 );
 			}
-			$plugin_updates = Puc_v4_Factory::buildUpdateChecker(
+			$plugin_updates = PucFactory::buildUpdateChecker(
 				sprintf( 'https://eighty20results.com/protected-content/%1$s/metadata.json', $plugin_slug ),
 				$plugin_path,
 				$plugin_slug
