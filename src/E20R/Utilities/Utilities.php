@@ -819,7 +819,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 				if (
 					( ! is_array( $field ) && ! is_email( $field ) ) ||
-				    ( ! is_array( $field ) && ctype_alpha( $field ) ) ||
+					( ! is_array( $field ) && ctype_alpha( $field ) ) ||
 					( ( ! is_array( $field ) ) && strtotime( $field ) ) ||
 					( ( ! is_array( $field ) ) && is_string( $field ) )
 				) {
