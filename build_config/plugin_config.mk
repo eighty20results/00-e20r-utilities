@@ -27,6 +27,7 @@ COMPOSER_VERSION ?= 1.29.2
 # COMPOSER_BIN := $(shell which composer)
 COMPOSER_BIN := composer.phar
 COMPOSER_DIR := inc
+E20R_COMPOSER_HASH := 'dac665fdc30fdd8ec78b38b9800061b4150413ff2e3b6f88543c636f7cd84f6db9189d43a81e5503cda447da73c7e5b6'
 
 APACHE_RUN_USER ?= $(shell id -u)
 # APACHE_RUN_GROUP ?= $(shell id -g)
