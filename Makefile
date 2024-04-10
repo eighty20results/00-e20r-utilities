@@ -34,6 +34,7 @@ UNIT_TEST_CASE_PATH := tests/unit/testcases/
 INTEGRATION_TEST_CASE_PATH := tests/integration/testcases/
 FUNCTIONAL_TEST_CASE_PATH := tests/functional/testcases/
 ACCEPTANCE_TEST_CASE_PATH := tests/acceptance/testcases/
+COVERAGE_MODE := coverage
 
 ifneq ($(wildcard ./tests/docker/docker.hub.key),)
 $(info Path to key for docker hub exists)
@@ -475,13 +476,13 @@ code-standard-tests: wp-deps
 unit-tests: wp-deps
 	@if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
 		echo "Running Unit tests for $(PROJECT)"; \
-		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --verbose --debug --coverage-html ./coverage/unit $(UNIT_TEST_CASE_PATH); \
+		XDEBUG_MODE=$(COVERAGE_MODE) $(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --verbose --debug --coverage-html ./coverage/unit $(UNIT_TEST_CASE_PATH); \
 	fi
 
 unit: wp-deps
 	@if [[ -n "$(FOUND_UNIT_TESTS)" && -n "$(TEST_TO_RUN)" ]]; then \
 		echo "Running Unit tests for $(PROJECT)/$(TEST_TO_RUN)"; \
-		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --verbose --debug --coverage-html ./coverage/unit $(UNIT_TEST_CASE_PATH)/$(TEST_TO_RUN); \
+		XDEBUG_MODE=$(COVERAGE_MODE) $(PHP_BIN)  $(COMPOSER_DIR)/bin/codecept run unit --steps --verbose --debug --coverage-html ./coverage/unit $(UNIT_TEST_CASE_PATH)/$(TEST_TO_RUN); \
   	else \
   	  echo "Error: Either FOUND_UNIT_TESTS is empty or TEST_TO_RUN is empty. Exiting!" ; \
   	  exit 1 ; \
@@ -490,7 +491,7 @@ unit: wp-deps
 coverage: wp-deps
 	@if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
 		echo "Running Unit tests for $(PROJECT)"; \
-		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --coverage --verbose --debug $(UNIT_TEST_CASE_PATH); \
+		XDEBUG_MODE=$(COVERAGE_MODE) $(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --coverage --verbose --debug $(UNIT_TEST_CASE_PATH); \
 	fi
 #
 # Using codeception to execute the WP Unit Tests (aka WP integration tests) for this plugin
