@@ -417,7 +417,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\Settings\\Defaults' ) ) {
 					sprintf(
 						// translators: %d - the operation constant to perform
 						esc_attr__( '%d is an invalid operation', '00-e20r-utilities' ),
-						esc_attr( $operation )
+						intval( $operation )
 					)
 				);
 			}
