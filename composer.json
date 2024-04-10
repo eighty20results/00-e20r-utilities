@@ -35,7 +35,7 @@
     "require-dev": {
         "wp-coding-standards/wpcs": "^3.1.0",
         "automattic/phpcs-neutron-standard": "^v1.7.0",
-        "phpstan/phpstan": "^0.12.78",
+        "phpstan/phpstan": "^1.8",
         "phpmetrics/phpmetrics": ">=v1.10.0",
         "phpunit/phpunit": "^8.5",
         "codeception/codeception": "^4.1.0",
@@ -51,7 +51,7 @@
         "spatie/phpunit-snapshot-assertions": "^4.2.5",
         "lucatume/wp-browser": "^3.0",
         "brain/monkey": ">=2.3.0",
-        "szepeviktor/phpstan-wordpress": "^v0.7",
+        "szepeviktor/phpstan-wordpress": "^v1.3.4",
         "mikey179/vfsstream": "~1",
         "phpstan/extension-installer": "^1.1",
         "codeception/module-rest": "^1.3",
