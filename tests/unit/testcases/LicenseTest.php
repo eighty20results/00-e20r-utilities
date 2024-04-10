@@ -123,7 +123,7 @@ class LicenseTest extends Unit {
 			Functions\expect( 'get_option' )
 				->with( 'e20r_license_settings' )
 				->andReturnUsing(
-					function() {
+					function () {
 						return 'test';
 					}
 				);
@@ -153,7 +153,7 @@ class LicenseTest extends Unit {
 			LicenseSettings::class,
 			array(
 				'update_plugin_defaults' => null,
-				'get'                    => function( $param_name ) use ( $defaults_mock ) {
+				'get'                    => function ( $param_name ) use ( $defaults_mock ) {
 					$retval = null;
 					switch ( $param_name ) {
 						case 'plugin_defaults':
@@ -177,7 +177,7 @@ class LicenseTest extends Unit {
 		$this->m_utils = $this->makeEmpty(
 			Utilities::class,
 			array(
-				'log'         => function( $msg ) {
+				'log'         => function ( $msg ) {
 					if ( is_array( $msg ) ) {
 						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 						$msg = print_r( $msg, true );
@@ -185,7 +185,7 @@ class LicenseTest extends Unit {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( "Stubbed log(): {$msg}" );
 				},
-				'add_message' => function( $msg, $type, $location ) {
+				'add_message' => function ( $msg, $type, $location ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( "Stubbed WP notice: {$msg}, type: {$type}, location: {$location}" );
 					self::assertSame( 'backend', $location );
@@ -196,7 +196,7 @@ class LicenseTest extends Unit {
 		$this->ajax_mock = $this->makeEmpty(
 			AjaxHandler::class,
 			array(
-				'ajax_handler_verify_license' => function( $value = null ) {
+				'ajax_handler_verify_license' => function ( $value = null ) {
 					return $value;
 				},
 			)
@@ -224,14 +224,12 @@ class LicenseTest extends Unit {
 	 * The license deactivation unit test
 	 */
 	public function test_deactivate() {
-
 	}
 
 	/**
 	 * Test the enqueue method for JavaScript and styles
 	 */
 	public function test_enqueue() {
-
 	}
 
 	/**
@@ -466,7 +464,7 @@ class LicenseTest extends Unit {
 		$m_defaults = $this->makeEmpty(
 			Defaults::class,
 			array(
-				'get' => function( $param_name ) use ( $is_new_version ) {
+				'get' => function ( $param_name ) use ( $is_new_version ) {
 					$value = null;
 					if ( 'debug_logging' === $param_name ) {
 						$value = true;
@@ -481,7 +479,7 @@ class LicenseTest extends Unit {
 		$m_settings = $this->makeEmpty(
 			LicenseSettings::class,
 			array(
-				'get'      => function( $parameter ) use ( $m_defaults, $domain, $status, $test_sku ) {
+				'get'      => function ( $parameter ) use ( $m_defaults, $domain, $status, $test_sku ) {
 					$value = null;
 					if ( 'plugin_defaults' === $parameter ) {
 						$value = $m_defaults;
@@ -528,7 +526,7 @@ class LicenseTest extends Unit {
 			License::class,
 			array( $test_sku, $m_settings, $m_server, $m_page, $this->m_utils ),
 			array(
-				'is_new_version' => function() use ( $is_new_version ) {
+				'is_new_version' => function () use ( $is_new_version ) {
 					return $is_new_version;
 				},
 			)
@@ -587,13 +585,13 @@ class LicenseTest extends Unit {
 		Functions\expect( 'wp_upload_dir' )
 			->zeroOrMoreTimes()
 			->andReturnUsing(
-				function() {
+				function () {
 					return fixture_upload_dir();
 				}
 			);
 		Functions\when( 'update_option' )
 			->alias(
-				function( $option_name, $values, $cache ) {
+				function ( $option_name, $values, $cache ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
 					error_log( "Saving to {$option_name} (cached: {$cache}) -> " . print_r( $values, true ) );
 					return true;
@@ -603,7 +601,7 @@ class LicenseTest extends Unit {
 		$m_defaults = $this->makeEmpty(
 			Defaults::class,
 			array(
-				'get'      => function( $param_name ) use ( $is_new_version, $store_code ) {
+				'get'      => function ( $param_name ) use ( $is_new_version, $store_code ) {
 					$value = null;
 					if ( 'debug_logging' === $param_name ) {
 						$value = true;
@@ -619,7 +617,7 @@ class LicenseTest extends Unit {
 					}
 					return $value;
 				},
-				'constant' => function( $constant_name ) {
+				'constant' => function ( $constant_name ) {
 					$value = -1;
 					switch ( $constant_name ) {
 						case 'E20R_LICENSE_ERROR':
@@ -646,7 +644,7 @@ class LicenseTest extends Unit {
 		$m_settings = $this->makeEmpty(
 			LicenseSettings::class,
 			array(
-				'get'          => function( $parameter ) use ( $m_defaults, $status, $test_sku ) {
+				'get'          => function ( $parameter ) use ( $m_defaults, $status, $test_sku ) {
 					$value = null;
 					if ( 'plugin_defaults' === $parameter ) {
 						$value = $m_defaults;
@@ -665,12 +663,12 @@ class LicenseTest extends Unit {
 					}
 					return $value;
 				},
-				'all_settings' => function() use ( $expected_settings ) {
+				'all_settings' => function () use ( $expected_settings ) {
 					return $expected_settings;
 				},
 				'defaults'     => array(),
 				'set'          => true,
-				'update'       => function() use ( $update_status ) {
+				'update'       => function () use ( $update_status ) {
 					return $update_status;
 				},
 			)
@@ -681,7 +679,7 @@ class LicenseTest extends Unit {
 		$m_server   = $this->makeEmpty(
 			LicenseServer::class,
 			array(
-				'send' => function() use ( $decoded_payload ) {
+				'send' => function () use ( $decoded_payload ) {
 					return $decoded_payload;
 				},
 			)
@@ -693,7 +691,7 @@ class LicenseTest extends Unit {
 			License::class,
 			array( $test_sku, $m_settings, $m_server, $m_page, $this->m_utils ),
 			array(
-				'is_new_version' => function() use ( $is_new_version ) {
+				'is_new_version' => function () use ( $is_new_version ) {
 					return $is_new_version;
 				},
 			)
@@ -702,7 +700,7 @@ class LicenseTest extends Unit {
 		if ( ! empty( $thrown_exception ) ) {
 			$this->assertThrows(
 				$thrown_exception,
-				function() use ( $m_license, $test_sku ) {
+				function () use ( $m_license, $test_sku ) {
 					$m_license->activate( $test_sku );
 				}
 			);
@@ -856,7 +854,7 @@ class LicenseTest extends Unit {
 		$m_defaults = $this->makeEmpty(
 			Defaults::class,
 			array(
-				'get' => function( $param_name ) use ( $version ) {
+				'get' => function ( $param_name ) use ( $version ) {
 					$value = null;
 					if ( 'debug_logging' === $param_name ) {
 						$value = true;
@@ -871,7 +869,7 @@ class LicenseTest extends Unit {
 		$m_settings = $this->makeEmpty(
 			LicenseSettings::class,
 			array(
-				'get'          => function( $parameter ) use ( $m_defaults ) {
+				'get'          => function ( $parameter ) use ( $m_defaults ) {
 					$value = null;
 					if ( 'plugin_defaults' === $parameter ) {
 						$value = $m_defaults;
@@ -884,7 +882,7 @@ class LicenseTest extends Unit {
 					}
 					return $value;
 				},
-				'all_settings' => function() use ( $settings_array ) {
+				'all_settings' => function () use ( $settings_array ) {
 					return $settings_array;
 				},
 				'defaults'     => array(),
@@ -904,11 +902,11 @@ class LicenseTest extends Unit {
 			Utilities::class,
 			array(
 				'is_license_server' => $is_local_server,
-				'log'               => function( $msg ) {
+				'log'               => function ( $msg ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( "Stubbed log(): {$msg}" );
 				},
-				'add_message'       => function( $msg, $type, $location ) {
+				'add_message'       => function ( $msg, $type, $location ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( "Stubbed WP notice: {$msg}, type: {$type}, location: {$location}" );
 					self::assertSame( 'backend', $location );
@@ -933,12 +931,12 @@ class LicenseTest extends Unit {
 			License::class,
 			array( $test_sku, $m_settings, $m_server, $m_page, $m_utils ),
 			array(
-				'is_active'      => function( $sku, $is_licensed ) use ( $is_active ) {
+				'is_active'      => function ( $sku, $is_licensed ) use ( $is_active ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( "Running mocked is_active( '{$sku}', '{$is_licensed}' ) and returning '{$is_active}'" );
 					return $is_active && $is_licensed;
 				},
-				'is_new_version' => function() use ( $version ) {
+				'is_new_version' => function () use ( $version ) {
 					return version_compare( $version, '3.0', 'ge' );
 				},
 			)
