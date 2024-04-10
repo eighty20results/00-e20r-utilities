@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2016 - 2022 - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2016 - 2024 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -126,7 +126,7 @@ if ( ! class_exists( '\\E20R\\Utilities\\Message' ) ) {
 				$total = count( $msg_found );
 
 				// Remove extra instances of the message
-				for ( $i = 1; ( $total - 1 ) >= $i; $i ++ ) {
+				for ( $i = 1; ( $total - 1 ) >= $i; $i++ ) {
 					$utils->log( 'Removing duplicate message' );
 					unset( $this->msg[ $i ] );
 				}
@@ -357,7 +357,7 @@ if ( ! class_exists( '\\E20R\\Utilities\\Message' ) ) {
 		 *
 		 * @return mixed
 		 */
-		public function filter_passthrough( $arg1 = null, $arg2 = null, $arg3 = null, $arg4 = null, $arg5 = null, $arg6 = null ) {
+		public function filter_passthrough( $arg1 = null, $arg2 = null, $arg3 = null, $arg4 = null, $arg5 = null, $arg6 = null ) { /* phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed */
 
 			$utils = Utilities::get_instance();
 
@@ -471,7 +471,6 @@ if ( ! class_exists( '\\E20R\\Utilities\\Message' ) ) {
 			}
 
 			return $messages;
-
 		}
 	}
 }
