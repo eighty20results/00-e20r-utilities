@@ -353,7 +353,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\Settings\\Defaults' ) ) {
 					sprintf(
 						// translators: %1$s - the parameter name provided by the caller
 						esc_attr__( 'Error: Cannot lock "%1$s". Invalid parameter name', '00-e20r-utilities' ),
-						$setting_name
+						esc_attr( $setting_name )
 					)
 				);
 			}
@@ -378,7 +378,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\Settings\\Defaults' ) ) {
 					sprintf(
 						// translators: %1$s - the parameter name provided by the caller
 						esc_attr__( 'Error: Cannot unlock "%1$s". Invalid parameter name', '00-e20r-utilities' ),
-						$setting_name
+						esc_attr( $setting_name )
 					)
 				);
 			}
@@ -407,7 +407,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\Settings\\Defaults' ) ) {
 					sprintf(
 					// translators: %1$s - Name of requested constant
 						esc_attr__( '"%1$s" is not a valid Defaults() constant!', '00-e20r-utilities' ),
-						$name
+						esc_attr( $name )
 					)
 				);
 			}
@@ -417,7 +417,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\Settings\\Defaults' ) ) {
 					sprintf(
 						// translators: %d - the operation constant to perform
 						esc_attr__( '%d is an invalid operation', '00-e20r-utilities' ),
-						$operation
+						esc_attr( $operation )
 					)
 				);
 			}
@@ -458,7 +458,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\Settings\\Defaults' ) ) {
 		 * @throws InvalidSettingsKey - Raised when attempting to set a parameter that doesn't exist
 		 * @throws DefinedByConstant - Raised when attempting to set a parameter that was previously defined by a constant
 		 */
-		public function set( string $name, $value ) : bool {
+		public function set( string $name, $value ): bool {
 
 			try {
 				$this->exists( $name );
@@ -481,7 +481,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\Settings\\Defaults' ) ) {
 							'00-e20r-utilities'
 						),
 						esc_attr( $name ),
-						$constant_map[ $is_constant ]
+						esc_attr( $constant_map[ $is_constant ] )
 					)
 				);
 			}
@@ -548,7 +548,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\Settings\\Defaults' ) ) {
 					sprintf(
 					// translators: %1$s - Supplied parameter name
 						esc_attr__( '"%1$s" is not a valid default setting', '00-e20r-utilities' ),
-						$name
+						esc_attr( $name )
 					)
 				);
 			}
@@ -585,7 +585,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\Settings\\Defaults' ) ) {
 					sprintf(
 					// translators: %s - The parameter given by the calling function
 						esc_attr__( 'Error: "%1$s" is not a valid parameter', '00-e20r-utilities' ),
-						$param_name
+						esc_attr( $param_name )
 					)
 				);
 			}
