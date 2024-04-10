@@ -15,17 +15,17 @@ parameters:
         # Uses func_get_args()
         - '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'
         - '#^Constant WP_LANG_DIR not found\.$#'
-        - '#^Cannot access property \$pmpro_b.* on WP_User\|false\.#'
-        - '#^Parameter \#1 \$page_name of function pmpro_loadTemplate expects null, string given\.#'
-        # - '#^Access to an undefined property object::\$cycle_period\.$#'
-        # - '#^Constant WP_PLUGIN_DIR not found\.$#'
+        #- '#^Cannot access property \$pmpro_b.* on WP_User\|false\.#'
+        #- '#^Parameter \#1 \$page_name of function pmpro_loadTemplate expects null, string given\.#'
+        - '#^Access to an undefined property object::\$cycle_period\.$#'
+        - '#^Constant WP_PLUGIN_DIR not found\.$#'
     scanDirectories:
         - inc/
     paths:
-        - class-e20r-members-list.php
+        - class-loader.php
         - src/
     bootstrapFiles:
-    	- class-e20r-members-list.php
+    	- class-loader.php
     excludePaths:
         - tests/
         - *.js

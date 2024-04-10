@@ -151,7 +151,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicenseServer' ) ) {
 						}
 					);
 				} catch ( Exception $e ) {
-					$this->utils->log( "Error activating the ${$api_params['sku']} license! - {$e->getMessage()}" );
+					$this->utils->log( "Error activating the {${$api_params['sku']}} license! - {$e->getMessage()}" );
 					$this->utils->log( $e->getTraceAsString() );
 					return false;
 				}

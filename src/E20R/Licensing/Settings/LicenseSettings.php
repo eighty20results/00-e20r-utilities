@@ -739,7 +739,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 
 					$lk = array_search( $l, $input['license_key'], true );
 
-					$this->utils->log( "License to deactivate (key: ${$dk}): {$input['product'][$lk]}" );
+					$this->utils->log( "License to deactivate (key: {$dk}): {$input['product'][$lk]}" );
 
 					$product   = $input['product'][ $lk ];
 					$licensing = new License( $product );

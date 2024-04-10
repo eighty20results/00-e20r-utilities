@@ -418,7 +418,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\License' ) ) {
 			try {
 				$settings = $this->settings->get_settings( $product_sku );
 			} catch ( Exception $e ) {
-				$this->utils->log( "Warning: Cannot find license for ${product_sku}: " . $e->getMessage() );
+				$this->utils->log( "Warning: Cannot find license for {$product_sku}: " . $e->getMessage() );
 				return true;
 			}
 
@@ -837,7 +837,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\License' ) ) {
 			foreach ( $settings as $product_sku => $license ) {
 
 				if ( $this->log_debug ) {
-					$this->utils->log( "Processing license info for ${product_sku}" );
+					$this->utils->log( "Processing license info for {$product_sku}" );
 				}
 
 				// Skip and clean up.

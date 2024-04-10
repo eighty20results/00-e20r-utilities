@@ -565,7 +565,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicensePage' ) ) {
 					true
 				) ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
-					$this->utils->log( "Skipping settings for ${product_sku}: " . print_r( $license, true ) );
+					$this->utils->log( "Skipping settings for {$product_sku}: " . print_r( $license, true ) );
 					continue;
 				}
 				$this->utils->log( "Checking license status for {$product_sku}" );
