@@ -13,7 +13,13 @@ jobs:
   plugin_tests:
     strategy:
       matrix:
-        php_version: [ '7.3', '7.4', '8.0' ]
+        php_version:
+          - '7.3'
+          - '7.4'
+          - '8.0'
+          - '8.1'
+          - '8.2'
+          - '8.3'
     name: "Plugin tests - PHP"
     defaults:
       run:
@@ -23,7 +29,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB }}
       DOCKER_USER: ${{ secrets.DOCKER_USER }}
       CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -70,7 +76,7 @@ jobs:
   build_i18n:
     name: Build the I18N translation files
     needs: plugin_tests
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
