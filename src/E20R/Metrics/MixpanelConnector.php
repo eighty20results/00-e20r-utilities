@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2016 - 2022 - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2016 - 2024 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -205,7 +205,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 				);
 
 				$this->utils->add_message( $msg, 'error', 'backend' );
-				throw new MissingDependencies( $msg );
+				throw new MissingDependencies( esc_attr( $msg ) );
 			}
 			$this->utils->log( "Incrementing the {$plugin_slug} activation metric" );
 			$this->mixpanel->people->increment( $this->hostid, "{$plugin_slug}_activated", 1 );
@@ -252,7 +252,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 								'Error: %1$s',
 								'00-e20r-utilities'
 							),
-							$e->getMessage()
+							esc_attr( $e->getMessage() )
 						)
 					);
 				}
@@ -281,7 +281,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 		public function decrement_activations( $plugin_slug = null ) {
 
 			if ( empty( $plugin_slug ) ) {
-				throw new InvalidPluginInfo( 'Error: No plugin slug supplied!' );
+				throw new InvalidPluginInfo( esc_attr__( 'Error: No plugin slug supplied!', '00-e20r-utilities' ) );
 			}
 
 			if ( ! class_exists( Mixpanel::class ) ) {
@@ -296,7 +296,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 
 				$this->utils->add_message( $msg, 'error', 'backend' );
 
-				throw new MissingDependencies( $msg );
+				throw new MissingDependencies( esc_attr( $msg ) );
 			}
 			$this->utils->log( "Decrementing the {$plugin_slug} activation metric for {$this->hostid}" );
 			$this->mixpanel->people->increment( $this->hostid, "{$plugin_slug}_deactivated", 1 );
@@ -319,7 +319,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 							'Invalid parameter (%1$s) for the MixpanelConnector() class',
 							'00-e20r-utilities'
 						),
-						$parameter
+						esc_attr( $parameter )
 					)
 				);
 			}
