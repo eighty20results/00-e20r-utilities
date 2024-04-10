@@ -1,6 +1,6 @@
 <?php
 /**
- *  Copyright (c) 2017 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
+ *  Copyright (c) 2017 - 2024. - Eighty / 20 Results by Wicked Strong Chicks.
  *  ALL RIGHTS RESERVED
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -243,7 +243,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 					'error',
 					'backend'
 				);
-				throw new MissingServerURL( $msg );
+				throw new MissingServerURL( esc_attr( $msg ) );
 			}
 		}
 
@@ -361,6 +361,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @throws BadOperation Raised if an unsupported operation is attempted against a constant
 		 * @throws DefinedByConstant Raised when trying to change a constant using the parameter settings method
 		 * @throws ReflectionException Default exception while processing the settings class by version
+		 *
 		 * phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
 		 */
 		public function set( string $key, $value = null ): bool {
@@ -400,7 +401,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 					sprintf(
 					// translators: %1$s - Key name for the failed setting update, %2$s - Class name
 						esc_attr__( '"%1$s" is not a valid property for %2$s', '00-e20r-utilities' ),
-						$key,
+						esc_attr( $key ),
 						__CLASS__
 					)
 				);
@@ -471,7 +472,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 			}
 
 			if ( ! isset( $this->all_settings[ $sku ] ) ) {
-				throw new NoLicenseKeyFound( $sku );
+				throw new NoLicenseKeyFound( esc_attr( $sku ) );
 			}
 
 			return $this->all_settings[ $sku ];
@@ -498,7 +499,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 					sprintf(
 						// translators: %1$s - The parameter name
 						esc_attr__( 'Cannot find a setting named "%1$s"', '00-e20r-utilities' ),
-						$key
+						esc_attr( $key )
 					)
 				);
 			}
@@ -724,10 +725,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 								}
 							}
 						}
-					} else {
-						if ( $this->to_debug ) {
+					} elseif ( $this->to_debug ) {
 							$this->utils->log( "No new license key specified for {$product}, nothing to save" );
-						}
 					}
 				}
 			}
@@ -833,7 +832,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 					$this->set( $key, $value );
 				} catch ( InvalidSettingsKey | BadOperation | DefinedByConstant | ReflectionException $e ) {
 					$this->utils->log( $e->getMessage() );
-					throw new ErrorSavingSettings( $e->getMessage() );
+					throw new ErrorSavingSettings( esc_html( $e->getMessage() ) );
 				}
 			}
 			return $this; // FIXME: Don't return self!
@@ -928,10 +927,8 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				}
 				unset( $license_settings[ $product_sku ] );
 
-			} else {
-				if ( $this->to_debug ) {
+			} elseif ( $this->to_debug ) {
 					$this->utils->log( 'Requested save of everything' );
-				}
 			}
 
 			if ( $this->to_debug ) {
