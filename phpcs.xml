@@ -34,7 +34,7 @@
 
 	<file>.</file>
 
-	<config name="installed_paths" value="inc/wp-coding-standards/wpcs" />
+	<!-- config name="installed_paths" value="inc/wp-coding-standards/wpcs" / -->
 	<config name="testVersion" value="5.6-" />
 
 	<!-- Include the WordPress ruleset. -->
