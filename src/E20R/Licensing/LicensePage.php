@@ -167,15 +167,13 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicensePage' ) ) {
 						return true;
 					}
 				}
-			} else {
+			} elseif ( $item[2] === $handle ) {
 
-				if ( $item[2] === $handle ) {
-					if ( $this->log_debug ) {
-						$this->utils->log( 'Menu already loaded: ' . urldecode( $item[2] ) );
-					}
+				if ( $this->log_debug ) {
+					$this->utils->log( 'Menu already loaded: ' . urldecode( $item[2] ) );
+				}
 
 					return true;
-				}
 			}
 
 			if ( $this->log_debug ) {
@@ -650,7 +648,6 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicensePage' ) ) {
 				</div> <!-- end wrap -->
 				<?php
 			}
-
 		}
 	}
 }
