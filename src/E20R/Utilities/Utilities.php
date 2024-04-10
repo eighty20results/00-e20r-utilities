@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2016 - 2022 - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2016 - 2024 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -283,7 +283,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			load_textdomain( '00-e20r-utilities', $mofile_local );
 
 			// Load via plugin_textdomain/glotpress
-			load_plugin_textdomain( '00-e20r-utilities', false, dirname( __FILE__ ) . '/../../languages/' );
+			load_plugin_textdomain( '00-e20r-utilities', false, __DIR__ . '/../../languages/' );
 		}
 
 		/**
@@ -699,6 +699,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			// @codeCoverageIgnoreStart
 			if ( ! file_exists( $log_directory ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir
 				if ( ! mkdir( $log_directory, 0750, true ) ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( "Warning: Unable to create the E20R Debug logging location: {$log_directory}" );
@@ -719,7 +720,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		public function log( $message ) {
 
-			if ( ! defined( 'WP_DEBUG' ) || defined( 'WP_DEBUG' ) && false === WP_DEBUG ) {
+			if ( ! defined( 'WP_DEBUG' ) || ( defined( 'WP_DEBUG' ) && false === WP_DEBUG ) ) {
 				return false;
 			}
 
@@ -786,13 +787,13 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * Process REQUEST variable: Check for presence and sanitize it before returning value or default
 		 *
 		 * @param string     $name    Name of the variable to return
-		 * @param null|mixed $default The default value to return if the REQUEST variable doesn't exist or is empty.
+		 * @param null|mixed $def     The default value to return if the REQUEST variable doesn't exist or is empty.
 		 *
 		 * @return bool|float|int|null|string|array  Sanitized value from the front-end.
 		 */
-		public function get_variable( $name, $default = null ) {
+		public function get_variable( $name, $def = null ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
-			return isset( $_REQUEST[ $name ] ) && ! empty( $_REQUEST[ $name ] ) ? $this->sanitize( $_REQUEST[ $name ] ) : $default;
+			return isset( $_REQUEST[ $name ] ) && ! empty( $_REQUEST[ $name ] ) ? $this->sanitize( $_REQUEST[ $name ] ) : $def;
 		}
 
 		/**
@@ -872,12 +873,12 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Test whether string contains HTML
 		 *
-		 * @param string $string The string to test for HTML tags
+		 * @param string $str The string to test for HTML tags
 		 *
 		 * @return bool
 		 */
-		final public static function is_html( $string ) {
-			return preg_match( '/<[^<]+>/', $string ) !== 0;
+		final public static function is_html( $str ) {
+			return preg_match( '/<[^<]+>/', $str ) !== 0;
 		}
 
 		/**
@@ -964,7 +965,6 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$buffers = ob_get_clean();
 
 			return $buffers;
-
 		}
 
 		/**
@@ -972,11 +972,11 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 *
 		 * @param mixed $needle The value to check the input for
 		 * @param mixed $haystack The value/string we're checking against
-		 * @param bool  $echo Whether to return or print the content
+		 * @param bool  $show Whether to return or print the content
 		 *
 		 * @return null|string
 		 */
-		public function checked( $needle, $haystack, $echo = false ) {
+		public function checked( $needle, $haystack, $show = false ) {
 
 			$text = null;
 
@@ -996,7 +996,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				}
 			}
 
-			if ( true === $echo && ! empty( $text ) ) {
+			if ( true === $show && ! empty( $text ) ) {
 				echo esc_attr__( ' checked="checked" ' );
 
 				return null;
@@ -1010,11 +1010,11 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 *
 		 * @param mixed $needle The value to check the input for
 		 * @param mixed $haystack The value/string we're checking against
-		 * @param bool  $echo Whether to return or print the content
+		 * @param bool  $show Whether to return or print the content
 		 *
 		 * @return null|string
 		 */
-		public function selected( $needle, $haystack, $echo = false ) {
+		public function selected( $needle, $haystack, $show = false ) {
 
 			$html_string = null;
 
@@ -1034,7 +1034,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				}
 			}
 
-			if ( true === $echo && ! empty( $html_string ) ) {
+			if ( true === $show && ! empty( $html_string ) ) {
 				print esc_attr__( ' selected="selected" ' );
 				return null;
 			}
@@ -1059,7 +1059,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$max_len = mb_strlen( $keyspace, '8bit' ) - 1;
 
 			try {
-				for ( $i = 0; $i < $length; ++ $i ) {
+				for ( $i = 0; $i < $length; ++$i ) {
 					$string .= $keyspace[ random_int( 0, $max_len ) ];
 				}
 			} catch ( Exception $e ) {
@@ -1073,13 +1073,13 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Search through array values to check whether there's anything there
 		 *
-		 * @param array $array The array to check if is empty
+		 * @param array $lst The array to check if is empty
 		 *
 		 * @return bool
 		 */
-		public function array_isnt_empty( $array ) {
+		public function array_isnt_empty( $lst ) {
 
-			$values = array_values( $array );
+			$values = array_values( $lst );
 
 			return ( empty( $values ) ? false : true );
 		}
@@ -1111,7 +1111,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 				$substr_count = substr_count( $sql, '[IN]' );
 
-				for ( $i = 0; $i < $substr_count; $i ++ ) {
+				for ( $i = 0; $i < $substr_count; $i++ ) {
 					$args = array_merge( $args, $values );
 				}
 
@@ -1132,7 +1132,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		public function safe_ajax() {
 
 			// Intentionally deactivate debug output to display/client
-			// phpcs:ignore WordPress.PHP.IniSet.display_errors_Blacklisted
+			// phpcs:ignore WordPress.PHP.IniSet.display_errors_Blacklisted, WordPress.PHP.IniSet.display_errors_Disallowed
 			ini_set( 'display_errors', '0' );
 			ob_start();
 			$messages = ob_get_clean();
