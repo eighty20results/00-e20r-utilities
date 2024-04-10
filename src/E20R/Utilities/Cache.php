@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2016 - 2022 - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2016 - 2024 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -103,7 +103,9 @@ if ( ! class_exists( '\\E20R\\Utilities\\Cache' ) ) {
 		 */
 		public function property_get( $property ) {
 			if ( ! property_exists( self::class, $property ) ) {
-				throw new BadOperation( "Error: {$property} is not a valid class property" );
+				throw new BadOperation(
+					sprintf( 'Error: %1$s is not a valid class property', esc_attr( $property ) )
+				);
 			}
 
 			return $this->{$property};
