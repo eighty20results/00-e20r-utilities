@@ -11,7 +11,7 @@ License: GPLv2
 Text Domain: 00-e20r-utilities
 Domain Path: languages/
 
- * Copyright (c) 2014 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2014 - 2024. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -210,7 +210,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 *
 		 * @return int
 		 */
-		public function get_default_priority() : int {
+		public function get_default_priority(): int {
 			return $this->default_priority;
 		}
 
