@@ -25,7 +25,7 @@ jobs:
       run:
         shell: bash
     env:
-      E20R_PLUGIN_NAME: e20r-members-list
+      E20R_PLUGIN_NAME: 00-e20r-utilities
       GITHUB_TOKEN: ${{ secrets.GITHUB }}
       DOCKER_USER: ${{ secrets.DOCKER_USER }}
       CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
@@ -34,7 +34,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          repository: eighty20results/e20r-members-list
+          repository: eighty20results/00-e20r-utilities
 
       - name: Setup PHP with Composer V2+
         uses: shivammathur/setup-php@v2
@@ -81,13 +81,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          repository: eighty20results/e20r-members-list
+          repository: eighty20results/00-e20r-utilities
 
-      - name: WordPress .pot File Generator for e20r-members-list
+      - name: WordPress .pot File Generator for 00-e20r-utilities
         uses: iamdharmesh/action-wordpress-pot-generator@main
         with:
           destination_path: './languages'
-          slug: 'e20r-members-list'
-          text_domain: 'e20r-members-list'
+          slug: '00-e20r-utilities'
+          text_domain: '00-e20r-utilities'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
