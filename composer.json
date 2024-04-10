@@ -33,7 +33,6 @@
         "ext-json": "*"
     },
     "require-dev": {
-        "squizlabs/php_codesniffer": ">=3.5.8",
         "wp-coding-standards/wpcs": "^3.1.0",
         "automattic/phpcs-neutron-standard": "^v1.7.0",
         "phpstan/phpstan": "^0.12.78",
@@ -88,8 +87,6 @@
         }
     },
     "scripts": {
-        "post-install-cmd": "if [ -f inc/bin/phpcs ] ; then inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs ; fi",
-        "post-update-cmd" : "if [ -f inc/bin/phpcs ] ; then inc/bin/phpcs --config-set installed_paths inc/wp-coding-standards/wpcs ; fi",
         "lint": "docker-compose -p ${PROJECT} --env-file ${DC_ENV_FILE} --file ${DC_CONFIG_FILE} exec -T -w /var/www/html/wp-content/plugins/00-e20r-utilities/ wordpress ./inc/bin/phpcs --report=full --colors -p --standard=WordPress-Extra --ignore=*/inc/*,*/node_modules/* --extensions=php *.php src/*/*.php"
     }
 }
