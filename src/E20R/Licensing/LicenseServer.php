@@ -24,6 +24,7 @@
 namespace E20R\Licensing;
 
 use E20R\Exceptions\InvalidSettingsKey;
+use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Exceptions\NoLicenseKeyFound;
 use E20R\Licensing\Settings\LicenseSettings;
 use E20R\Utilities\Cache;
@@ -140,10 +141,10 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicenseServer' ) ) {
 				try {
 					return Api::validate(
 						$this->license_keys_client,
-						function() use ( $api_params ) {
+						function () use ( $api_params ) {
 							return new LicenseRequest( $api_params['license_key'] );
 						},
-						function( $api_params ) {
+						function ( $api_params ) {
 							$this->utils = Utilities::get_instance();
 							// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 							$this->utils->log( 'Need to save API settings? ' . print_r( $api_params, true ) );
@@ -221,7 +222,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicenseServer' ) ) {
 		 *
 		 * @return bool
 		 */
-		public function status( $sku, $force = false ) : bool {
+		public function status( $sku, $force = false ): bool {
 
 			// Default value for the license (it's not active)
 			$use_new = (bool) $this->license_settings->get( 'new_version' );
@@ -287,10 +288,10 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicenseServer' ) ) {
 				try {
 					return Api::validate(
 						$this->license_keys_client,
-						function() use ( $settings ) {
+						function () use ( $settings ) {
 							return new LicenseRequest( $settings['key'] );
 						},
-						function() use ( $sku, $settings, $license_settings ) {
+						function () use ( $sku, $settings, $license_settings ) {
 							if ( $this->log_debug ) {
 								// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 								$this->utils->log( "Saving settings for {$sku}: " . print_r( $settings, true ) );
@@ -324,13 +325,14 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicenseServer' ) ) {
 		/**
 		 * Using the new Licensing plugin for WooCommerce (different format)
 		 *
-		 * @param string   $sku The license SKU we're processing
-		 * @param stdClass $decoded The decoded License Server response payload
+		 * @param string   $sku      The license SKU we're processing
+		 * @param stdClass $decoded  The decoded License Server response payload
 		 * @param array    $settings The license settings we're using
 		 *
 		 * @return bool
+		 * @throws BadOperation Invalid cache set/get operation attempted
 		 */
-		private function process_new_license_info( $sku, $decoded, $settings ) : bool {
+		private function process_new_license_info( $sku, $decoded, $settings ): bool {
 
 			global $current_user;
 
@@ -400,10 +402,8 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicenseServer' ) ) {
 						if ( $this->log_debug ) {
 							$this->utils->log( "Current status for {$sku} license: " . ( $license_status ? 'active' : 'inactive/deactivated/blocked' ) );
 						}
-					} else {
-						if ( $this->log_debug ) {
+					} elseif ( $this->log_debug ) {
 							$this->utils->log( 'Wrong domain, or domain info not found' );
-						}
 					}
 				}
 			} else {
@@ -414,7 +414,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicenseServer' ) ) {
 				$license_status = false;
 			}
 
-			if ( isset( $settings['expires'] ) && $settings['expires'] < time() || ( isset( $settings['active'] ) && 'active' !== $settings['status'] ) ) {
+			if ( ( isset( $settings['expires'] ) && $settings['expires'] < time() ) || ( isset( $settings['active'] ) && 'active' !== $settings['status'] ) ) {
 				$msg = sprintf(
 				// translators: The license name is set by the plugin being licensed
 					__( 'Your %s license has expired!', '00-e20r-utilities' ),
@@ -437,13 +437,14 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicenseServer' ) ) {
 		/**
 		 * Process the original type of license information
 		 *
-		 * @param string   $sku The license SKU we're processing
-		 * @param stdClass $decoded The decoded License Server HTTP response
+		 * @param string   $sku      The license SKU we're processing
+		 * @param stdClass $decoded  The decoded License Server HTTP response
 		 * @param array    $settings The license settings
 		 *
 		 * @return bool
+		 * @throws BadOperation Error while attempting to save cached value
 		 */
-		private function process_old_license_info( $sku, $decoded, $settings ) : bool {
+		private function process_old_license_info( $sku, $decoded, $settings ): bool {
 
 			$license_status = (bool) Cache::get( "{$sku}_status", 'e20r_licensing' );
 
@@ -462,9 +463,8 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicenseServer' ) ) {
 					'backend'
 				);
 
-				$license_status = false;
-				Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
-				return $license_status;
+				Cache::set( "{$sku}_status", false, DAY_IN_SECONDS, 'e20r_licensing' );
+				return false;
 			}
 
 			if ( 1 === (int) $decoded->error && ( isset( $decoded->status ) && 500 === (int) $decoded->status ) ) {
@@ -480,9 +480,8 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicenseServer' ) ) {
 					);
 				}
 
-				$license_status = false;
-				Cache::set( "{$sku}_status", $license_status, DAY_IN_SECONDS, 'e20r_licensing' );
-				return $license_status;
+				Cache::set( "{$sku}_status", false, DAY_IN_SECONDS, 'e20r_licensing' );
+				return false;
 			}
 
 			if ( isset( $decoded->status ) && 200 === (int) $decoded->status ) {
