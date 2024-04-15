@@ -263,14 +263,14 @@ php-composer: prerequisite
 #
 composer-prod: composer.json real-clean clean-inc php-composer
 	@echo "Install/Update the Production composer dependencies"
-	@$(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable --no-dev
+	@COMPOSER=composer-php8.json $(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable --no-dev
 
 #
-# Install the required Composer packages to develop/test this plugin
+# Install the required Composer packages to develop/test this plugin using PHP 7.x
 #
-composer-dev: composer.json php-composer
-	@echo "Use composer to install/update the PHP test dependencies"
-	@$(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable
+composer-dev: composer-php7.json composer-php8.json php-composer
+	@echo "Use composer to install/update the PHP dependencies"
+	@COMPOSER=$(COMPOSER_FILE) $(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable
 
 #
 # Install docker-compose for use

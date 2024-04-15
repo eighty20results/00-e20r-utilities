@@ -7,6 +7,10 @@ ifeq ($(E20R_DEPLOYMENT_SERVER), )
 E20R_DEPLOYMENT_SERVER ?= eighty20results.com
 endif
 
+ifeq ($(COMPOSER_FILE), )
+COMPOSER_FILE ?= composer-php8.json
+endif
+
 ifneq ($(LOCAL_NETWORK_IF), )
 LOCAL_NETWORK_STATUS ?= $(shell ifconfig $(LOCAL_NETWORK_IF) | awk '/status:/ { print $$2 }')
 $(info Setting local network interface status for $(LOCAL_NETWORK_IF): '$(LOCAL_NETWORK_STATUS)')
