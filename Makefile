@@ -344,7 +344,8 @@ docker-deps: prerequisite is-docker-running docker-compose wp-deps
 # triggers the e20r-deps target, which installs any Eighty20Results.com custom plugins we need (normally the
 # E20R Utilities module).
 #
-wp-deps: prerequisite clean composer-dev e20r-deps
+# wp-deps: prerequisite clean composer-dev e20r-deps
+wp-deps: prerequisite clean e20r-deps
 	@echo "Loading WordPress plugin dependencies"
 	@for dep_plugin in ${WP_DEPENDENCIES} ; do \
   		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" ]]; then \
