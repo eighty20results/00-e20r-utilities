@@ -59,13 +59,13 @@ jobs:
           path: inc/**
 
       - name: Install all needed PHP 7.x dependencies for Composer
-        if: steps.restore-cache.outputs.cache-hit != 'true' AND startsWith(matrix.php_version, '7.')
+        if: steps.restore-cache.outputs.cache-hit != 'true' && startsWith(matrix.php_version, '7.')
         env:
           COMPOSER_FILE: composer-php7.json
         run: make composer-dev
 
       - name: Install all needed PHP 8.x dependencies for Composer
-        if: steps.restore-cache.outputs.cache-hit != 'true' AND startsWith(matrix.php_version, '8.')
+        if: steps.restore-cache.outputs.cache-hit != 'true' && startsWith(matrix.php_version, '8.')
         env:
           COMPOSER_FILE: composer-php8.json
         run: make composer-dev
