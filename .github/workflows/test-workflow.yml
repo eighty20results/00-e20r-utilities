@@ -71,8 +71,16 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-cache
           path: inc/**
 
-      - name: Install all needed dependencies for Composer
-        if: steps.restore-cache.outputs.cache-hit != 'true'
+      - name: Install all needed PHP 7.x dependencies for Composer
+        if: steps.restore-cache.outputs.cache-hit != 'true' AND startsWith(matrix.php_version, '7.')
+        env:
+          COMPOSER_FILE: composer-php7.json
+        run: make composer-dev
+
+      - name: Install all needed PHP 8.x dependencies for Composer
+        if: steps.restore-cache.outputs.cache-hit != 'true' AND startsWith(matrix.php_version, '8.')
+        env:
+          COMPOSER_FILE: composer-php8.json
         run: make composer-dev
 
       - name: Install all needed WordPress plugin dependencies
@@ -105,6 +113,7 @@ jobs:
       CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
       SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
       SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+      COMPOSER_FILE: composer-php8.json
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -143,12 +152,20 @@ jobs:
         uses: actions/cache@v2
         id: composer-cache
         with:
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer-php8.lock') }}
           restore-keys: ${{ runner.os }}-composer-cache
           path: inc/
 
-      - name: Install all needed dependencies for Composer
-        if: steps.composer-cache.outputs.cache-hit != 'true'
+      - name: Install all needed PHP8 dependencies for Composer
+        if: steps.restore-cache.outputs.cache-hit != 'true' AND startsWith(matrix.php_version, '8.')
+        env:
+          COMPOSER_FILE: composer-php8.json
+        run: make composer-dev
+
+      - name: Install all needed PHP7 dependencies for Composer
+        if: steps.restore-cache.outputs.cache-hit != 'true' AND startsWith(matrix.php_version, '7.')
+        env:
+          COMPOSER_FILE: composer-php7.json
         run: make composer-dev
 
       - name: Install all needed WordPress plugin dependencies
@@ -189,6 +206,7 @@ jobs:
       CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
       SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
       SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+      COMPOSER_FILE: composer-php8.json
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -227,12 +245,20 @@ jobs:
         uses: actions/cache@v2
         id: composer-cache-prod
         with:
-          key: ${{ runner.os }}-composer-cache-prod-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-composer-cache-prod-${{ hashFiles('**/composer-php8.lock') }}
           restore-keys: ${{ runner.os }}-composer-cache-prod
           path: inc/
 
-      - name: Install all needed dependencies for Composer
-        if: steps.composer-cache-prod.outputs.cache-hit != 'true'
+      - name: Install all needed PHP 7.x dependencies for Composer
+        if: steps.restore-cache.outputs.cache-hit != 'true' AND startsWith(matrix.php_version, '7.')
+        env:
+          COMPOSER_FILE: composer-php7.json
+        run: make composer-dev
+
+      - name: Install all needed PHP 8.x dependencies for Composer
+        if: steps.restore-cache.outputs.cache-hit != 'true' AND startsWith(matrix.php_version, '8.')
+        env:
+          COMPOSER_FILE: composer-php8.json
         run: make composer-dev
 
       - name: Install all needed WordPress plugin dependencies
