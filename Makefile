@@ -269,7 +269,7 @@ composer-prod: composer.json real-clean clean-inc php-composer
 # Install the required Composer packages to develop/test this plugin using PHP 7.x
 #
 composer-dev: composer-php7.json composer-php8.json php-composer
-	@echo "Use composer to install/update the PHP dependencies"
+	@echo "Use composer to install/update the Composer '$(COMPOSER_FILE)' dependencies"
 	@COMPOSER=$(COMPOSER_FILE) $(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable
 
 #
