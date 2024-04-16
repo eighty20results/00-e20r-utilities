@@ -38,6 +38,9 @@ jobs:
         with:
           repository: eighty20results/00-e20r-utilities
 
+      - name: Extract PHP version information
+        run: echo "PHP_MAJOR_VERSION=$(echo ${{ matrix.php_version }} | cut -c1-1)" >> $GITHUB_ENV
+
       - name: Setup PHP with Composer V2+
         uses: shivammathur/setup-php@v2
         with:
@@ -56,20 +59,14 @@ jobs:
         uses: actions/cache@v2
         id: composer-cache
         with:
-          key: ${{ runner.os }}-composer-cache-${{ hashFiles('**/composer-php8.lock') }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer-php${{ env.PHP_MAJOR_VERSION }}.lock') }}
           restore-keys: ${{ runner.os }}-composer-cache
           path: inc/**
 
-      - name: Install all needed PHP 7.x dependencies for Composer
-        if: steps.restore-cache.outputs.cache-hit != 'true' && startsWith(matrix.php_version, '7.')
+      - name: Install all needed PHP ${{ env.PHP_MAJOR_VERSION }} dependencies for Composer
+        if: steps.restore-cache.outputs.cache-hit != 'true'
         env:
-          COMPOSER_FILE: composer-php7.json
-        run: make composer-dev
-
-      - name: Install all needed PHP 8.x dependencies for Composer
-        if: steps.restore-cache.outputs.cache-hit != 'true' && startsWith(matrix.php_version, '8.')
-        env:
-          COMPOSER_FILE: composer-php8.json
+          COMPOSER_FILE: composer-php${{ env.PHP_MAJOR_VERSION }}.json
         run: make composer-dev
 
       - name: Install all needed WordPress plugin dependencies
