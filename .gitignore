@@ -84,3 +84,4 @@ build/
 !build/kits/.gitkeep
 /.phpunit.result.cache
 /github/
+/my.secrets
