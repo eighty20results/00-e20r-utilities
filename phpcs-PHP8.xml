@@ -37,6 +37,7 @@
 	<!-- config name="installed_paths" value="inc/wp-coding-standards/wpcs" / -->
 	<config name="testVersion" value="5.6-" />
 
+	<!-- Include support for custom WP capabilities -->
 	<rule ref="WordPress.WP.Capabilities">
 		<properties>
 			<property name="custom_capabilities" type="array">
