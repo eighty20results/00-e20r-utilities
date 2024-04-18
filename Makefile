@@ -459,14 +459,14 @@ phpstan-tests: composer-dev wp-deps
 # Using the local environment to execute the PHP Code Standards tests (using WPCS-Extra ruleset)
 #
 code-standard-tests: wp-deps
-	@echo "Running WP Code Standards testing for $(PROJECT)"
+	@echo "Running WP Code Standards testing for PHP ${PHP_MAJOR_VERSION} in $(PROJECT)"
 	@$(PHP_BIN) $(COMPOSER_DIR)/bin/phpcs \
 		--runtime-set ignore_warnings_on_exit true \
 		--report=full \
 		--colors \
 		-p \
 		-s \
-		--standard=phpcs.xml \
+		--standard=phpcs-PHP${PHP_MAJOR_VERSION}.xml \
 		--ignore='$(PHP_IGNORE_PATHS)' \
 		--extensions=php \
 		$(PHP_CODE_PATHS)
