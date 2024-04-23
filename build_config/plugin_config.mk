@@ -23,7 +23,9 @@ endif
 WP_DEPENDENCIES ?= paid-memberships-pro woocommerce
 E20R_DEPENDENCIES ?=
 
-DOCKER_HUB_USER ?= eighty20results
+DOCKER_USER ?= eighty20results
+CONTAINER_ACCESS_TOKEN ?= $(shell if [[ -f .docker.hub.key ]]; then cat .docker.hub.key; fi)
+
 DOCKER_ENV ?= Docker.app
 DOCKER_IS_RUNNING := $(shell ps -ef | grep $(DOCKER_ENV) | wc -l | xargs)
 
