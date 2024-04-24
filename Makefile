@@ -261,7 +261,7 @@ php-composer: prerequisite
 #
 # Install the Composer packages required by this plugin when it is released
 #
-composer-prod: composer.json real-clean clean-inc php-composer
+composer-prod: composer-php7.json composer-php8.json real-clean clean-inc php-composer
 	@echo "Install/Update the Production composer dependencies"
 	@COMPOSER=composer-php8.json $(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable --no-dev
 
