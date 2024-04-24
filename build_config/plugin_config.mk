@@ -8,7 +8,7 @@ E20R_DEPLOYMENT_SERVER ?= eighty20results.com
 endif
 
 ifeq ($(COMPOSER_FILE), )
-COMPOSER_FILE ?= composer-php8.json
+COMPOSER_FILE ?= composer-php$(PHP_MAJOR_VERSION).json
 endif
 
 ifneq ($(LOCAL_NETWORK_IF), )
