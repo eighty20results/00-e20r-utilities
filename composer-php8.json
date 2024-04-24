@@ -8,6 +8,7 @@
     },
     "name": "eight20results/utilities",
     "type": "wordpress-plugin",
+    "version": "2.3.4",
     "description": "Adds various utility functions and license capabilities",
     "keywords": ["wordpress",
         "src/E20R/Utilities",
