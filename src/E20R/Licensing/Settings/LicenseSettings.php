@@ -343,7 +343,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$this->utils->log( 'All settings: ' . print_r( $this->all_settings, true ) );
 			}
 
-			if ( empty( $product_sku ) || 'e20r_default_license' === $product_sku ) {
+			if ( 'e20r_default_license' === $product_sku ) {
 				if ( $this->to_debug ) {
 					$this->utils->log(
 						"No product, or default product specified, so returning all settings: {$product_sku}"
