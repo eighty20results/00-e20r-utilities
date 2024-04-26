@@ -451,7 +451,7 @@ phpstan-tests: composer-dev wp-deps
 		--ansi \
 		--debug \
 		-v \
-		--configuration=./phpstan.dist.neon \
+		--configuration=./phpstan-PHP${PHP_MAJOR_VERSION}.dist.neon \
 		--no-interaction \
 		--memory-limit=-1
 
