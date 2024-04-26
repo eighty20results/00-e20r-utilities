@@ -71,13 +71,11 @@ if ( ! class_exists( '\\E20R\\Utilities\\GDPR_Enablement' ) ) {
 
 		/**
 		 * Build the Eighty/20 Results by Wicked Strong Chicks, LLC data privacy policy
-		 *
-		 * @return bool
 		 */
 		public function e20r_data_privacy_policy() {
 
 			if ( false === $this->wp_has_gdpr_support() ) {
-				return false;
+				return;
 			}
 
 			$privacy_policy = file_get_contents( plugin_dir_path( __FILE__ ) . 'policies/e20r-privacy-policy.html' );
@@ -193,8 +191,6 @@ if ( ! class_exists( '\\E20R\\Utilities\\GDPR_Enablement' ) ) {
 				),
 				$privacy_policy
 			);
-
-			return true;
 		}
 
 		/**

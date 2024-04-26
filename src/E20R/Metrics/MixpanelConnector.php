@@ -140,7 +140,7 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 
 			$this->hostid = sprintf( '%1$s -> %2$s', $hostid, $this->user_id );
 
-			if ( isset( $this->mixpanel->people ) && ! empty( $this->mixpanel->people ) ) {
+			if ( $this->mixpanel->people ) {
 				$this->mixpanel->people->set(
 					$this->hostid,
 					array(

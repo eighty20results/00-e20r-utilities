@@ -53,13 +53,6 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicensePage' ) ) {
 		private $utils = null;
 
 		/**
-		 * Handle to page (license settings)
-		 *
-		 * @var string|false Handle for WP admin page
-		 */
-		private $page_handle = null;
-
-		/**
 		 * Whether to add Licensing specific debug logging
 		 *
 		 * @var bool $log_debug
@@ -192,7 +185,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\LicensePage' ) ) {
 				$this->utils->log( 'Attempting to add options page for E20R Licenses' );
 			}
 
-			$this->page_handle = add_options_page(
+			add_options_page(
 				__( 'E20R Licenses', '00-e20r-utilities' ),
 				__( 'E20R Licenses', '00-e20r-utilities' ),
 				'manage_options',

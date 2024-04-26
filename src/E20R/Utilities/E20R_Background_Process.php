@@ -785,11 +785,11 @@ if ( ! class_exists( '\\E20R\\Utilities\\E20R_Background_Process' ) ) {
 		 */
 		public function schedule_cron_healthcheck( $schedules ) {
 
-			$current_timeout = get_cfg_var( 'max_execution_time' );
+			$current_timeout = (int) get_cfg_var( 'max_execution_time' );
 			$min_interval    = 2;
 
 			if ( ! empty( $current_timeout ) ) {
-				$max_in_mins  = ceil( $current_timeout / 60 );
+				$max_in_mins  = ceil( ( $current_timeout / 60 ) );
 				$min_interval = $max_in_mins + 1;
 			}
 

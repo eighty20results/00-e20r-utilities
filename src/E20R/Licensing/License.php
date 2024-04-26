@@ -262,7 +262,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\License' ) ) {
 		public function load_hooks() {
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ), 10 );
 
-			if ( ! empty( $this->ajax ) ) {
+			if ( $this->ajax ) {
 				add_action(
 					'wp_ajax_e20r_license_verify',
 					array( $this->ajax, 'ajax_handler_verify_license' ),

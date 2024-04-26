@@ -36,6 +36,7 @@ use E20R\Licensing\LicenseServer;
 use E20R\Exceptions\InvalidSettingsKey;
 use E20R\Utilities\Message;
 use E20R\Utilities\Utilities;
+use Exception;
 use ReflectionException;
 
 // Deny direct access to the file
@@ -131,6 +132,13 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		private $plugin_defaults;
 
 		/**
+		 * Array/List of licenses that are considered "null licenses"
+		 *
+		 * @var string[]
+		 */
+		private $no_license;
+
+		/**
 		 * LicenseSettings constructor.
 		 *
 		 * @param string|null                  $product_sku     The SKU in the WooCommerce store for the product
@@ -143,6 +151,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @throws ConfigDataNotFound Raised when the config data (JSON blob) is missing/unused
 		 * @throws BadOperation Raised if the lock operation fails for a default setting
 		 * @throws InvalidSettingsVersion Raised if we attempt to instantiate the wrong settings class for the licensing code
+		 * @throws Exception Default exception thrown
 		 */
 		public function __construct( $product_sku = 'e20r_default_license', $plugin_defaults = null, $utils = null, $settings_class = null ) {
 
@@ -154,12 +163,14 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$messages = new Message();
 				$utils    = new Utilities( $messages );
 			}
-			$this->utils = $utils;
+
+			$this->utils      = $utils;
+			$this->no_license = array( 'e20r_default_license', 'example_gateway_addon' );
 
 			if ( empty( $plugin_defaults ) ) {
 				try {
 					$plugin_defaults = new Defaults( true, $this->utils );
-				} catch ( ConfigDataNotFound | InvalidSettingsKey $e ) {
+				} catch ( ConfigDataNotFound | InvalidSettingsKey | Exception $e ) {
 					$this->utils->log( 'Cannot load settings: ' . $e->getMessage() );
 					throw $e;
 				}
@@ -332,7 +343,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$this->utils->log( 'All settings: ' . print_r( $this->all_settings, true ) );
 			}
 
-			if ( 'e20r_default_license' === $product_sku || empty( $product_sku ) ) {
+			if ( empty( $product_sku ) || 'e20r_default_license' === $product_sku ) {
 				if ( $this->to_debug ) {
 					$this->utils->log(
 						"No product, or default product specified, so returning all settings: {$product_sku}"
@@ -866,7 +877,7 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 		 * @return bool
 		 */
 		public function save() {
-			// TODO: This function needs to load the existing settings from the DB and then and saves the current setting
+			// TODO: This function needs to load the existing settings from the DB and then save the current setting
 
 			try {
 				$license_settings = $this->all_settings();
@@ -898,34 +909,26 @@ if ( ! class_exists( '\E20R\Utilities\Licensing\LicenseSettings' ) ) {
 				$license_settings[ $this->product_sku ] = $this->license_request_settings->defaults();
 			}
 
-			// Need to update the settings for a (possibly) pre-existing product
-			if ( ! is_null( $this->product_sku ) && ! empty( $new_settings ) && ! in_array(
-				$this->product_sku,
-				array(
-					'e20r_default_license',
-					'example_gateway_addon',
-				),
-				true
-			) && ! empty( $product_sku )
-			) {
+			$new_settings = $this->defaults();
 
-				$license_settings[ $product_sku ] = $new_settings;
+			// Need to update the settings for a (possibly) pre-existing product
+			if ( $this->product_sku && ! in_array( $this->product_sku, $this->no_license, true ) ) {
+
+				$license_settings[ $this->product_sku ] = $new_settings;
+
 				if ( $this->to_debug ) {
-					$this->utils->log( "Updating license settings for {$product_sku}" );
+					$this->utils->log( "Updating license settings for {$this->product_sku}" );
 				}
-			} elseif ( ! is_null( $this->product_sku ) && empty( $new_settings ) && ( ! in_array(
-				$this->product_sku,
-				array(
-					'e20r_default_license',
-					'example_gateway_addon',
-				),
-				true
-			) && ! empty( $product_sku ) )
+			} elseif (
+				! is_null( $this->product_sku ) && empty( $new_settings ) && (
+					! in_array( $this->product_sku, $this->no_license, true ) &&
+					! empty( $this->product_sku )
+				)
 			) {
 				if ( $this->to_debug ) {
-					$this->utils->log( "Removing license settings for {$product_sku}" );
+					$this->utils->log( "Removing license settings for {$this->product_sku}" );
 				}
-				unset( $license_settings[ $product_sku ] );
+				unset( $license_settings[ $this->product_sku ] );
 
 			} elseif ( $this->to_debug ) {
 					$this->utils->log( 'Requested save of everything' );

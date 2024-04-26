@@ -445,11 +445,10 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 						self::$instance->log( "Processing Subscription Delay values for {$level->id}" );
 
 						// Get the default delay value (days)
-						$date_or_num = pmprosd_getDelay( $level->id, null ); // @phpstan-ignore-line
+						$date_or_num = pmprosd_getDelay( $level->id, null );
 						self::$instance->log( "Received default delay value: {$date_or_num}" );
 
 						if ( ! empty( $date_or_num ) ) {
-							// @phpstan-ignore-next-line
 							$val = ( is_numeric( $date_or_num ) ? $date_or_num : pmprosd_daysUntilDate( $date_or_num ) );
 
 							if ( ! empty( $val ) ) {
@@ -468,12 +467,11 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 							foreach ( $active_codes as $code ) {
 
 								// Get the delay value from the Subscription Delays plugin
-								$d = pmprosd_getDelay( $level->id, $code->id ); // @phpstan-ignore-line
+								$d = pmprosd_getDelay( $level->id, $code->id );
 
 								if ( ! empty( $d ) ) {
 
 									self::$instance->log( "Processing {$d}" );
-									// @phpstan-ignore-next-line
 									$val = ( is_numeric( $d ) ? $d : pmprosd_daysUntilDate( $d ) );
 
 									if ( ! empty( $val ) ) {
