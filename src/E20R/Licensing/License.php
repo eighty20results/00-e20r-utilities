@@ -195,7 +195,7 @@ if ( ! class_exists( '\\E20R\\Licensing\\License' ) ) {
 				try {
 					$ajax_handler = new AjaxHandler( $product_sku, $this->settings, $this->server, $this->utils );
 				} catch ( Exception $e ) {
-					$this->utils->log( 'Warning: Not loading the AJAX handler. No SKU or Key found.' );
+					$this->utils->log( 'Warning: Not loading the AJAX handler. No SKU or Key found. - ' . $e->getMessage() );
 				}
 			} else {
 				$this->utils->log( 'Using supplied AjaxHandler class' );
