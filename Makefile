@@ -446,12 +446,12 @@ db-backup: prerequisite
 # Using the local environment to execute the PHPStan tests (code analysis)
 #
 phpstan-tests: composer-dev wp-deps
-	@echo "Loading the PHP-Stan tests for $(PROJECT)"
+	@echo "Loading the PHP-Stan tests for $(PROJECT) using PHP ${PHP_MAJOR_VERSION}"
 	@$(PHP_BIN) ./$(COMPOSER_DIR)/bin/phpstan analyze \
 		--ansi \
 		--debug \
 		-v \
-		--configuration=./phpstan-PHP${PHP_MAJOR_VERSION}.dist.neon \
+		--configuration=phpstan-PHP${PHP_MAJOR_VERSION}.dist.neon \
 		--no-interaction \
 		--memory-limit=-1
 
