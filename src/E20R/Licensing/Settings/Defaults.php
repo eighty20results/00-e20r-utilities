@@ -443,6 +443,8 @@ if ( ! class_exists( '\\E20R\\Licensing\\Settings\\Defaults' ) ) {
 					}
 					return true;
 			}
+
+			return false;
 		}
 
 		/**
