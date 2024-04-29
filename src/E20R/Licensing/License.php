@@ -261,14 +261,11 @@ if ( ! class_exists( '\\E20R\\Licensing\\License' ) ) {
 		 */
 		public function load_hooks() {
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ), 10 );
-
-			if ( $this->ajax ) {
-				add_action(
-					'wp_ajax_e20r_license_verify',
-					array( $this->ajax, 'ajax_handler_verify_license' ),
-					10
-				);
-			}
+			add_action(
+				'wp_ajax_e20r_license_verify',
+				array( $this->ajax, 'ajax_handler_verify_license' ),
+				10
+			);
 		}
 
 		/**
@@ -427,21 +424,21 @@ if ( ! class_exists( '\\E20R\\Licensing\\License' ) ) {
 				$this->utils->log( 'Received settings for expiration check: ' . print_r( $settings, true ) );
 			}
 
+			// phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+			$expires = (int) time();
+
 			if ( $this->is_new_version() && isset( $settings['expire'] ) ) {
 				$expires = (int) $settings['expire'];
 			} elseif ( isset( $settings['expires'] ) ) {
 				$expires = (int) $settings['expires'];
 			} else {
-				// phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
-				$expires = (int) time();
+				$expires = null;
 			}
 
 			if ( empty( $expires ) ) {
-
 				if ( $this->log_debug ) {
 					$this->utils->log( "NOTICE: The {$product_sku} license does not expire" );
 				}
-
 				return false;
 			}
 
