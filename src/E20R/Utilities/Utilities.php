@@ -388,12 +388,15 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		}
 
 		/**
+		 * NOTE: Not being used by any plugin of mine...(?)
+		 *
 		 * Return all delay values for a membership payment start
 		 *
 		 * @param stdClass|array $level The membership level we're checking start delays for
 		 *
 		 * @return array|bool|mixed|null
 		 */
+		/** Deactivated code
 		public static function get_membership_start_delays( $level ) {
 
 			$delays = array();
@@ -405,96 +408,98 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			}
 
 			if ( ! function_exists( 'pmprosd_daysUntilDate' ) ) {
-				self::$instance->log( 'The PMPro Set Expiration Date add-on is not an active plugin!' );
+				self::$instance->log( 'The PMPro Subscription Delays add-on is not an active plugin!' );
 				return $delays;
 			}
 
-			if ( true === pmpro_isLevelRecurring( $level ) ) {
+			if ( false === pmpro_isLevelRecurring( $level ) ) {
+				self::$instance->log( "Level {$level->id} is not a recurring payments level" );
+				return $delays;
+			}
 
-				self::$instance->log( "Level {$level->id} is a recurring payments level" );
-				$delays = Cache::get( "start_delay_{$level->id}", self::$cache_key );
+			self::$instance->log( "Level {$level->id} is a recurring payments level" );
+			$delays = Cache::get( "start_delay_{$level->id}", self::$cache_key );
 
-				if ( null === $delays ) {
+			if ( null === $delays ) {
 
-					self::$instance->log( 'Invalid cache... Loading from scratch' );
+				self::$instance->log( 'Invalid cache...' );
 
-					// Calculate the trial period (may be smaller than a normal billing period
-					if ( $level->cycle_number > 0 ) {
+				// Calculate the trial period (may be smaller than a normal billing period)
+				if ( $level->cycle_number > 0 ) {
 
-						self::$instance->log( 'Is a recurring billing level' );
+					self::$instance->log( 'Is a recurring billing level' );
 
-						$trial_cycles       = $level->trial_limit;
-						$period_days        = self::convert_period( $level->cycle_period );
-						$billing_cycle_days = 0;
+					$trial_cycles       = $level->trial_limit;
+					$period_days        = self::convert_period( $level->cycle_period );
+					$billing_cycle_days = 0;
 
-						if ( null !== $period_days ) {
-							$billing_cycle_days = $level->cycle_number * $period_days;
-						}
-
-						if ( ! empty( $trial_cycles ) ) {
-							$delays['trial'] = $trial_cycles * $billing_cycle_days;
-						}
-
-						$delays[ $level->id ] = ( $billing_cycle_days * $level->cycle_number );
-						self::$instance->log( "Days used for delay value: {$delays[$level->id]} " );
+					if ( null !== $period_days ) {
+						$billing_cycle_days = $level->cycle_number * $period_days;
 					}
 
-					// We have Subscription Delays add-on for PMPro installed and active
-					if ( function_exists( 'pmprosd_getDelay' ) ) {
+					if ( ! empty( $trial_cycles ) ) {
+						$delays['trial'] = $trial_cycles * $billing_cycle_days;
+					}
 
-						self::$instance->log( "Processing Subscription Delay values for {$level->id}" );
+					$delays[ $level->id ] = ( $billing_cycle_days * $level->cycle_number );
+					self::$instance->log( "Days used for delay value: {$delays[$level->id]} " );
+				}
 
-						// Get the default delay value (days)
-						$date_or_num = pmprosd_getDelay( $level->id, null );
-						self::$instance->log( "Received default delay value: {$date_or_num}" );
+				// We have Subscription Delays add-on for PMPro installed and active
+				if ( function_exists( 'pmprosd_getDelay' ) && function_exists( 'pmprosd_daysUntilDate' ) ) {
 
-						if ( ! empty( $date_or_num ) ) {
-							$val = ( is_numeric( $date_or_num ) ? $date_or_num : pmprosd_daysUntilDate( $date_or_num ) );
+					self::$instance->log( "Processing Subscription Delay values for {$level->id}" );
 
-							if ( ! empty( $val ) ) {
-								$delays['default'] = $val;
-								self::$instance->log( "Configured default value {$delays[ 'default' ]}" );
-							}
-						} else {
-							self::$instance->log( "No default value for level {$level->id} specified" );
+					// Get the default delay value (days)
+					$date_or_num = pmprosd_getDelay( $level->id, null );
+					self::$instance->log( "Received default delay value: {$date_or_num}" );
+
+					if ( ! empty( $date_or_num ) ) {
+						$val = ( is_numeric( $date_or_num ) ? $date_or_num : pmprosd_daysUntilDate( $date_or_num ) );
+
+						if ( ! empty( $val ) ) {
+							$delays['default'] = $val;
+							self::$instance->log( "Configured default value {$delays[ 'default' ]}" );
 						}
+					} else {
+						self::$instance->log( "No default value for level {$level->id} specified" );
+					}
 
-						// Fetch discount codes to locate delays for
-						$active_codes = self::get_all_discount_codes();
+					// Fetch discount codes to locate delays for
+					$active_codes = self::get_all_discount_codes();
 
-						// Process active discount code delays
-						if ( ! empty( $active_codes ) ) {
-							foreach ( $active_codes as $code ) {
+					// Process active discount code delays
+					if ( ! empty( $active_codes ) ) {
+						foreach ( $active_codes as $code ) {
 
-								// Get the delay value from the Subscription Delays plugin
-								$d = pmprosd_getDelay( $level->id, $code->id );
+							// Get the delay value from the Subscription Delays plugin
+							$d = pmprosd_getDelay( $level->id, $code->id );
 
-								if ( ! empty( $d ) ) {
+							if ( ! empty( $d ) ) {
 
-									self::$instance->log( "Processing {$d}" );
-									$val = ( is_numeric( $d ) ? $d : pmprosd_daysUntilDate( $d ) );
+								self::$instance->log( "Processing {$d}" );
+								$val = ( is_numeric( $d ) ? $d : pmprosd_daysUntilDate( $d ) );
 
-									if ( ! empty( $val ) ) {
-										$delays[ $code->code ] = $val;
-										self::$instance->log( "Configured {$code->code} value {$delays[ $code->code ]}" );
-									}
+								if ( ! empty( $val ) ) {
+									$delays[ $code->code ] = $val;
+									self::$instance->log( "Configured {$code->code} value {$delays[ $code->code ]}" );
 								}
 							}
 						}
 					}
+				}
 
-					// Update the cache.
-					if ( ! empty( $delays ) ) {
+				// Update the cache.
+				if ( ! empty( $delays ) ) {
 
-						// Save to cache and have cached for up to 7 days
-						Cache::set( "start_delay_{$level->id}", $delays, WEEK_IN_SECONDS, self::$cache_key );
-					}
+					// Save to cache and have cached for up to 7 days
+					Cache::set( "start_delay_{$level->id}", $delays, WEEK_IN_SECONDS, self::$cache_key );
 				}
 			}
 
 			return $delays;
 		}
-
+		 */
 		/**
 		 * Convert a Cycle Period (from PMPro) string to an approximate day count
 		 *
