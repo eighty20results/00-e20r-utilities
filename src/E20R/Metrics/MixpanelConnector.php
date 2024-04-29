@@ -139,20 +139,15 @@ if ( ! class_exists( 'E20R\\Metrics\\MixpanelConnector' ) ) {
 			}
 
 			$this->hostid = sprintf( '%1$s -> %2$s', $hostid, $this->user_id );
-
-			if ( $this->mixpanel->people ) {
-				$this->mixpanel->people->set(
-					$this->hostid,
-					array(
-						'user_id' => $this->user_id,
-						'host_id' => $this->hostid,
-					),
-					null,
-					true
-				);
-			} else {
-				$this->utils->log( 'The Mixpanel environment has not been instantiated. Are we unit testing??' );
-			}
+			$this->mixpanel->people->set(
+				$this->hostid,
+				array(
+					'user_id' => $this->user_id,
+					'host_id' => $this->hostid,
+				),
+				null,
+				true
+			);
 		}
 
 		/**
