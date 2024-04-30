@@ -35,6 +35,7 @@ use Brain\Monkey\Filters;
 use Brain\Monkey\Actions;
 use Mixpanel;
 
+use Producers_MixpanelPeople;
 use function E20R\Tests\Unit\Fixtures\e20r_unittest_stubs;
 
 /**
@@ -129,12 +130,18 @@ class LoaderTest extends Unit {
 		}
 
 		try {
+			$this->mp_people = $this->makeEmpty(
+				Producers_MixpanelPeople::class,
+				array()
+			);
+
 			$this->m_mixpanel = $this->makeEmpty(
 				Mixpanel::class,
-				array(
-					'getInstance' => $this->m_mixpanel,
-				)
+				array()
 			);
+
+			$this->m_mixpanel->people = $this->mp_people;
+
 		} catch ( Exception $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( 'Unable to create mock of ' . Mixpanel::class . ': ' . $e->getMessage() );
@@ -180,6 +187,7 @@ class LoaderTest extends Unit {
 	 * @test
 	 */
 	public function it_instantiated_loader_class( string $class_name, int $priority, int $init_priority ) {
+		// self::markTestSkipped( 'FIXME: Not mocking the MixpanelConnector() class correctly' );
 		$this->loader = new Loader( $this->m_utils, $this->m_mp_connector );
 		self::assertInstanceOf( $class_name, $this->loader );
 
@@ -213,6 +221,7 @@ class LoaderTest extends Unit {
 	 * @test
 	 */
 	public function it_loaded_the_utilities_module( $test_value, $expected ) {
+		// self::markTestSkipped( 'FIXME: Not mocking the MixpanelConnector() class correctly' );
 		$this->loader = new Loader( $this->m_utils, $this->m_mp_connector );
 		$this->loader->utilities_loaded();
 		Filters\has( 'e20r_utilities_module_installed', '__return_true' );
