@@ -172,17 +172,15 @@ class MixpanelConnectorTest extends Unit {
 			)
 		);
 
-		$this->mp_people = $this->makeEmpty(
-			Producers_MixpanelPeople::class,
-			array()
-		);
-
-		$this->mock_mp = $this->makeEmpty(
-			Mixpanel::class,
-			array()
-		);
-
-		$this->mock_mp->people = $this->mp_people;
+		try {
+			$this->mp_people       = $this->makeEmpty(
+				Producers_MixpanelPeople::class,
+				array()
+			);
+			$this->mock_mp->people = $this->mp_people;
+		} catch ( Exception $e ) {
+			self::assertFalse( true, 'Error mocking Producers_MixpanelPeople() class: ' . $e->getMessage() );
+		}
 	}
 
 	/**
@@ -209,7 +207,7 @@ class MixpanelConnectorTest extends Unit {
 	 * @throws Monkey\Expectation\Exception\ExpectationArgsRequired Thrown if the expected arguments are not provided
 	 */
 	public function it_instantiated_the_mixpanel_connector( $token, $server, $class_name ) {
-		// self::markTestSkipped( 'FIXME: Not mocking the MixpanelConnector() class correctly' );
+		// self::markTestSkipped( 'Not mocking the MixpanelConnector() class correctly' );
 
 		Functions\expect( 'update_option' )
 			->zeroOrMoreTimes()

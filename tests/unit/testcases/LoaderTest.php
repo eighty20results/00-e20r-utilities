@@ -148,6 +148,19 @@ class LoaderTest extends Unit {
 		}
 
 		try {
+			$this->mp_people = $this->makeEmpty(
+				Producers_MixpanelPeople::class,
+				array()
+			);
+
+			$this->m_mixpanel->people = $this->mp_people;
+
+		} catch ( Exception $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Unable to create mock of ' . Producers_MixpanelPeople::class . ': ' . $e->getMessage() );
+		}
+
+		try {
 			$this->m_mp_connector = $this->construct(
 				MixpanelConnector::class,
 				array( 'a14f11781866c2117ab6487792e4ebfd', array( 'host' => 'api-eu.mixpanel.com' ), $this->m_mixpanel, $this->m_utils ),
@@ -187,7 +200,7 @@ class LoaderTest extends Unit {
 	 * @test
 	 */
 	public function it_instantiated_loader_class( string $class_name, int $priority, int $init_priority ) {
-		// self::markTestSkipped( 'FIXME: Not mocking the MixpanelConnector() class correctly' );
+		// self::markTestSkipped( 'Not mocking the MixpanelConnector() class correctly' );
 		$this->loader = new Loader( $this->m_utils, $this->m_mp_connector );
 		self::assertInstanceOf( $class_name, $this->loader );
 
@@ -221,7 +234,7 @@ class LoaderTest extends Unit {
 	 * @test
 	 */
 	public function it_loaded_the_utilities_module( $test_value, $expected ) {
-		// self::markTestSkipped( 'FIXME: Not mocking the MixpanelConnector() class correctly' );
+		// self::markTestSkipped( 'Not mocking the MixpanelConnector() class correctly' );
 		$this->loader = new Loader( $this->m_utils, $this->m_mp_connector );
 		$this->loader->utilities_loaded();
 		Filters\has( 'e20r_utilities_module_installed', '__return_true' );
