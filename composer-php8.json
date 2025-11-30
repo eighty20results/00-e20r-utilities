@@ -1,0 +1,93 @@
+{
+    "config": {
+        "vendor-dir": "inc/",
+        "allow-plugins": {
+            "phpstan/extension-installer": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "name": "eight20results/utilities",
+    "type": "wordpress-plugin",
+    "version": "2.3.4",
+    "description": "Adds various utility functions and license capabilities",
+    "keywords": ["wordpress",
+        "src/E20R/Utilities",
+        "src/Licensing"
+    ],
+    "minimum-stability": "stable",
+    "homepage": "https://eighty20results.com",
+    "license": "GPLv2",
+    "authors": [
+    {
+      "name": "Thomas Sjolshagen",
+      "email": "thomas@eighty20results.com",
+      "homepage": "https://eighty20results.com/thomas-sjolshagen",
+      "role": "Developer"
+    }
+    ],
+    "require": {
+        "php": ">=8.0",
+        "yahnis-elsts/plugin-update-checker": "^5.4",
+        "10quality/license-keys-php-client": "v1.2.2",
+        "mixpanel/mixpanel-php" : "^2.11",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "wp-coding-standards/wpcs": "^3.1",
+        "automattic/phpcs-neutron-standard": "^v1.7",
+        "phpstan/phpstan": "^1.10",
+        "szepeviktor/phpstan-wordpress": "^v1.3",
+        "phpmetrics/phpmetrics": "^v2.8",
+        "phpunit/phpunit": "^10.5",
+        "codeception/codeception": "^5.1",
+        "codeception/module-asserts": "^3.0",
+        "codeception/module-phpbrowser": "^3.0",
+        "codeception/module-webdriver": "^3.0",
+        "codeception/module-db": "^3.1",
+        "codeception/module-filesystem": "^3.0",
+        "codeception/module-cli": "^2.0",
+        "codeception/util-universalframework": "^1.0.0",
+        "codeception/aspect-mock": "<4.0",
+        "codeception/assert-throws": "^1.4.0",
+        "codeception/module-rest": "^3.3",
+        "spatie/phpunit-snapshot-assertions": "^5.1",
+        "lucatume/wp-browser": "^4.1",
+        "brain/monkey": "^2.6",
+        "mikey179/vfsstream": "~1",
+        "phpstan/extension-installer": "^1.3",
+        "php-mock/php-mock": "^2.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "ProjectRoot\\" : ".",
+            "NamespaceInSourceDir\\": "",
+            "E20R\\": "src/E20R/",
+            "E20R\\Utilities\\": "src/E20R/Utilities/",
+            "E20R\\Exceptions\\": "src/E20R/Exceptions",
+            "E20R\\Licensing\\": "src/E20R/Licensing/",
+            "E20R\\Metrics\\": "src/E20R/Metrics/",
+            "E20R\\Licensing\\Exceptions\\": "src/E20R/Licensing/Exceptions/",
+            "E20R\\Licensing\\Settings\\": "src/E20R/Licensing/Settings/",
+            "E20R\\Tests\\": "tests/",
+            "E20R\\Tests\\Unit\\": "tests/unit/testcases/",
+            "E20R\\Tests\\Integration\\": "tests/integration/testcases/",
+            "E20R\\Tests\\Functional\\": "tests/functional/testcases/",
+            "E20R\\Tests\\Acceptance\\": "tests/acceptance/testcases/",
+            "E20R\\Tests\\Api\\": "tests/api/testcases/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "E20R\\Tests\\": "tests/",
+            "E20R\\Tests\\Unit\\": "tests/unit/testcases/",
+            "E20R\\Tests\\Integration\\": "tests/integration/testcases/",
+            "E20R\\Tests\\Functional\\": "tests/functional/testcases/",
+            "E20R\\Tests\\Acceptance\\": "tests/acceptance/testcases/",
+            "E20R\\Tests\\Api\\": "tests/api/testcases/"
+        }
+    },
+    "scripts": {
+        "lint": "docker-compose -p ${PROJECT} --env-file ${DC_ENV_FILE} --file ${DC_CONFIG_FILE} exec -T -w /var/www/html/wp-content/plugins/00-e20r-utilities/ wordpress ./inc/bin/phpcs --report=full --colors -p --standard=WordPress-Extra --ignore=*/inc/*,*/node_modules/* --extensions=php *.php src/*/*.php"
+    }
+}

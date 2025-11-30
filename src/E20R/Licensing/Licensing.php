@@ -98,7 +98,6 @@ if ( ! class_exists( '\\E20R\\Licensing\\Licensing' ) ) {
 				);
 				return false;
 			}
-
 		}
 
 		/**

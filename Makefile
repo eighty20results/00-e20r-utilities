@@ -34,6 +34,7 @@ UNIT_TEST_CASE_PATH := tests/unit/testcases/
 INTEGRATION_TEST_CASE_PATH := tests/integration/testcases/
 FUNCTIONAL_TEST_CASE_PATH := tests/functional/testcases/
 ACCEPTANCE_TEST_CASE_PATH := tests/acceptance/testcases/
+COVERAGE_MODE := coverage
 
 ifneq ($(wildcard ./tests/docker/docker.hub.key),)
 $(info Path to key for docker hub exists)
@@ -252,7 +253,7 @@ php-composer: prerequisite
 	@if [[ ! -z "$(PHP_BIN)" && "Xinactive" != "X$(LOCAL_NETWORK_STATUS)" ]]; then \
 	    echo "Install the PHP Composer component" && \
 	    $(PHP_BIN) -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
-	    $(PHP_BIN) -r "if (hash_file('sha384', 'composer-setup.php') === '906a84df04cea2aa72f40b5f787e49f22d4c2f19492ac310e8cba5b96ac8b64115ac402c8cd292b8a03482574915d1a8') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
+	    $(PHP_BIN) -r "if (hash_file('sha384', 'composer-setup.php') === $(E20R_COMPOSER_HASH)) { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
             $(PHP_BIN) composer-setup.php --install-dir=$(BASE_PATH)/ && \
             $(PHP_BIN) -r "unlink('composer-setup.php');" ; \
     fi
@@ -260,16 +261,16 @@ php-composer: prerequisite
 #
 # Install the Composer packages required by this plugin when it is released
 #
-composer-prod: composer.json real-clean clean-inc php-composer
-	@echo "Install/Update the Production composer dependencies"
-	@$(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable --no-dev
+composer-prod: composer-php7.json composer-php8.json real-clean clean-inc php-composer
+	@echo "Install/Update the Production composer dependencies ($(COMPOSER_FILE))"
+	@COMPOSER=composer-php8.json $(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable --no-dev
 
 #
-# Install the required Composer packages to develop/test this plugin
+# Install the required Composer packages to develop/test this plugin using PHP 7.x
 #
-composer-dev: composer.json php-composer
-	@echo "Use composer to install/update the PHP test dependencies"
-	@$(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable
+composer-dev: composer-php7.json composer-php8.json php-composer
+	@echo "Use composer to install/update the Composer '$(COMPOSER_FILE)' dependencies"
+	@COMPOSER=$(COMPOSER_FILE) $(PHP_BIN) $(COMPOSER_BIN) update --ansi --prefer-stable
 
 #
 # Install docker-compose for use
@@ -343,7 +344,8 @@ docker-deps: prerequisite is-docker-running docker-compose wp-deps
 # triggers the e20r-deps target, which installs any Eighty20Results.com custom plugins we need (normally the
 # E20R Utilities module).
 #
-wp-deps: prerequisite clean composer-dev e20r-deps
+# wp-deps: prerequisite clean composer-dev e20r-deps
+wp-deps: prerequisite clean e20r-deps
 	@echo "Loading WordPress plugin dependencies"
 	@for dep_plugin in ${WP_DEPENDENCIES} ; do \
   		if [[ ! -d "$(COMPOSER_DIR)/wp_plugins/$${dep_plugin}" ]]; then \
@@ -444,12 +446,12 @@ db-backup: prerequisite
 # Using the local environment to execute the PHPStan tests (code analysis)
 #
 phpstan-tests: composer-dev wp-deps
-	@echo "Loading the PHP-Stan tests for $(PROJECT)"
+	@echo "Loading the PHP-Stan tests for $(PROJECT) using PHP ${PHP_MAJOR_VERSION}"
 	@$(PHP_BIN) ./$(COMPOSER_DIR)/bin/phpstan analyze \
 		--ansi \
 		--debug \
 		-v \
-		--configuration=./phpstan.dist.neon \
+		--configuration=phpstan-PHP${PHP_MAJOR_VERSION}.dist.neon \
 		--no-interaction \
 		--memory-limit=-1
 
@@ -457,14 +459,14 @@ phpstan-tests: composer-dev wp-deps
 # Using the local environment to execute the PHP Code Standards tests (using WPCS-Extra ruleset)
 #
 code-standard-tests: wp-deps
-	@echo "Running WP Code Standards testing for $(PROJECT)"
+	@echo "Running WP Code Standards testing for PHP ${PHP_MAJOR_VERSION} in $(PROJECT)"
 	@$(PHP_BIN) $(COMPOSER_DIR)/bin/phpcs \
 		--runtime-set ignore_warnings_on_exit true \
 		--report=full \
 		--colors \
 		-p \
 		-s \
-		--standard=phpcs.xml \
+		--standard=phpcs-PHP${PHP_MAJOR_VERSION}.xml \
 		--ignore='$(PHP_IGNORE_PATHS)' \
 		--extensions=php \
 		$(PHP_CODE_PATHS)
@@ -475,13 +477,13 @@ code-standard-tests: wp-deps
 unit-tests: wp-deps
 	@if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
 		echo "Running Unit tests for $(PROJECT)"; \
-		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --verbose --debug --coverage-html ./coverage/unit $(UNIT_TEST_CASE_PATH); \
+		XDEBUG_MODE=$(COVERAGE_MODE) $(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --verbose --debug --coverage-html ./coverage/unit $(UNIT_TEST_CASE_PATH); \
 	fi
 
 unit: wp-deps
 	@if [[ -n "$(FOUND_UNIT_TESTS)" && -n "$(TEST_TO_RUN)" ]]; then \
 		echo "Running Unit tests for $(PROJECT)/$(TEST_TO_RUN)"; \
-		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --verbose --debug --coverage-html ./coverage/unit $(UNIT_TEST_CASE_PATH)/$(TEST_TO_RUN); \
+		XDEBUG_MODE=$(COVERAGE_MODE) $(PHP_BIN)  $(COMPOSER_DIR)/bin/codecept run unit --steps --verbose --debug --coverage-html ./coverage/unit $(UNIT_TEST_CASE_PATH)/$(TEST_TO_RUN); \
   	else \
   	  echo "Error: Either FOUND_UNIT_TESTS is empty or TEST_TO_RUN is empty. Exiting!" ; \
   	  exit 1 ; \
@@ -490,7 +492,7 @@ unit: wp-deps
 coverage: wp-deps
 	@if [[ -n "$(FOUND_UNIT_TESTS)" ]]; then \
 		echo "Running Unit tests for $(PROJECT)"; \
-		$(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --coverage --verbose --debug $(UNIT_TEST_CASE_PATH); \
+		XDEBUG_MODE=$(COVERAGE_MODE) $(PHP_BIN) $(COMPOSER_DIR)/bin/codecept run unit --steps --coverage --verbose --debug $(UNIT_TEST_CASE_PATH); \
 	fi
 #
 # Using codeception to execute the WP Unit Tests (aka WP integration tests) for this plugin
@@ -563,7 +565,7 @@ tests: prerequisite clean wp-deps code-standard-tests phpstan-tests unit-tests d
 # Generate a GIT commit log in build_readmes/current.txt
 #
 git-log: prerequisite
-	@./bin/create_log.sh
+	@E20R_MAIN_BRANCH_NAME=$(E20R_MAIN_BRANCH_NAME) ./bin/create_log.sh
 
 #
 # Generate (and update) the custom WP Plugin Updater metadata.json file
@@ -588,14 +590,17 @@ readme: prerequisite
 # Saves the built plugin .zip archive to build/kits
 #
 $(E20R_PLUGIN_BASE_FILE): prerequisite stop-stack clean-inc composer-prod
-	@if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
-  		echo "Deploying kit to $(E20R_DEPLOYMENT_SERVER)" && \
-  		E20R_PLUGIN_NAME=$(E20R_PLUGIN_NAME) ./bin/build-plugin.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"; \
-	else \
-		rm -rf $(COMPOSER_DIR)/wp_plugins && \
-		mkdir -p build/kits/ && \
-		E20R_PLUGIN_VERSION=$$(./bin/get_plugin_version.sh "$(E20R_PLUGIN_BASE_FILE)") \
-		git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output=build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip --worktree-attributes main ; \
+	@export E20R_PLUGIN_VERSION="$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_BASE_FILE))" ; \
+	if [[ ! -f "build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip" ]]; then \
+		if [[ -z "$${USE_LOCAL_BUILD}" ]]; then \
+			echo "Deploying kit to $(E20R_DEPLOYMENT_SERVER)" && \
+			E20R_PLUGIN_NAME="$(E20R_PLUGIN_NAME)" ./bin/build-plugin.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"; \
+		else \
+			rm -rf $(COMPOSER_DIR)/wp_plugins && \
+			mkdir -p build/kits/ && \
+			E20R_PLUGIN_VERSION="$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_BASE_FILE))" \
+			git archive --prefix=$(E20R_PLUGIN_NAME)/ --format=zip --output="build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip" --worktree-attributes "$(E20R_MAIN_BRANCH_NAME)" ; \
+		fi ; \
 	fi
 
 #
@@ -603,17 +608,25 @@ $(E20R_PLUGIN_BASE_FILE): prerequisite stop-stack clean-inc composer-prod
 # Saves the built plugin .zip archive to build/kits
 #
 build: prerequisite stop-stack clean-inc composer-prod $(E20R_PLUGIN_BASE_FILE)
-	@echo "Built kit for $(E20R_PLUGIN_NAME)"
+	@export E20R_PLUGIN_VERSION="$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_BASE_FILE))" ; \
+	if [[ ! -f "build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip" ]]; then \
+		echo "Package for $(E20R_PLUGIN_NAME) not found!" ; \
+		exit 1 ; \
+	else \
+		echo "$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip is complete" ; \
+	fi && \
+	rm -rf "build/$(E20R_PLUGIN_NAME)" || die "Error: Cannot remove build/kits/$(E20R_PLUGIN_NAME)"
 
-deploy: prerequisite
-	@echo "Deploy ${E20R_PLUGIN_NAME}.zip to ${E20R_DEPLOYMENT_SERVER}"
-	@if ! compgen -G "build/kits/${E20R_PLUGIN_NAME}-*.zip" > /dev/null; then \
-	  	echo "Error: ${PWD}/build/kits/${E20R_PLUGIN_NAME}*.zip not found!" ; \
+deploy: prerequisite build
+	@echo "Deploy $(E20R_PLUGIN_NAME) to $(E20R_DEPLOYMENT_SERVER)"
+	@export E20R_PLUGIN_VERSION="$$(./bin/get_plugin_version.sh $(E20R_PLUGIN_BASE_FILE))" ; \
+	if [[ ! -f "build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip" ]]; then \
+	  	echo "Error: ${PWD}/build/kits/$(E20R_PLUGIN_NAME)-$${E20R_PLUGIN_VERSION}.zip not found!" ; \
 	  	ls -l "${PWD}/build/kits/" ; \
 	  	exit 1; \
-	fi
-	@echo "Preparing to deploy the ${E20R_PLUGIN_NAME}-*.zip plugin archive to the Deployment Server"
-	@./bin/deploy.sh "${E20R_PLUGIN_BASE_FILE}" "${E20R_DEPLOYMENT_SERVER}"
+	fi ; \
+	echo "Preparing to deploy the $${E20R_PLUGIN_NAME}-$${E20R_PLUGIN_VERSION}.zip plugin archive to the $(E20R_DEPLOYMENT_SERVER) Server" && \
+	E20R_MAIN_BRANCH_NAME="$(E20R_MAIN_BRANCH_NAME)" ./bin/deploy.sh "$(E20R_PLUGIN_BASE_FILE)" "$(E20R_DEPLOYMENT_SERVER)"
 
 
 #new-release: test composer-prod

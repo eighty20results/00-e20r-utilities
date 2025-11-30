@@ -131,7 +131,7 @@ if ( ! class_exists( 'E20R\\Licensing\\AjaxHandler' ) ) {
 			}
 
 			if ( empty( $this->key_to_check ) ) {
-				throw new NoLicenseKeyFound( $this->key_to_check );
+				throw new NoLicenseKeyFound( esc_attr( $this->key_to_check ) );
 			}
 
 			if ( empty( $settings ) ) {
@@ -229,6 +229,5 @@ if ( ! class_exists( 'E20R\\Licensing\\AjaxHandler' ) ) {
 			}
 			wp_send_json_success();
 		}
-
 	}
 }

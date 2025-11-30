@@ -33,6 +33,7 @@ use E20R\Utilities\Utilities;
 use Exception;
 use Mixpanel;
 use Mockery;
+use Producers_MixpanelPeople;
 
 /**
  * Unit tests for Mixpanel connector
@@ -171,10 +172,15 @@ class MixpanelConnectorTest extends Unit {
 			)
 		);
 
-		$this->mock_mp = $this->makeEmpty(
-			Mixpanel::class,
-			array()
-		);
+		try {
+			$this->mp_people       = $this->makeEmpty(
+				Producers_MixpanelPeople::class,
+				array()
+			);
+			$this->mock_mp->people = $this->mp_people;
+		} catch ( Exception $e ) {
+			self::assertFalse( true, 'Error mocking Producers_MixpanelPeople() class: ' . $e->getMessage() );
+		}
 	}
 
 	/**
@@ -198,8 +204,11 @@ class MixpanelConnectorTest extends Unit {
 	 *
 	 * @throws HostNotDefined Thrown if the Mixpanel API host configuration is not defined
 	 * @throws InvalidMixpanelKey Thrown if the mixpanel key is missing/not defined
+	 * @throws Monkey\Expectation\Exception\ExpectationArgsRequired Thrown if the expected arguments are not provided
 	 */
 	public function it_instantiated_the_mixpanel_connector( $token, $server, $class_name ) {
+		// self::markTestSkipped( 'Not mocking the MixpanelConnector() class correctly' );
+
 		Functions\expect( 'update_option' )
 			->zeroOrMoreTimes()
 			->with( 'e20r_mp_userid', null )
@@ -322,6 +331,7 @@ class MixpanelConnectorTest extends Unit {
 		$token = null,
 		$config = array( 'host' => 'api-eu.mixpanel.com' )
 	) {
+
 		$result = null;
 		Functions\expect( 'update_option' )
 			->zeroOrMoreTimes()

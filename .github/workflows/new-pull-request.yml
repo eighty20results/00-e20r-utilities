@@ -2,10 +2,8 @@ name: Run Unit Tests and create translations when creating a PR
 
 # Run Unit Test and POT files when new PR is created
 on:
-#   push:
-#     branches:
-#       - main
   pull_request:
+    types: [opened]
     branches:
       - main
 
@@ -13,14 +11,32 @@ jobs:
   pr_tests:
     strategy:
       matrix:
-        php_version: [ '7.3', '7.4', '8.0' ]
+        php_version:
+          - '7.3'
+          - '7.4'
+          - '8.1'
+          - '8.2'
+          - '8.3'
     name: "Plugin tests - PHP"
-    runs-on: ubuntu-18.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      # To deploy to the E20R WooCommerce target, set E20R_SSH_SERVER, E20R_SSH_USER, E20R_SSH_PORT, E20R_SSH_KEY and remove traces of the SVN_* variables
+      # To deploy to the wordpress.org repository, set SVN_USERNAME and SVN_PASSWORD and remove traces of the E20R_SSH_* variables
+      E20R_PLUGIN_NAME: 00-e20r-utilities
+      GITHUB_TOKEN: ${{ secrets.GITHUB }}
+      DOCKER_USER: ${{ secrets.DOCKER_USER }}
+      CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          repository: eighty20results/Utilities
+          repository: eighty20results/00-e20r-utilities
+
+      - name: Extract PHP version information
+        run: echo "PHP_MAJOR_VERSION=$(echo ${{ matrix.php_version }} | cut -c1-1)" >> $GITHUB_ENV
 
       - name: Setup PHP with Composer V2+
         uses: shivammathur/setup-php@v2
@@ -31,6 +47,7 @@ jobs:
           coverage: pcov
 
       - name: Login to Docker HUB
+        if: ${{ ! env.ACT }}
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_USER }}
@@ -40,57 +57,52 @@ jobs:
         uses: actions/cache@v2
         id: composer-cache
         with:
-          key: ${{ runner.os }}-composer-cache-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer-php${{ env.PHP_MAJOR_VERSION }}.lock') }}
           restore-keys: ${{ runner.os }}-composer-cache
           path: inc/**
-        env:
-          E20R_PLUGIN_NAME: 00-e20r-utilities
 
-      - name: Install all needed dependencies for Composer
-        shell: bash
+      - name: Install all needed PHP ${{ env.PHP_MAJOR_VERSION }} dependencies for Composer
         if: steps.restore-cache.outputs.cache-hit != 'true'
-        run: make composer-dev
         env:
-          E20R_PLUGIN_NAME: 00-e20r-utilities
+          COMPOSER_FILE: composer-php${{ env.PHP_MAJOR_VERSION }}.json
+        run: make composer-dev
 
       - name: Install all needed WordPress plugin dependencies
-        shell: bash
         if: steps.composer-cache.outputs.cache-hit != 'true'
-        run: make wp-deps
         env:
-          E20R_PLUGIN_NAME: 00-e20r-utilities
+          COMPOSER_FILE: composer-php${{ env.PHP_MAJOR_VERSION }}.json
+        run: make wp-deps
 
       - name: Install all needed dependencies for Docker
-        shell: bash
         if: steps.composer-cache.outputs.cache-hit != 'true'
-        run: make docker-deps
         env:
-          E20R_PLUGIN_NAME: 00-e20r-utilities
+          COMPOSER_FILE: composer-php${{ env.PHP_MAJOR_VERSION }}.json
+        run: make docker-deps
 
       - name: Run all Standard Tests
-        shell: bash
-        run: make tests
         env:
-          E20R_PLUGIN_NAME: 00-e20r-utilities
-          GITHUB_TOKEN: ${{ secrets.GITHUB }}
-          DOCKER_USER: ${{ secrets.DOCKER_USER }}
-          CONTAINER_ACCESS_TOKEN: ${{ secrets.CONTAINER_ACCESS_TOKEN }}
+          COMPOSER_FILE: composer-php${{ env.PHP_MAJOR_VERSION }}.json
+        run: make tests
 
   build_i18n:
     name: Build the I18N translation files
     needs: [pr_tests]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          repository: eighty20results/Utilities
+          repository: eighty20results/00-e20r-utilities
+
+      - name: Extract PHP version information
+        run: echo "PHP_MAJOR_VERSION=$(echo ${{ matrix.php_version }} | cut -c1-1)" >> $GITHUB_ENV
 
       - name: WordPress .pot File Generator for 00-e20r-utilities
         uses: iamdharmesh/action-wordpress-pot-generator@main
         with:
           destination_path: './languages'
-          slug: '00-e20r-utilities'
+          slug: 00-e20r-utilities
           text_domain: '00-e20r-utilities'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMPOSER_FILE: composer-php${{ env.PHP_MAJOR_VERSION }}.json

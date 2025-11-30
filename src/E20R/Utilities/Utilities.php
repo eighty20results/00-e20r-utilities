@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2016 - 2022 - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2016 - 2024 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,8 +25,8 @@ use E20R\Licensing\Exceptions\BadOperation;
 use E20R\Licensing\Settings\Defaults;
 use E20R\Exceptions\InvalidSettingsKey;
 use Exception;
-use Puc_v4_Factory;
 use stdClass;
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 use function apply_filters;
 use function plugin_dir_path;
 
@@ -283,7 +283,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			load_textdomain( '00-e20r-utilities', $mofile_local );
 
 			// Load via plugin_textdomain/glotpress
-			load_plugin_textdomain( '00-e20r-utilities', false, dirname( __FILE__ ) . '/../../languages/' );
+			load_plugin_textdomain( '00-e20r-utilities', false, __DIR__ . '/../../languages/' );
 		}
 
 		/**
@@ -388,12 +388,15 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		}
 
 		/**
+		 * NOTE: Not being used by any plugin of mine...(?)
+		 *
 		 * Return all delay values for a membership payment start
 		 *
 		 * @param stdClass|array $level The membership level we're checking start delays for
 		 *
 		 * @return array|bool|mixed|null
 		 */
+		/** Deactivated code
 		public static function get_membership_start_delays( $level ) {
 
 			$delays = array();
@@ -405,98 +408,98 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			}
 
 			if ( ! function_exists( 'pmprosd_daysUntilDate' ) ) {
-				self::$instance->log( 'The PMPro Set Expiration Date add-on is not an active plugin!' );
+				self::$instance->log( 'The PMPro Subscription Delays add-on is not an active plugin!' );
 				return $delays;
 			}
 
-			if ( true === pmpro_isLevelRecurring( $level ) ) {
+			if ( false === pmpro_isLevelRecurring( $level ) ) {
+				self::$instance->log( "Level {$level->id} is not a recurring payments level" );
+				return $delays;
+			}
 
-				self::$instance->log( "Level {$level->id} is a recurring payments level" );
-				$delays = Cache::get( "start_delay_{$level->id}", self::$cache_key );
+			self::$instance->log( "Level {$level->id} is a recurring payments level" );
+			$delays = Cache::get( "start_delay_{$level->id}", self::$cache_key );
 
-				if ( null === $delays ) {
+			if ( null === $delays ) {
 
-					self::$instance->log( 'Invalid cache... Loading from scratch' );
+				self::$instance->log( 'Invalid cache...' );
 
-					// Calculate the trial period (may be smaller than a normal billing period
-					if ( $level->cycle_number > 0 ) {
+				// Calculate the trial period (may be smaller than a normal billing period)
+				if ( $level->cycle_number > 0 ) {
 
-						self::$instance->log( 'Is a recurring billing level' );
+					self::$instance->log( 'Is a recurring billing level' );
 
-						$trial_cycles       = $level->trial_limit;
-						$period_days        = self::convert_period( $level->cycle_period );
-						$billing_cycle_days = 0;
+					$trial_cycles       = $level->trial_limit;
+					$period_days        = self::convert_period( $level->cycle_period );
+					$billing_cycle_days = 0;
 
-						if ( null !== $period_days ) {
-							$billing_cycle_days = $level->cycle_number * $period_days;
-						}
-
-						if ( ! empty( $trial_cycles ) ) {
-							$delays['trial'] = $trial_cycles * $billing_cycle_days;
-						}
-
-						$delays[ $level->id ] = ( $billing_cycle_days * $level->cycle_number );
-						self::$instance->log( "Days used for delay value: {$delays[$level->id]} " );
+					if ( null !== $period_days ) {
+						$billing_cycle_days = $level->cycle_number * $period_days;
 					}
 
-					// We have Subscription Delays add-on for PMPro installed and active
-					if ( function_exists( 'pmprosd_getDelay' ) ) {
+					if ( ! empty( $trial_cycles ) ) {
+						$delays['trial'] = $trial_cycles * $billing_cycle_days;
+					}
 
-						self::$instance->log( "Processing Subscription Delay values for {$level->id}" );
+					$delays[ $level->id ] = ( $billing_cycle_days * $level->cycle_number );
+					self::$instance->log( "Days used for delay value: {$delays[$level->id]} " );
+				}
 
-						// Get the default delay value (days)
-						$date_or_num = pmprosd_getDelay( $level->id, null ); // @phpstan-ignore-line
-						self::$instance->log( "Received default delay value: {$date_or_num}" );
+				// We have Subscription Delays add-on for PMPro installed and active
+				if ( function_exists( 'pmprosd_getDelay' ) && function_exists( 'pmprosd_daysUntilDate' ) ) {
 
-						if ( ! empty( $date_or_num ) ) {
-							// @phpstan-ignore-next-line
-							$val = ( is_numeric( $date_or_num ) ? $date_or_num : pmprosd_daysUntilDate( $date_or_num ) );
+					self::$instance->log( "Processing Subscription Delay values for {$level->id}" );
 
-							if ( ! empty( $val ) ) {
-								$delays['default'] = $val;
-								self::$instance->log( "Configured default value {$delays[ 'default' ]}" );
-							}
-						} else {
-							self::$instance->log( "No default value for level {$level->id} specified" );
+					// Get the default delay value (days)
+					$date_or_num = pmprosd_getDelay( $level->id, null );
+					self::$instance->log( "Received default delay value: {$date_or_num}" );
+
+					if ( ! empty( $date_or_num ) ) {
+						$val = ( is_numeric( $date_or_num ) ? $date_or_num : pmprosd_daysUntilDate( $date_or_num ) );
+
+						if ( ! empty( $val ) ) {
+							$delays['default'] = $val;
+							self::$instance->log( "Configured default value {$delays[ 'default' ]}" );
 						}
+					} else {
+						self::$instance->log( "No default value for level {$level->id} specified" );
+					}
 
-						// Fetch discount codes to locate delays for
-						$active_codes = self::get_all_discount_codes();
+					// Fetch discount codes to locate delays for
+					$active_codes = self::get_all_discount_codes();
 
-						// Process active discount code delays
-						if ( ! empty( $active_codes ) ) {
-							foreach ( $active_codes as $code ) {
+					// Process active discount code delays
+					if ( ! empty( $active_codes ) ) {
+						foreach ( $active_codes as $code ) {
 
-								// Get the delay value from the Subscription Delays plugin
-								$d = pmprosd_getDelay( $level->id, $code->id ); // @phpstan-ignore-line
+							// Get the delay value from the Subscription Delays plugin
+							$d = pmprosd_getDelay( $level->id, $code->id );
 
-								if ( ! empty( $d ) ) {
+							if ( ! empty( $d ) ) {
 
-									self::$instance->log( "Processing {$d}" );
-									// @phpstan-ignore-next-line
-									$val = ( is_numeric( $d ) ? $d : pmprosd_daysUntilDate( $d ) );
+								self::$instance->log( "Processing {$d}" );
+								$val = ( is_numeric( $d ) ? $d : pmprosd_daysUntilDate( $d ) );
 
-									if ( ! empty( $val ) ) {
-										$delays[ $code->code ] = $val;
-										self::$instance->log( "Configured {$code->code} value {$delays[ $code->code ]}" );
-									}
+								if ( ! empty( $val ) ) {
+									$delays[ $code->code ] = $val;
+									self::$instance->log( "Configured {$code->code} value {$delays[ $code->code ]}" );
 								}
 							}
 						}
 					}
+				}
 
-					// Update the cache.
-					if ( ! empty( $delays ) ) {
+				// Update the cache.
+				if ( ! empty( $delays ) ) {
 
-						// Save to cache and have cached for up to 7 days
-						Cache::set( "start_delay_{$level->id}", $delays, WEEK_IN_SECONDS, self::$cache_key );
-					}
+					// Save to cache and have cached for up to 7 days
+					Cache::set( "start_delay_{$level->id}", $delays, WEEK_IN_SECONDS, self::$cache_key );
 				}
 			}
 
 			return $delays;
 		}
-
+		 */
 		/**
 		 * Convert a Cycle Period (from PMPro) string to an approximate day count
 		 *
@@ -699,6 +702,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 			// @codeCoverageIgnoreStart
 			if ( ! file_exists( $log_directory ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir
 				if ( ! mkdir( $log_directory, 0750, true ) ) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( "Warning: Unable to create the E20R Debug logging location: {$log_directory}" );
@@ -719,7 +723,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 */
 		public function log( $message ) {
 
-			if ( ! defined( 'WP_DEBUG' ) || defined( 'WP_DEBUG' ) && false === WP_DEBUG ) {
+			if ( ! defined( 'WP_DEBUG' ) || ( defined( 'WP_DEBUG' ) && false === WP_DEBUG ) ) {
 				return false;
 			}
 
@@ -786,13 +790,13 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 * Process REQUEST variable: Check for presence and sanitize it before returning value or default
 		 *
 		 * @param string     $name    Name of the variable to return
-		 * @param null|mixed $default The default value to return if the REQUEST variable doesn't exist or is empty.
+		 * @param null|mixed $def     The default value to return if the REQUEST variable doesn't exist or is empty.
 		 *
 		 * @return bool|float|int|null|string|array  Sanitized value from the front-end.
 		 */
-		public function get_variable( $name, $default = null ) {
+		public function get_variable( $name, $def = null ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
-			return isset( $_REQUEST[ $name ] ) && ! empty( $_REQUEST[ $name ] ) ? $this->sanitize( $_REQUEST[ $name ] ) : $default;
+			return isset( $_REQUEST[ $name ] ) && ! empty( $_REQUEST[ $name ] ) ? $this->sanitize( $_REQUEST[ $name ] ) : $def;
 		}
 
 		/**
@@ -872,12 +876,12 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Test whether string contains HTML
 		 *
-		 * @param string $string The string to test for HTML tags
+		 * @param string $str The string to test for HTML tags
 		 *
 		 * @return bool
 		 */
-		final public static function is_html( $string ) {
-			return preg_match( '/<[^<]+>/', $string ) !== 0;
+		final public static function is_html( $str ) {
+			return preg_match( '/<[^<]+>/', $str ) !== 0;
 		}
 
 		/**
@@ -964,7 +968,6 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$buffers = ob_get_clean();
 
 			return $buffers;
-
 		}
 
 		/**
@@ -972,11 +975,11 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 *
 		 * @param mixed $needle The value to check the input for
 		 * @param mixed $haystack The value/string we're checking against
-		 * @param bool  $echo Whether to return or print the content
+		 * @param bool  $show Whether to return or print the content
 		 *
 		 * @return null|string
 		 */
-		public function checked( $needle, $haystack, $echo = false ) {
+		public function checked( $needle, $haystack, $show = false ) {
 
 			$text = null;
 
@@ -996,7 +999,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				}
 			}
 
-			if ( true === $echo && ! empty( $text ) ) {
+			if ( true === $show && ! empty( $text ) ) {
 				echo esc_attr__( ' checked="checked" ' );
 
 				return null;
@@ -1010,11 +1013,11 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		 *
 		 * @param mixed $needle The value to check the input for
 		 * @param mixed $haystack The value/string we're checking against
-		 * @param bool  $echo Whether to return or print the content
+		 * @param bool  $show Whether to return or print the content
 		 *
 		 * @return null|string
 		 */
-		public function selected( $needle, $haystack, $echo = false ) {
+		public function selected( $needle, $haystack, $show = false ) {
 
 			$html_string = null;
 
@@ -1034,7 +1037,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				}
 			}
 
-			if ( true === $echo && ! empty( $html_string ) ) {
+			if ( true === $show && ! empty( $html_string ) ) {
 				print esc_attr__( ' selected="selected" ' );
 				return null;
 			}
@@ -1059,7 +1062,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			$max_len = mb_strlen( $keyspace, '8bit' ) - 1;
 
 			try {
-				for ( $i = 0; $i < $length; ++ $i ) {
+				for ( $i = 0; $i < $length; ++$i ) {
 					$string .= $keyspace[ random_int( 0, $max_len ) ];
 				}
 			} catch ( Exception $e ) {
@@ -1073,13 +1076,13 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		/**
 		 * Search through array values to check whether there's anything there
 		 *
-		 * @param array $array The array to check if is empty
+		 * @param array $lst The array to check if is empty
 		 *
 		 * @return bool
 		 */
-		public function array_isnt_empty( $array ) {
+		public function array_isnt_empty( $lst ) {
 
-			$values = array_values( $array );
+			$values = array_values( $lst );
 
 			return ( empty( $values ) ? false : true );
 		}
@@ -1111,7 +1114,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 
 				$substr_count = substr_count( $sql, '[IN]' );
 
-				for ( $i = 0; $i < $substr_count; $i ++ ) {
+				for ( $i = 0; $i < $substr_count; $i++ ) {
 					$args = array_merge( $args, $values );
 				}
 
@@ -1132,7 +1135,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 		public function safe_ajax() {
 
 			// Intentionally deactivate debug output to display/client
-			// phpcs:ignore WordPress.PHP.IniSet.display_errors_Blacklisted
+			// phpcs:ignore WordPress.PHP.IniSet.display_errors_Blacklisted, WordPress.PHP.IniSet.display_errors_Disallowed
 			ini_set( 'display_errors', '0' );
 			ob_start();
 			$messages = ob_get_clean();
@@ -1192,7 +1195,7 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 				$plugin_path = sprintf( '%1$s/%2$s/%2$s.php', WP_PLUGIN_DIR, $plugin_slug );
 			}
 
-			if ( ! file_exists( dirname( E20R_UTILITIES_BASE_FILE ) . '/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php' ) ) {
+			if ( ! defined( 'E20R_UTILITIES_BASE_FILE' ) || ! file_exists( dirname( E20R_UTILITIES_BASE_FILE ) . '/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php' ) ) {
 				$plugin->add_message( 'File not found: Unable to load the plugin update checker!', 'warning' );
 				return null;
 			}
@@ -1200,16 +1203,24 @@ if ( ! class_exists( '\E20R\Utilities\Utilities' ) ) {
 			/**
 			 * One-click update handler & checker
 			 */
-			if ( ! class_exists( '\\Puc_v4_Factory' ) ) {
+			if ( ! class_exists( 'YahnisElsts\\PluginUpdateChecker\\v5\\PucFactory;' ) ) {
 				require_once sprintf( '%1$s/inc/yahnis-elsts/plugin-update-checker/plugin-update-checker.php', dirname( E20R_UTILITIES_BASE_FILE ) );
 			}
 
-			$plugin_updates = Puc_v4_Factory::buildUpdateChecker(
+			if ( ! has_filter( "puc_is_slug_in_use-{$plugin_slug}", '__return_false' ) ) {
+				self::$instance->log( "Adding the 'puc_is_slug_in_use-{$plugin_slug}' filter hook" );
+				add_filter( "puc_is_slug_in_use-{$plugin_slug}", '__return_false', 99999, 1 );
+			}
+			$plugin_updates = PucFactory::buildUpdateChecker(
 				sprintf( 'https://eighty20results.com/protected-content/%1$s/metadata.json', $plugin_slug ),
 				$plugin_path,
 				$plugin_slug
 			);
 
+			if ( has_filter( "puc_is_slug_in_use-{$plugin_slug}", '__return_false' ) ) {
+				self::$instance->log( "Removing the 'puc_is_slug_in_use-{$plugin_slug}' filter hook" );
+				remove_filter( "puc_is_slug_in_use-{$plugin_slug}", '__return_false', 99999 );
+			}
 			return $plugin_updates;
 		}
 

@@ -33,7 +33,7 @@ use Mockery;
 function e20r_unittest_stubs() {
 	Functions\when( 'wp_die' )
 		->justReturn(
-			function( $string ) {
+			function ( $string ) {
 				// phpcs:ignore
 				error_log( "Should have died: {$string}" );
 			}
@@ -43,6 +43,12 @@ function e20r_unittest_stubs() {
 		->returnArg( 1 );
 
 	Functions\when( 'esc_html__' )
+		->returnArg( 1 );
+
+	Functions\when( 'esc_attr' )
+		->returnArg( 1 );
+
+	Functions\when( 'esc_html' )
 		->returnArg( 1 );
 
 	Functions\when( '__return_true' )
@@ -59,14 +65,14 @@ function e20r_unittest_stubs() {
 
 	Functions\when( 'date_i18n' )
 		->justReturn(
-			function( $date_string, $time ) {
+			function ( $date_string, $time ) {
 				return date( $date_string, $time ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
 			}
 		);
 
 	Functions\expect( 'wp_date' )
 		->andReturnUsing(
-			function( $date_string, $time ) {
+			function ( $date_string, $time ) {
 				return date( $date_string, $time ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
 			}
 		);
@@ -78,7 +84,7 @@ function e20r_unittest_stubs() {
 		Functions\expect( 'admin_url' )
 			->with( Mockery::contains( 'options-general.php' ) )
 			->andReturnUsing(
-				function() {
+				function () {
 					return 'https://localhost:7254/wp-admin/options-general.php';
 				}
 			);
@@ -97,7 +103,7 @@ function e20r_unittest_stubs() {
 
 	Functions\when( '_deprecated_function' )
 		->alias(
-			function( $depr_function, $wp_version, $new_function ) {
+			function ( $depr_function, $wp_version, $new_function ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( "{$depr_function} is deprecated as of WordPress v{$wp_version}. Please use {$new_function} instead" );
 			}

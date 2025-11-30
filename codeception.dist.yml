@@ -18,7 +18,7 @@ extensions:
         - Codeception\Command\GenerateWPCanonical
         - Codeception\Command\GenerateWPXMLRPC
 params:
-    - tests/_envs/.env.testing
+    - ./tests/_envs/.env.testing
 bootstrap: _bootstrap.php
 settings:
   lint: true
@@ -26,8 +26,13 @@ settings:
   memory_limit: 1024M
 coverage:
   enabled: true
-  show_uncovered: true
-  show_only_summary: true
+  colors: true
+  remote_context_options:
+    http:
+      timeout: 60
+    ssl:
+      verify_peer: false
+  low_limit: 16
   include:
     - src/E20R/Utilities/*.php
     - src/E20R/Licensing/*.php

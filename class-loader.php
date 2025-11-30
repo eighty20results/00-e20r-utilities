@@ -3,7 +3,7 @@
 Plugin Name: E20R Utilities Module
 Plugin URI: https://eighty20results.com/
 Description: Provides functionality required by the Eighty/20 Results developed plugins
-Version: 2.3.3
+Version: 2.3.4
 Requires PHP: 7.3
 Author: Thomas Sjolshagen <thomas@eighty20results.com>
 Author URI: https://eighty20results.com/thomas-sjolshagen/
@@ -11,7 +11,7 @@ License: GPLv2
 Text Domain: 00-e20r-utilities
 Domain Path: languages/
 
- * Copyright (c) 2014 - 2022. - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2014 - 2024. - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -210,7 +210,7 @@ if ( ! class_exists( 'E20R\Utilities\Loader' ) ) {
 		 *
 		 * @return int
 		 */
-		public function get_default_priority() : int {
+		public function get_default_priority(): int {
 			return $this->default_priority;
 		}
 

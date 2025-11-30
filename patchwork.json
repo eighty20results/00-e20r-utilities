@@ -1,13 +1,12 @@
 {
   "redefinable-internals": [
-	"function_exists",
-	"file_exists",
-	"mkdir",
-	"dirname",
-	"json_decode",
-	"gethostname",
-	"random_bytes",
-	"openssl_random_pseudo_bytes",
-	"bin2hex"
+    "function_exists",
+    "file_exists",
+    "mkdir",
+    "dirname",
+    "json_decode",
+    "gethostname",
+    "bin2hex",
+    "random_bytes"
   ]
 }

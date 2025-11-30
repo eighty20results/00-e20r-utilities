@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2016 - 2022 - Eighty / 20 Results by Wicked Strong Chicks.
+ * Copyright (c) 2016 - 2024 - Eighty / 20 Results by Wicked Strong Chicks.
  * ALL RIGHTS RESERVED
  *
  * This program is free software: you can redistribute it and/or modify
@@ -96,7 +96,7 @@ abstract class BaseSettings {
 						'%1$s is not a valid setting for this version of the licensing solution',
 						'00-e20r-utilities'
 					),
-					$key
+					esc_attr( $key )
 				)
 			);
 		}
@@ -120,7 +120,7 @@ abstract class BaseSettings {
 						'"%1$s" is not a valid setting for this version of the licensing solution',
 						'00-e20r-utilities'
 					),
-					$key
+					esc_attr( $key )
 				)
 			);
 		}
